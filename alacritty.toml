@@ -1,0 +1,10 @@
+[terminal]
+shell = "zellij"
+
+[font]
+normal = { family="0xProto Nerd Font Mono", style="Regular" }
+
+[window]
+opacity = 0.9
+startup_mode = "Maximized"
+
