@@ -1,5 +1,5 @@
 [terminal]
-shell = "zellij"
+# shell = "zellij"
 
 [font]
 normal = { family="0xProto Nerd Font Mono", style="Regular" }
