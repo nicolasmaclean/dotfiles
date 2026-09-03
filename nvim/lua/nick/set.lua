@@ -27,4 +27,11 @@ vim.opt.colorcolumn = "80"
 
 vim.g.mapleader = " "
 
-vim.diagnostic.config({virtual_text = true })
+-- vim.diagnostic.config({virtual_text = true })
+vim.diagnostic.config({
+  virtual_text = { spacing = 2, prefix = "●" },
+  underline = true,
+  update_in_insert = true,   -- lint while typing, not just on InsertLeave
+  severity_sort = true,
+  signs = false,
+})

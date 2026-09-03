@@ -2,6 +2,7 @@
 # shell = "zellij"
 
 [font]
+size = 8.0
 normal = { family="0xProto Nerd Font Mono", style="Regular" }
 
 [window]
