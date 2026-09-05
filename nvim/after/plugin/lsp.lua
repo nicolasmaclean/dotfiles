@@ -8,6 +8,14 @@ local lsps = {
             root_markers = { '.clangd', 'compile_commands.json', '.git' },
         }
     },
+    {
+        "intelephense",
+        {
+            cmd = { 'intelephense', '--stdio' },
+            filetypes = { 'php' },
+            root_markers = { 'composer.json', '.git' },
+        }
+    },
 }
 
 for _, lsp in pairs(lsps) do
