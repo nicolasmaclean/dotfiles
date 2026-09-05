@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 
 .bak
+
+# nvim
+nvim/plugin/packer_compiled.lua
