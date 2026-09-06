@@ -1,0 +1,14 @@
+[Unit]
+Description=picom compositor
+PartOf=qtile-session.target
+After=qtile-session.target
+Requisite=qtile-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/picom
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=qtile-session.target

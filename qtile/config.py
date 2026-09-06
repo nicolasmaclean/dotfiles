@@ -12,6 +12,7 @@
 #   widgets.py        custom bar widgets
 #   popups.py         shared popup keymap and liveness check
 #   power.py          power menu popup
+#   network.py        network widget and its Wi-Fi menu
 
 # ═══ imports ═══════════════════════════════════════════════════════════════
 import subprocess
@@ -19,11 +20,19 @@ import subprocess
 from libqtile import bar, hook, layout, widget
 from libqtile.config import Group, Match, Screen
 
+from network import NetworkButton
 from power import PowerButton, power_menu
 from remap import group_keys, keys, mouse  # noqa: F401
 from tabbed_column import TabbedColumns
-from theme import C, F, G
-from widgets import BrightnessBar, ColorizedCPU, ColorizedMemory, VolumeBar
+from theme import B, C, F, G
+from widgets import (
+    BrightnessBar,
+    ColorizedCPU,
+    ColorizedMemory,
+    KeyboardLayout,
+    StatusNotifier,
+    VolumeBar,
+)
 
 # ═══ groups ══════════════════════════════════════════════════════════════
 groups = [Group(i) for i in "12345"]
@@ -72,109 +81,83 @@ extension_defaults = widget_defaults.copy()
 
 
 # ═══ taskbar ═════════════════════════════════════════════════════════════════
-# Left: groups, then the thermal / CPU / memory readouts. Centre: clock.
-# Right: two bands running out to the screen edge —
-#   bg_topbar_tray        the two trays
-#   bg_topbar (unbanded)  brightness, volume, battery, then the power button
+# One flat bar, one background. Everything sits straight on the body and the
+# grouping is done with rules alone —
+#   Left    power, battery, brightness, volume  |  thermal, CPU, memory
+#   Centre  clock
+#   Right   the two trays, input source, network  |  group numbers
 #
-# None of this is a real powerline — a band is an oversized arrow glyph drawn
-# over whatever background precedes it, followed by ordinary widgets that all
-# share that background. The two right-hand bands run to the edge and open with
-# a G.arrow point; the readouts sit mid-bar and instead read as a right-pointing
-# banner, G.arrow_close at both ends: the opening one is drawn in the *bar*
-# colour over the slab, so it cuts a chevron in rather than sticking a point out.
-def _slab(bg, **kwargs):
-    """Shared styling for everything sitting on the slab coloured `bg`."""
+# The bar is a pill: bar.Bar's own margin insets the *window* by B.gutter on
+# three sides, so the gutter is simply not part of the bar and the wallpaper
+# there needs no transparency to show. The background stays fully opaque, and
+# deliberately: a bar with an alpha channel is handed to Systray as a 32-bit
+# visual, and X copies a child window's pixels into its parent rather than
+# blending them, so every transparent pixel in a tray icon would punch a hole
+# straight through to the desktop. The ends are square — the body just stops,
+# and _pill_end is only the padding that keeps the outermost widget off it.
+#
+# Widgets set no background of their own: with none, each one draws over the
+# bar's own C.bg_topbar, so there is exactly one place the colour is set.
+def _bar_text(**kwargs):
+    """Shared styling for every widget on the bar."""
     return dict(
         font=F.normal,
         fontsize=F.icon_size,
-        background=bg,
         foreground=C.fg_normal,
         **kwargs,
     )
 
 
-def _slab_icon(glyph, color, bg):
-    """An accent-coloured icon on a slab, paired with the readout after it."""
-    return widget.TextBox(f"{glyph} ", **{**_slab(bg, padding=2), "foreground": color})
+def _bar_icon(glyph, color):
+    """An accent-coloured icon, paired with the readout after it."""
+    return widget.TextBox(f"{glyph} ", **{**_bar_text(padding=2), "foreground": color})
 
 
-def _slab_arrow(bg, over=None, glyph=G.arrow):
-    """A `bg` triangle capping a band. `over` is the background behind it."""
-    return widget.TextBox(
-        glyph,
-        font=F.normal,
-        fontsize=F.arrow_size,
-        foreground=bg,
-        background=over,
-        padding=0,
-    )
+def _sep():
+    """The rule that does all the grouping now that no widget has a band.
+
+    Dim grey and short of full height: it has to read against the #1e1e1e
+    body without turning into a hard division.
+    """
+    return widget.Sep(foreground=C.fg_dim, padding=24, linewidth=1, size_percent=55)
+
+
+def _pill_end():
+    """A square end of the pill — a little room off the vertical edge.
+
+    Nothing but padding: the corner is square because the body simply stops,
+    so this only keeps the first/last widget off the edge.
+    """
+    return widget.Spacer(length=6)
 
 
 bar_widgets = [
-    widget.GroupBox(
-        margin_y=3,
-        margin_x=3,
-        padding=1,
-        borderwidth=0,
-        font=F.normal,
-        fontsize=F.icon_size,
-        active=C.fg_dim,
-        inactive=C.fg_dim,
-        foreground=C.fg_dim,
-        this_current_screen_border=C.fg_white,
-        this_screen_border=C.fg_blue,
-        other_current_screen_border=C.fg_white,
-        highlight_color=C.fg_white,
-        highlight_method="text",
-        rounded=False,
-        urgent_alert_method="border",
-        urgent_border=C.fg_urgent,
+    _pill_end(),
+    PowerButton(
+        G.power,
+        **_bar_text(padding=8),
+        mouse_callbacks={"Button1": power_menu},
     ),
-    # Divides the groups from the readouts. The band colours are all but
-    # invisible against the #1e1e1e bar, so this uses the accent instead.
-    widget.Sep(
-        foreground=C.bg_topbar_selected, padding=24, linewidth=1, size_percent=55
+    widget.Battery(
+        **_bar_text(padding=5),
+        # Pin the ACPI name. qtile's autodetect walks /sys/class/power_supply
+        # and takes the first dir exposing a "capacity" file, which on this box
+        # can be hidpp_battery_2 — the MX Master 3S. The mouse reports capacity
+        # but no energy_now, so the widget dies with "Unable to read status for
+        # energy_now_file" whenever the mouse sorts ahead of BAT0.
+        battery="BAT0",
+        format="{char} {percent:2.0%}",
+        charge_char="\uf1e6",  # plug
+        discharge_char="\uf241",  # battery draining
+        empty_char="\uf244",
+        full_char="\uf240",
+        not_charging_char="\U000f06a6",
+        unknown_char="\U000f06c4",
+        low_percentage=0.15,
+        low_foreground=C.fg_urgent,
     ),
-    # ── the readouts banner: a band that closes again, not one that runs to
-    # the edge, so it is capped at both ends — both pointing right ──
-    _slab_arrow(C.bg_topbar, over=C.bg_topbar_tray, glyph=G.arrow_close),
-    _slab_icon(G.thermal, C.fg_light_blue, C.bg_topbar_tray),
-    widget.ThermalSensor(
-        **_slab(C.bg_topbar_tray, padding=2),
-        tag_sensor="Package id 0",
-        format="{temp:.0f}{unit} ",
-        threshold=75,
-        foreground_alert=C.fg_orange,
-    ),
-    _slab_icon(G.cpu, C.fg_yellow, C.bg_topbar_tray),
-    ColorizedCPU(**_slab(C.bg_topbar_tray, padding=2), format="{load_percent}% "),
-    _slab_icon(G.memory, C.fg_grey, C.bg_topbar_tray),
-    ColorizedMemory(**_slab(C.bg_topbar_tray, padding=2), format="{MemUsed:.0f}{mm} "),
-    _slab_arrow(C.bg_topbar_tray, glyph=G.arrow_close),
-    widget.Spacer(length=bar.STRETCH),
-    widget.Clock(
-        format="%b %d, %I:%M %p",
-        font=F.normal,
-        fontsize=F.icon_size,
-        foreground=C.fg_normal,
-        padding=2,
-    ),
-    widget.Spacer(length=bar.STRETCH),
-    # ── first slab: the trays ──
-    _slab_arrow(C.bg_topbar_tray),
-    # Two tray protocols, two widgets: Systray speaks XEmbed, StatusNotifier
-    # speaks StatusNotifierItem/AppIndicator. Apps pick one or the other, so
-    # dropping either loses its icons. StatusNotifier needs dbus-fast, and
-    # pyxdg for items that publish an icon name instead of a pixmap.
-    widget.Systray(**_slab(C.bg_topbar_tray, padding=4)),  # nm-applet etc. dock here
-    widget.StatusNotifier(
-        **_slab(C.bg_topbar_tray, padding=4), icon_size=20
-    ),  # Proton VPN etc.
-    # ── dark slab: the two meters, battery and power, out to the edge ──
-    _slab_arrow(C.bg_topbar, over=C.bg_topbar_tray),
     BrightnessBar(
-        **_slab(C.bg_topbar, padding=5),
+        **_bar_text(padding=5),
         # remap.py's XF86MonBrightness keys drive this widget by name, so they
         # and a scroll over it step the backlight identically.
         name="brightness",
@@ -187,7 +170,7 @@ bar_widgets = [
         min_brightness=10,
     ),
     VolumeBar(
-        **_slab(C.bg_topbar, padding=5),
+        **_bar_text(padding=5),
         # VolumeBar would otherwise be addressed as "volumebar", and remap.py's
         # XF86Audio* keys look the widget up as "volume".
         name="volume",
@@ -208,32 +191,88 @@ bar_widgets = [
         # nudges the volume. Button3 runs volume_app, which is unset - there is
         # no mixer installed for it to open anyway.
     ),
-    widget.Battery(
-        **_slab(C.bg_topbar, padding=5),
-        # Pin the ACPI name. qtile's autodetect walks /sys/class/power_supply
-        # and takes the first dir exposing a "capacity" file, which on this box
-        # can be hidpp_battery_2 — the MX Master 3S. The mouse reports capacity
-        # but no energy_now, so the widget dies with "Unable to read status for
-        # energy_now_file" whenever the mouse sorts ahead of BAT0.
-        battery="BAT0",
-        format="{char} {percent:2.0%}",
-        charge_char="\uf1e6",  # plug
-        discharge_char="\uf241",  # battery draining
-        empty_char="\uf244",
-        full_char="\uf240",
-        not_charging_char="\U000f06a6",
-        unknown_char="\U000f06c4",
-        low_percentage=0.15,
-        low_foreground=C.fg_urgent,
+    # Divides the meters from the readouts.
+    _sep(),
+    _bar_icon(G.thermal, C.fg_light_blue),
+    widget.ThermalSensor(
+        **_bar_text(padding=2),
+        tag_sensor="Package id 0",
+        format="{temp:.0f}{unit} ",
+        threshold=75,
+        foreground_alert=C.fg_orange,
     ),
-    PowerButton(
-        G.power,
-        **_slab(C.bg_topbar, padding=8),
-        mouse_callbacks={"Button1": power_menu},
+    _bar_icon(G.cpu, C.fg_yellow),
+    ColorizedCPU(**_bar_text(padding=2), format="{load_percent}% "),
+    _bar_icon(G.memory, C.fg_grey),
+    ColorizedMemory(**_bar_text(padding=2), format="{MemUsed:.0f}{mm} "),
+    widget.Spacer(length=bar.STRETCH),
+    widget.Clock(
+        format="%b %d, %I:%M %p",
+        font=F.normal,
+        fontsize=F.icon_size,
+        foreground=C.fg_normal,
+        padding=2,
     ),
-    # tail of the slab: without the background it reverts to the bar colour
-    # and leaves a gap between the power button and the screen edge
-    widget.Spacer(length=5, background=C.bg_topbar),
+    widget.Spacer(length=bar.STRETCH),
+    # Two tray protocols, two widgets: Systray speaks XEmbed, StatusNotifier
+    # speaks StatusNotifierItem/AppIndicator. Apps pick one or the other, so
+    # dropping either loses its icons. StatusNotifier needs dbus-fast, and
+    # pyxdg for items that publish an icon name instead of a pixmap.
+    widget.Systray(**_bar_text(padding=4)),  # Discord etc. dock here
+    # widgets.StatusNotifier, not the stock one: Proton VPN introspects its
+    # item without any properties, which the stock widget cannot read an icon
+    # from. See the tray section of widgets.py.
+    StatusNotifier(**_bar_text(padding=4), icon_size=20),  # Proton VPN etc.
+    # App icons first, then the two things this config draws itself. Both used
+    # to be foreign tray icons - ibus's GTK panel and nm-applet - and both are
+    # native widgets now, so they sit outside the trays and follow the palette
+    # in theme.py like everything else on the bar.
+    KeyboardLayout(
+        **_bar_text(padding=5),
+        # remap.py's mod+shift+space drives this widget by name.
+        name="keyboard",
+        # (ibus engine id, label), in cycle order. `ibus list-engine` lists all
+        # 983 of them; the Chinese IMEs installed on this box are libpinyin
+        # (pinyin), chewing (zhuyin) and the ibus-table engines (cangjie, wubi).
+        #
+        # Note that "cn" is deliberately not here. GNOME's input-sources list
+        # on this box still reads [('xkb','us'), ('xkb','cn')], but ibus
+        # registers no xkb:cn engine at all, so that entry was never selectable
+        # - see the README note. libpinyin is the working Chinese input method.
+        engines=[("xkb:us::eng", "US"), ("libpinyin", "CN")],
+        # Nothing polls usefully here: the widget re-reads on its own switch,
+        # and this only catches a switch made behind its back.
+        update_interval=30,
+    ),
+    NetworkButton(
+        **_bar_text(padding=5),
+        # network.py's popup finds the widget under this name to anchor itself.
+        name="network",
+        update_interval=5,
+        # Glyph only. show_name=True adds the SSID next to it.
+    ),
+    # Divides all of that from the group numbers.
+    _sep(),
+    widget.GroupBox(
+        margin_y=3,
+        margin_x=3,
+        padding=1,
+        borderwidth=0,
+        font=F.normal,
+        fontsize=F.icon_size,
+        active=C.fg_dim,
+        inactive=C.fg_dim,
+        foreground=C.fg_dim,
+        this_current_screen_border=C.fg_white,
+        this_screen_border=C.fg_blue,
+        other_current_screen_border=C.fg_white,
+        highlight_color=C.fg_white,
+        highlight_method="text",
+        rounded=False,
+        urgent_alert_method="border",
+        urgent_border=C.fg_urgent,
+    ),
+    _pill_end(),
 ]
 
 # ═══ desktop ═════════════════════════════════════════════════════════════════
@@ -241,7 +280,13 @@ screens = [
     Screen(
         wallpaper="/home/nick/.local/share/backgrounds/2025-11-27-08-48-14-puppycat_sleeping.jpg",
         wallpaper_mode="fill",
-        top=bar.Bar(bar_widgets, 34, background=C.bg_topbar),
+        # margin is [N E S W]: the gutter on three sides, nothing below.
+        top=bar.Bar(
+            bar_widgets,
+            B.height,
+            background=C.bg_topbar,
+            margin=[B.gutter, B.gutter, 0, B.gutter],
+        ),
     ),
 ]
 

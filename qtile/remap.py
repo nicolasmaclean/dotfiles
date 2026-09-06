@@ -92,6 +92,17 @@ keys = [
         lazy.widget["brightness"].change_backlight(ChangeDirection.DOWN),
         desc="Lower screen brightness",
     ),
+    # --- input sources ---
+    # Alt+Shift+space, not Alt+space: that one is taken by layout.next() above.
+    # Goes through the bar widget rather than calling ibus directly, for the
+    # same reason the volume keys do - the widget owns the engine list and the
+    # cycle order, and driving it from here redraws the label immediately.
+    Key(
+        [mod, "shift"],
+        "space",
+        lazy.widget["keyboard"].next_layout(),
+        desc="Cycle input source (US / pinyin)",
+    ),
     # --- session ---
     Key([mod, "control"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shut down qtile"),

@@ -70,8 +70,14 @@ def _power_row(index, glyph, label, callback, danger=False, offset_y=0):
         # with a Button1 callback. That is what arms the layout's focus hooks -
         # without a focusable control the toolkit never calls set_hooks() and
         # neither click-outside nor Escape would work.
-        highlight=C.bg_topbar_selected,
-        foreground_highlighted=C.bg_topbar,
+        highlight=C.bg_highlight,
+        # Hover lifts the block *and* brightens the text, rather than
+        # inverting to dark-on-light: bg_topbar_selected is a near-black
+        # border accent, so inverting against it left #1e1e1e text on a
+        # #2a2a2a block - 1.16:1, effectively invisible. A destructive row
+        # keeps its red instead of going white, so hovering it never reads
+        # as ordinary.
+        foreground_highlighted=C.fg_urgent if danger else C.fg_white,
         highlight_method="block",
         h_align="left",
         mouse_callbacks={"Button1": callback},

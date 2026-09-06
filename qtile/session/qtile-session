@@ -1,0 +1,16 @@
+#!/bin/sh
+# Launch qtile as a systemd-aware X11 session.
+# Referenced by /usr/share/xsessions/qtile.desktop (Exec=).
+
+# Qt apps have no theme of their own here; the gtk3 platform theme plugin
+# (qt5-gtk2-platformtheme / qt6-gtk-platformtheme) makes them follow GTK.
+export QT_QPA_PLATFORMTHEME=gtk3
+
+# Make the X display + session vars visible to systemd --user and dbus,
+# so user services started by qtile-session.target can reach the display.
+systemctl --user import-environment DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+    dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME
+fi
+
+exec /home/nick/.local/bin/qtile start -b x11
