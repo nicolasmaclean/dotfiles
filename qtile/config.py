@@ -17,6 +17,7 @@
 # ═══ imports ═══════════════════════════════════════════════════════════════
 import subprocess
 
+import libqtile
 from libqtile import bar, hook, layout, widget
 from libqtile.config import Group, Match, Screen
 
@@ -60,6 +61,10 @@ layouts = [
     layout.Columns(**_COLUMN_OPTS),
     layout.Max(),
 ]
+
+# Layouts that mean "this window and nothing else" - the bar hides for these.
+# Matched on Layout.name, which is the class name lowercased.
+_BARLESS_LAYOUTS = {"max"}
 
 floating_layout = layout.Floating(
     border_focus=C.border_focus,
@@ -321,3 +326,36 @@ def _start_systemd_session():
 @hook.subscribe.shutdown
 def _stop_systemd_session():
     subprocess.run(["systemctl", "--user", "stop", "qtile-session.target"], check=False)
+
+
+# ═══ bar visibility ══════════════════════════════════════════════════════════
+# Max is the stop on mod+Tab you reach for when you want the window and nothing
+# else, and the bar is the last thing in the way: qtile reserves its strip out
+# of the screen's usable area, so a Max window stops short of the top edge.
+# Hiding the bar hands that strip back to the layout and Max fills the screen.
+#
+# Two hooks, because the current layout changes two ways - mod+Tab cycles it
+# (layout_change) and switching group swaps in whatever layout that group was
+# left on (setgroup). setgroup is passed nothing, so both go through the same
+# walk over the screens rather than being handed the one that changed.
+def _sync_bar_to_layout():
+    for scr in getattr(libqtile.qtile, "screens", ()):
+        top = scr.top
+        # A Gap has no show(), and a Bar has no .window until _configure has
+        # run - calling show() before that zeroes the reserved size out from
+        # under the first layout pass.
+        if not isinstance(top, bar.Bar) or getattr(top, "window", None) is None:
+            continue
+        if scr.group is None:
+            continue
+        top.show(scr.group.layout.name not in _BARLESS_LAYOUTS)
+
+
+@hook.subscribe.layout_change
+def _bar_follows_layout(new_layout, group):
+    _sync_bar_to_layout()
+
+
+@hook.subscribe.setgroup
+def _bar_follows_group():
+    _sync_bar_to_layout()
