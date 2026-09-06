@@ -16,8 +16,10 @@ class Colors:
     fg_dim: str = "#7a7a7a"  # groups other than the current one
     fg_white: str = "#ffffff"
     bg_topbar: str = "#1e1e1e"  # bar background
-    bg_topbar_selected: str = "#9e9e9e"  # accent: popup borders, separator, slider
-    bg_topbar_arrow: str = "#3a3a3a"  # the slab on the right
+    # the readouts banner on the left, and the tray band on the right
+    bg_topbar_tray: str = "#333333"
+    # accent: popup borders and the separator
+    bg_topbar_selected: str = "#2a2a2a"
     border_focus: str = "#aa00ff"
     border_normal: str = "#4a4a4a"  # unfocused windows
     border_focus_stack: str = "#ffcc00"  # focused window of a stacked column
@@ -38,7 +40,9 @@ class Fonts:
 # the only form that reliably survives a copy-paste or a patch.
 @dataclass(frozen=True)
 class Glyphs:
-    arrow: str = "\ue0b2"  # powerline left-facing triangle
+    arrow: str = "\ue0b2"  # powerline left-facing triangle: opens a band
+    arrow_close: str = "\ue0b0"  # right-facing: closes a band short of the edge
+    brightness: str = "\U000f00e0"  # md-brightness_7, a full sun
     thermal: str = "\U000f10c2"  # thermometer
     cpu: str = "\uf4bc"  # chip
     memory: str = "\U000f0127"  # memory sticks
@@ -58,7 +62,7 @@ class Glyphs:
 class Tabs:
     height: int = 22
     bg: str = Colors.bg_topbar  # shows through the gaps between tabs
-    inactive_bg: str = Colors.bg_topbar_arrow
+    inactive_bg: str = Colors.bg_topbar
     active_bg: str = Colors.bg_topbar  # focused tab melts into the strip
     fg: str = Colors.fg_grey
     active_fg: str = Colors.fg_white

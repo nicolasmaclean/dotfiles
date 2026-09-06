@@ -2,6 +2,7 @@
 # qtile core
 from libqtile.config import Click, Drag, Key
 from libqtile.lazy import lazy
+from libqtile.widget.backlight import ChangeDirection
 
 # ═══ misc ═══════════════════════════════════════════════════════════════
 terminal = "alacritty"  # only terminal installed on this box
@@ -43,6 +44,54 @@ keys = [
     Key([mod], "w", lazy.window.kill(), desc="Kill focused window"),
     Key([mod], "f", lazy.window.toggle_fullscreen(), desc="Toggle fullscreen"),
     Key([mod], "t", lazy.window.toggle_floating(), desc="Toggle floating"),
+    # --- media keys ---
+    # Volume rides the bar widget instead of calling wpctl directly: the widget
+    # already owns the wpctl commands (config.py), and driving it from here
+    # redraws the bar at once rather than waiting on its next poll.
+    Key(
+        [],
+        "XF86AudioRaiseVolume",
+        lazy.widget["volume"].increase_vol(),
+        desc="Raise volume",
+    ),
+    Key(
+        [],
+        "XF86AudioLowerVolume",
+        lazy.widget["volume"].decrease_vol(),
+        desc="Lower volume",
+    ),
+    Key([], "XF86AudioMute", lazy.widget["volume"].mute(), desc="Toggle mute"),
+    # Nothing in the bar tracks the mic, so this one talks to wpctl itself.
+    Key(
+        [],
+        "XF86AudioMicMute",
+        lazy.spawn("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),
+        desc="Toggle mic mute",
+    ),
+    # Driven through the bar widget rather than by spawning brightnessctl, so
+    # the meter and the keys cannot disagree: the widget owns the step, the
+    # exponential curve and the floor, and still shells out to brightnessctl -
+    # which writes /sys/class/backlight unprivileged thanks to the
+    # brightness-udev rule plus video-group membership.
+    #
+    # -e puts the 5% steps on an exponential curve: the panel's response to raw
+    # values is perceptually non-linear, so linear steps crawl at the top and
+    # lurch at the bottom. The curve makes each press feel like the same change.
+    # That curve has no floor of its own - "brightnessctl -e set 5%-" walks
+    # happily down to a raw 0 and a black panel - so the widget's
+    # min_brightness is what stops the last press going dark.
+    Key(
+        [],
+        "XF86MonBrightnessUp",
+        lazy.widget["brightness"].change_backlight(ChangeDirection.UP),
+        desc="Raise screen brightness",
+    ),
+    Key(
+        [],
+        "XF86MonBrightnessDown",
+        lazy.widget["brightness"].change_backlight(ChangeDirection.DOWN),
+        desc="Lower screen brightness",
+    ),
     # --- session ---
     Key([mod, "control"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shut down qtile"),

@@ -134,6 +134,21 @@ class TabbedColumns(layout.Columns):
         self._tabbed = []
         self._hooked = False
 
+    # --- stacking policy ---
+    # With num_columns=2, once both columns exist a new window is handed to the
+    # current column. Columns' own default is to split it, halving everyone's
+    # height; stack it instead, so the extra window becomes another tab.
+    #
+    # The invariant this keeps is the same one _wants_tabs tests: a column is
+    # stacked exactly while it holds more than one window. Dropping back to one
+    # window re-splits, which is a no-op for placement but restores the plain
+    # border colours (Columns paints a non-split column with border_*_stack).
+    def add_client(self, client):
+        will_add_column = len(self.cc) > 0 and len(self.columns) < self.num_columns
+        if len(self.cc) > 0 and not will_add_column:
+            self.cc.split = False
+        super().add_client(client)
+
     def clone(self, group):
         c = super().clone(group)
         # Layout.clone is a shallow copy and every group gets its own clone, so
@@ -226,6 +241,9 @@ class TabbedColumns(layout.Columns):
 
     def remove(self, client):
         res = super().remove(client)
+        for col in self.columns:
+            if len(col) <= 1:
+                col.split = True
         if not self.get_windows():
             # An empty group never calls layout(), so clean up here instead.
             self._tabbed = []
