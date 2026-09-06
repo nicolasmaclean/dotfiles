@@ -3,6 +3,33 @@ vim.opt.guicursor = "i:ver25"
 vim.opt.nu = true
 vim.opt.relativenumber = true
 
+-- count display rows, not buffer lines, so the numbers match gj/gk on wrapped
+-- text. "%s" keeps the sign column; falls back to normal behaviour when nowrap.
+function _G.display_relnum()
+  local sp = vim.fn.screenpos(0, vim.v.lnum, 1)
+  if sp.row == 0 then return "" end
+  local delta = (sp.row + vim.v.virtnum) - vim.fn.winline()
+  local n = delta == 0 and vim.v.lnum or math.abs(delta)
+  return "%s" .. string.format("%3d ", n)
+end
+vim.opt.statuscolumn = "%!v:lua.display_relnum()"
+
+-- cursor movement only redraws the number column when the cursor's *buffer*
+-- line changes, so moving between rows of one wrapped line left stale numbers.
+-- re-setting the option marks the column dirty; guarded so it only fires when
+-- the cursor actually changes display row.
+vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+  group = vim.api.nvim_create_augroup("display_relnum", { clear = true }),
+  callback = function()
+    if not vim.wo.wrap then return end
+    local row = vim.fn.winline()
+    if row ~= vim.w.display_relnum_row then
+      vim.w.display_relnum_row = row
+      vim.wo.statuscolumn = vim.wo.statuscolumn
+    end
+  end,
+})
+
 vim.opt.tabstop = 2
 vim.opt.softtabstop = 2  
 vim.opt.shiftwidth = 2 
