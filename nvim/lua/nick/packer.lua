@@ -16,6 +16,7 @@ return require('packer').startup(function(use)
     'saghen/blink.cmp',
     requires = { 'saghen/blink.lib', 'rafamadriz/friendly-snippets' },
     tag = 'v1.*',
+    run = function() require('blink.cmp').build():pwait() end,
     config = function()
         require('blink.cmp').setup({
             keymap = { preset = 'default' },
