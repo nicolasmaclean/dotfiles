@@ -38,9 +38,10 @@ echo "installed /usr/share/xsessions/qtile.desktop"
 # here is WantedBy that target, so they come and go with qtile.
 install -Dm644 "$HERE/session/qtile-session.target" "$UNITS/qtile-session.target"
 install -Dm644 "$HERE/session/picom.service" "$UNITS/picom.service"
+install -Dm644 "$HERE/session/protonvpn.service" "$UNITS/protonvpn.service"
 systemctl --user daemon-reload
-systemctl --user enable picom.service >/dev/null
-echo "installed and enabled: qtile-session.target, picom.service"
+systemctl --user enable picom.service protonvpn.service >/dev/null
+echo "installed and enabled: qtile-session.target, picom.service, protonvpn.service"
 
 # nm-applet is deliberately not shipped: network.py draws the indicator now,
 # and running the applet as well would dock a second one in the tray. This

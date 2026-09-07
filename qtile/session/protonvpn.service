@@ -1,0 +1,19 @@
+[Unit]
+Description=Proton VPN tray app
+PartOf=qtile-session.target
+After=qtile-session.target
+Requisite=qtile-session.target
+
+[Service]
+Type=simple
+# --start-minimized leaves only the tray icon: the target is started from
+# config.py's startup_once, by which point the bar's StatusNotifier already
+# owns the watcher name on the bus, so the icon has somewhere to dock.
+ExecStart=/usr/bin/protonvpn-app --start-minimized
+# on-failure, not always: quitting from the tray is a clean exit and should
+# stay quit until the next login.
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=qtile-session.target
