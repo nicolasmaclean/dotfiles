@@ -8,6 +8,55 @@ from libqtile.widget.backlight import ChangeDirection
 terminal = "alacritty"  # only terminal installed on this box
 launcher = "rofi -show drun"
 
+# ImageMagick's `import` plus xclip, because that is what is already on this
+# box - no flameshot, maim or scrot - and between them they cover both shots
+# without pulling in another package.
+#
+# Every shot lands in ~/Pictures/Screenshots, and the file is the part that is
+# always there: the save happens before xclip is ever called, so the shot
+# survives whatever the clipboard does. The capture goes to a temp file first
+# rather than straight down a pipe, so a cancelled or empty grab leaves nothing
+# behind - a drag that ends where it started is a 0-byte PNG, and that must not
+# become a file. mktemp makes that file 0600, hence the chmod: a screenshot is
+# an ordinary file and should not be readable only by its owner.
+#
+# The clipboard copy is best-effort, and deliberately not trusted. xclip cannot
+# serve a selection much past 1MB - measured on this box, 774KB pastes and
+# 1.1MB hangs the receiving app - and a full-screen PNG at 1920x1080 is around
+# 1.2MB, so it is exactly the full-screen shots that fall off the end. Region
+# shots are almost always well under. xclip forks and holds the selection
+# itself, so nothing here has to stay alive for a paste that does work.
+#
+# No notify-send confirmation: there is no notification daemon on this box
+# (org.freedesktop.Notifications is unclaimed), so the call would only ever
+# fail silently. The shot appearing on the clipboard is the feedback.
+#
+# The capture flags come in as "$@" - see _screenshot() below - so the two
+# bindings share one script: no args means the interactive crosshair,
+# "-window root" means the whole screen.
+_SCREENSHOT_SH = """\
+dir="$HOME/Pictures/Screenshots"
+tmp=$(mktemp --suffix=.png) || exit 1
+if import "$@" png:"$tmp" && [ -s "$tmp" ]; then
+    mkdir -p "$dir"
+    out="$dir/Screenshot from $(date '+%Y-%m-%d %H-%M-%S').png"
+    mv "$tmp" "$out"
+    chmod 644 "$out"
+    xclip -selection clipboard -target image/png -i "$out"
+else
+    rm -f "$tmp"
+fi
+"""
+
+
+def _screenshot(*args):
+    """Run _SCREENSHOT_SH with `args` as the flags handed to import."""
+    # The "screenshot" between the script and the flags is $0: sh -c takes the
+    # argument after the script as the shell's own name, and without it the
+    # first real flag would be swallowed into $0 instead of "$@".
+    return lazy.spawn(["sh", "-c", _SCREENSHOT_SH, "screenshot", *args])
+
+
 # ═══ keybindings ═══════════════════════════════════════════════════════════════
 mod = "mod1"  # Alt: keyboard modifier for every Key() binding
 mod_mouse = "mod4"  # Windows key: blender and other 3d software uses alt+mouse, so leave mod+mouse to windows key
@@ -92,6 +141,12 @@ keys = [
         lazy.widget["brightness"].change_backlight(ChangeDirection.DOWN),
         desc="Lower screen brightness",
     ),
+    # --- screenshots ---
+    # Print alone takes the whole screen; shift+Print hands over the crosshair
+    # to drag a region out, and a plain click there grabs the window under the
+    # pointer instead.
+    Key([], "Print", _screenshot("-window", "root"), desc="Screenshot the screen"),
+    Key(["shift"], "Print", _screenshot(), desc="Screenshot a region or window"),
     # --- input sources ---
     # Alt+Shift+space, not Alt+space: that one is taken by layout.next() above.
     # Goes through the bar widget rather than calling ibus directly, for the

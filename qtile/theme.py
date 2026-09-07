@@ -78,7 +78,7 @@ class TopBar:
     height: int = 34
     # Inset on three sides, so the bar reads as a pill floating over the
     # wallpaper rather than a band welded to the top edge. Nothing below: the
-    # layout's own 4px window margin already opens that gap.
+    # layout's own window gap (config.WINDOW_GAP) already opens that gap.
     gutter: int = 6
 
 

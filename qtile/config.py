@@ -24,7 +24,7 @@ from libqtile.config import Group, Match, Screen
 from network import NetworkButton
 from power import PowerButton, power_menu
 from remap import group_keys, keys, mouse  # noqa: F401
-from tabbed_column import TabbedColumns
+from tabbed_column import EvenColumns, TabbedColumns
 from theme import B, C, F, G
 from widgets import (
     BrightnessBar,
@@ -41,6 +41,9 @@ keys += group_keys(groups)
 
 
 # ═══ layouts ═════════════════════════════════════════════════════════════
+# One gap, used between two windows and between a window and a screen edge.
+WINDOW_GAP = 4
+
 _COLUMN_OPTS = {
     # Two columns, and no more: past that, TabbedColumns stacks the new window
     # into the current column instead of splitting it.
@@ -50,15 +53,18 @@ _COLUMN_OPTS = {
     "border_focus_stack": C.border_focus_stack,
     "border_normal_stack": C.border_normal_stack,
     "border_width": 2,
-    "margin": 4,
+    # Half of WINDOW_GAP: both layouts are EvenColumns, which turns a
+    # half-gap margin into one gap between any two windows and the same gap
+    # between a window and a screen edge.
+    "margin": WINDOW_GAP // 2,
 }
 
 layouts = [
     # Tab styling comes from theme.py (Tabs); pass tab_* here to override it.
     TabbedColumns(**_COLUMN_OPTS),
-    # Plain Columns kept as a fallback: mod+Tab reaches a known-good layout if
+    # Plain columns kept as a fallback: mod+Tab reaches a known-good layout if
     # the tab strips ever misbehave.
-    layout.Columns(**_COLUMN_OPTS),
+    EvenColumns(**_COLUMN_OPTS),
     layout.Max(),
 ]
 

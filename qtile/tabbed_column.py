@@ -1,6 +1,7 @@
 # ═══ imports ══════════════════════════════════════════════════════
 # qtile core
 from libqtile import hook, layout
+from libqtile.config import ScreenRect
 
 # internal
 from theme import T
@@ -17,6 +18,39 @@ from theme import T
 def _as_int(value, fallback=0):
     """Pin a Configurable option to an int; they resolve dynamically."""
     return fallback if value is None else int(value)
+
+
+# ═══ even gaps ═══════════════════════════════════════════════════════════
+# Columns hangs `margin` off all four sides of every window, so two neighbours
+# end up 2 * margin apart while a window and a screen edge are only margin
+# apart: the gap down the middle of the screen comes out twice the one around
+# it. EvenColumns hands the layout a screen rect already inset by the missing
+# half, which makes margin half a gap on every side of every window and every
+# gap on screen the same width. Set `margin` to half the gap you want.
+#
+# The inset is this layout's and not the screen's (a bar.Gap would do the same
+# job): Max still gets the whole screen, which is the point of it.
+class EvenColumns(layout.Columns):
+    """Columns whose gap to a screen edge matches the gap between windows."""
+
+    def _edge_pad(self):
+        """The half-gap Columns leaves off the outside, as [N E S W]."""
+        m = self.margin
+        if isinstance(m, (list, tuple)):
+            return [_as_int(v) for v in m]
+        return [_as_int(m)] * 4
+
+    def _inset(self, screen_rect):
+        north, east, south, west = self._edge_pad()
+        return ScreenRect(
+            screen_rect.x + west,
+            screen_rect.y + north,
+            max(1, screen_rect.width - east - west),
+            max(1, screen_rect.height - north - south),
+        )
+
+    def configure(self, client, screen_rect):
+        super().configure(client, self._inset(screen_rect))
 
 
 class _TabStrip:
@@ -110,7 +144,7 @@ class _TabStrip:
         self.win.kill()
 
 
-class TabbedColumns(layout.Columns):
+class TabbedColumns(EvenColumns):
     """Columns, with a tab strip along the top of every stacked column."""
 
     # Values live in theme.py (Tabs); only the descriptions are here.
@@ -186,7 +220,9 @@ class TabbedColumns(layout.Columns):
 
     # --- hooking into the layout cycle ---
     def layout(self, windows, screen_rect):
-        self._sync_strips(screen_rect)
+        # The strips share the windows' geometry, so they measure from the
+        # inset rect too; configure() below insets the raw one it is handed.
+        self._sync_strips(self._inset(screen_rect))
         super().layout(windows, screen_rect)
 
     def _sync_strips(self, screen_rect):

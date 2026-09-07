@@ -159,7 +159,7 @@ class BrightnessBar(_BlockMeter, widget.Backlight):
 # Only the two layouts actually configured above; extend if you add more.
 LAYOUT_ICONS = {
     "tabbedcolumns": "\U000f0322",  # nf-md-tab
-    "columns": "",
+    "evencolumns": "",
     "max": "",
 }
 
