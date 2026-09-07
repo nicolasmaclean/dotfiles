@@ -1,0 +1,154 @@
+# dunst - the notification daemon for the qtile session (session/dunst.service).
+#
+# Ported from a dunstrc written against dunst 1.12. Noble ships 1.9.2, which
+# rejects six of its settings; every one of them is called out inline below,
+# verified by running the real 1.9.2 binary over the original file. Nothing was
+# changed for taste - the colours, geometry, timeouts and mouse bindings are
+# the source file's, so this looks like that config and not like the bar.
+#
+# The one deliberate substitution is the font: the original asks for Iosevka
+# Term, which is not installed here, and an unmatched Pango family falls back
+# to DejaVu Sans without a word of complaint - so the popup would have looked
+# nothing like the config it was copied from. 0xProto is what the bar uses.
+
+[global]
+
+    # ═══ display ═════════════════════════════════════════════════════════
+    monitor = 0
+    # none, so a notification always lands on monitor 0 rather than chasing
+    # the pointer or the focused window.
+    follow = none
+
+    # ═══ geometry ════════════════════════════════════════════════════════
+    width = 300
+    # 1.9.2 has no dynamic height: the tuple form `(0, 300)` fails to parse
+    # ("No digits found") and a bare value is read as the maximum height,
+    # which is what the tuple asked for anyway.
+    height = 300
+    origin = top-right
+    # 1.9.2 wants WxH here, not `(15, 49)`. 49px of top offset clears the
+    # bar - 34px of body plus its 6px gutter - with 9px of air under it.
+    offset = 15x49
+    # 0 auto-detects from Xft.dpi.
+    scale = 0
+    notification_limit = 0
+
+    # ═══ progress bar ════════════════════════════════════════════════════
+    # Drawn when a client passes a value hint, e.g.
+    #   dunstify -h int:value:40 "Volume"
+    progress_bar = true
+    progress_bar_height = 10
+    progress_bar_frame_width = 1
+    progress_bar_min_width = 150
+    progress_bar_max_width = 300
+    progress_bar_corner_radius = 0
+    # progress_bar_corners: 1.9.2 has no such setting. Moot regardless - it
+    # only chooses which corners a non-zero radius rounds.
+
+    # ═══ appearance ══════════════════════════════════════════════════════
+    indicate_hidden = yes
+    # Needs a compositor to mean anything; picom.service is that compositor.
+    transparency = 5
+    separator_height = 2
+    padding = 6
+    horizontal_padding = 6
+    text_icon_padding = 0
+    frame_width = 3
+    # The global frame, which in practice is only ever seen for a fraction of
+    # a second: all three urgency sections below override it.
+    frame_color = "#8EC07C"
+    gap_size = 0
+    separator_color = frame
+    sort = no
+    corner_radius = 0
+    # corners: 1.9.2 has no such setting, and with radius 0 there is nothing
+    # to round anyway.
+
+    # Keep messages up even while the box is idle. Left off, as in the source.
+    # idle_threshold = 120
+
+    # ═══ text ════════════════════════════════════════════════════════════
+    # Iosevka Term 11 in the original - see the note at the top of the file.
+    font = 0xProto Nerd Font 11
+    line_height = 3
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = center
+    vertical_alignment = center
+    show_age_threshold = -1
+    ellipsize = middle
+    ignore_newline = no
+    stack_duplicates = true
+    hide_duplicate_count = true
+    show_indicators = no
+
+    # ═══ icons ═══════════════════════════════════════════════════════════
+    # icon_position = off, so nothing here draws anything. Kept because it is
+    # what the popup would use the moment icons are turned back on.
+    icon_position = off
+    enable_recursive_icon_lookup = true
+    icon_theme = Adwaita
+    min_icon_size = 32
+    max_icon_size = 128
+    icon_path = /usr/share/icons/gnome/16x16/status/:/usr/share/icons/gnome/16x16/devices/
+
+    # ═══ history ═════════════════════════════════════════════════════════
+    # `dunstctl history-pop` brings the last one back; sticky, so it waits to
+    # be dismissed rather than timing out again.
+    sticky_history = yes
+    history_length = 15
+
+    # ═══ misc ════════════════════════════════════════════════════════════
+    # The context menu shells out to dmenu, which is not installed - so a
+    # middle-click on a notification carrying actions has nothing to open.
+    # Either apt install dmenu or repoint this at rofi -dmenu.
+    dmenu = /usr/bin/dmenu -p dunst:
+    browser = /usr/bin/xdg-open
+    always_run_script = true
+    title = Dunst
+    class = Dunst
+    ignore_dbusclose = false
+
+    # ═══ wayland / legacy ════════════════════════════════════════════════
+    # Inert on X11, both of them. Kept so this file still behaves if the
+    # session ever moves to Wayland.
+    force_xwayland = false
+    force_xinerama = false
+
+    # ═══ mouse ═══════════════════════════════════════════════════════════
+    mouse_left_click = close_current
+    mouse_middle_click = do_action, close_current
+    mouse_right_click = close_all
+
+[experimental]
+    per_monitor_dpi = false
+
+# ═══ urgencies ═══════════════════════════════════════════════════════════
+# Colours have to be quoted: unquoted, the '#' opens a comment and the value
+# is empty.
+#
+# The source file gives the two upper urgencies an override_pause_level (30
+# and 60), which is how dunst >= 1.10 does partial do-not-disturb: pause at a
+# level and anything above it still comes through. 1.9.2 has neither the
+# setting nor the levels, so `dunstctl set-paused true` here is all-or-nothing
+# and the two lines are dropped rather than silently ignored.
+
+[urgency_low]
+    frame_color = "#3B7C87"
+    foreground = "#3B7C87"
+    background = "#191311"
+    timeout = 4
+
+[urgency_normal]
+    frame_color = "#5B8234"
+    foreground = "#5B8234"
+    background = "#191311"
+    timeout = 6
+
+[urgency_critical]
+    frame_color = "#B7472A"
+    foreground = "#B7472A"
+    background = "#191311"
+    timeout = 8
+
+# vim: ft=cfg

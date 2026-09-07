@@ -3,10 +3,12 @@
 #   ~/.local/bin/qtile-session        the launcher GDM execs
 #   /usr/share/xsessions/qtile.desktop the entry GDM lists
 #   ~/.config/systemd/user/*           the units the session is made of
+#   ~/.config/dunst                    symlink to this repo's dunstrc
 #   ibus                               the input sources the bar's widget cycles
 #
-# Expects policykit-1-gnome to be installed (it ships the authentication agent
-# polkit-agent.service runs): sudo apt install policykit-1-gnome
+# Expects policykit-1-gnome and dunst to be installed - the first ships the
+# authentication agent polkit-agent.service runs, the second is the session's
+# notification daemon: sudo apt install policykit-1-gnome dunst
 #
 # Run as yourself, NOT with sudo. The user units and the gsettings values below
 # belong to your own session - run as root they would land in root's systemd
@@ -46,10 +48,16 @@ install -Dm644 "$HERE/session/protonvpn.service" "$UNITS/protonvpn.service"
 # it polkit can only answer "Authorization requires interaction", and GUI apps
 # report that as their own vague failure - App Center calls it "unknown error".
 install -Dm644 "$HERE/session/polkit-agent.service" "$UNITS/polkit-agent.service"
+# dunst is what answers org.freedesktop.Notifications. Nothing in a bare qtile
+# session does, and every notify-send - plus every app that notifies over dbus
+# - then fails with "No notification daemon". This unit deliberately shadows
+# the one the dunst package ships in /usr/lib/systemd/user.
+install -Dm644 "$HERE/session/dunst.service" "$UNITS/dunst.service"
 systemctl --user daemon-reload
-systemctl --user enable picom.service protonvpn.service polkit-agent.service >/dev/null
+systemctl --user enable picom.service protonvpn.service polkit-agent.service \
+    dunst.service >/dev/null
 echo "installed and enabled: qtile-session.target, picom.service, protonvpn.service,"
-echo "                       polkit-agent.service"
+echo "                       polkit-agent.service, dunst.service"
 
 # nm-applet is deliberately not shipped: network.py draws the indicator now,
 # and running the applet as well would dock a second one in the tray. This
@@ -57,6 +65,20 @@ echo "                       polkit-agent.service"
 if [ -e "$UNITS/nm-applet.service" ]; then
     systemctl --user disable --now nm-applet.service >/dev/null 2>&1 || true
     echo "disabled the leftover nm-applet.service (network.py replaces it)"
+fi
+
+# ═══ dunst's config ══════════════════════════════════════════════════════
+# It has to sit at the XDG default path: dbus activation runs a plain
+# `dunst` with no way to pass -conf, so a config anywhere else would be read
+# by the unit and ignored by every other route into the daemon. Symlinked, not
+# copied, so editing the repo is editing the live config.
+DUNSTCFG="$HOME/.config/dunst"
+if [ -L "$DUNSTCFG" ] || [ ! -e "$DUNSTCFG" ]; then
+    ln -sfn "$(dirname "$HERE")/dunst" "$DUNSTCFG"
+    echo "linked ~/.config/dunst -> $(dirname "$HERE")/dunst"
+else
+    echo "warning: ~/.config/dunst is a real directory - left alone. Move it" >&2
+    echo "         aside and rerun to pick up this repo's dunstrc." >&2
 fi
 
 # ═══ input sources ═══════════════════════════════════════════════════════

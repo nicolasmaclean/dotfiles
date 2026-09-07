@@ -1,0 +1,26 @@
+[Unit]
+Description=dunst notification daemon
+PartOf=qtile-session.target
+After=qtile-session.target
+Requisite=qtile-session.target
+
+[Service]
+# Type=dbus, not simple: dunst's whole job is to own
+# org.freedesktop.Notifications, and this is what makes systemd treat the
+# service as started only once that name is actually on the bus. Anything
+# notifying early then queues against a real activation instead of finding
+# nobody home.
+Type=dbus
+BusName=org.freedesktop.Notifications
+# No -conf: ~/.config/dunst is symlinked into this repo (install-session.sh),
+# so dunst's own XDG lookup finds the config. That also means the copy dbus
+# would activate reads the same file as the one this unit starts.
+ExecStart=/usr/bin/dunst
+Restart=on-failure
+RestartSec=2
+
+[Install]
+# This unit shadows the dunst.service the package ships in
+# /usr/lib/systemd/user, which is deliberate: notifications belong to the
+# qtile session, and in a GNOME session gnome-shell owns that bus name itself.
+WantedBy=qtile-session.target
