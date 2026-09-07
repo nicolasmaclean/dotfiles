@@ -230,7 +230,7 @@ class KeyboardLayout(base.BackgroundPoll):
             [("xkb:us::eng", "US")],
             "(engine id, label) pairs, in cycle order.",
         ),
-        ("icon", G.keyboard, "Glyph drawn before the label."),
+        ("icon", G.keyboard, "Glyph drawn after the label."),
     ]
 
     def __init__(self, **config):
@@ -239,7 +239,7 @@ class KeyboardLayout(base.BackgroundPoll):
         self.add_callbacks({"Button1": self.next_layout})
 
     def poll(self):
-        return f"{self.icon} {self._label(_ibus('engine'))}"
+        return f" {self._label(_ibus('engine'))} {self.icon}"
 
     def _label(self, engine):
         for name, label in self.engines:
@@ -516,7 +516,12 @@ WINDOW_ENTRY_LABELS = frozenset({"show", "hide", "open", "restore", "show window
 # The errors a badly behaved item can raise on any of this. AttributeError is
 # in here for the same reason the tray fix above exists: an accessor the item's
 # introspection never declared.
-_ITEM_ERRORS = (AttributeError, DBusError, InterfaceNotFoundError, InvalidObjectPathError)
+_ITEM_ERRORS = (
+    AttributeError,
+    DBusError,
+    InterfaceNotFoundError,
+    InvalidObjectPathError,
+)
 
 
 def _prop(properties, name, default):
@@ -544,7 +549,9 @@ async def _click_window_entry(item):
         entry, properties, _grandchildren = child.value
         if _prop(properties, "type", "standard") != "standard":
             continue
-        if not (_prop(properties, "enabled", True) and _prop(properties, "visible", True)):
+        if not (
+            _prop(properties, "enabled", True) and _prop(properties, "visible", True)
+        ):
             continue
         if _prop(properties, "label", "").strip().lower() not in WINDOW_ENTRY_LABELS:
             continue

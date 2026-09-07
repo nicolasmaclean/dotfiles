@@ -218,8 +218,6 @@ bar_widgets = [
     ),
     _bar_icon(G.cpu, C.fg_yellow),
     ColorizedCPU(**_bar_text(padding=2), format="{load_percent}% "),
-    _bar_icon(G.memory, C.fg_grey),
-    ColorizedMemory(**_bar_text(padding=2), format="{MemUsed:.0f}{mm} "),
     widget.Spacer(length=bar.STRETCH),
     widget.Clock(
         format="%b %d, %I:%M %p",
@@ -238,6 +236,13 @@ bar_widgets = [
     # item without any properties, which the stock widget cannot read an icon
     # from. See the tray section of widgets.py.
     StatusNotifier(**_bar_text(padding=4), icon_size=20),  # Proton VPN etc.
+    NetworkButton(
+        **_bar_text(padding=5),
+        # network.py's popup finds the widget under this name to anchor itself.
+        name="network",
+        update_interval=5,
+        # Glyph only. show_name=True adds the SSID next to it.
+    ),
     # App icons first, then the two things this config draws itself. Both used
     # to be foreign tray icons - ibus's GTK panel and nm-applet - and both are
     # native widgets now, so they sit outside the trays and follow the palette
@@ -258,13 +263,6 @@ bar_widgets = [
         # Nothing polls usefully here: the widget re-reads on its own switch,
         # and this only catches a switch made behind its back.
         update_interval=30,
-    ),
-    NetworkButton(
-        **_bar_text(padding=5),
-        # network.py's popup finds the widget under this name to anchor itself.
-        name="network",
-        update_interval=5,
-        # Glyph only. show_name=True adds the SSID next to it.
     ),
     # Divides all of that from the group numbers.
     _sep(),
