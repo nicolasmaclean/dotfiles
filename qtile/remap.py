@@ -2,7 +2,8 @@
 # qtile core
 from libqtile.config import Click, Drag, Key
 from libqtile.lazy import lazy
-from libqtile.widget.backlight import ChangeDirection
+
+import brightness
 
 # ═══ misc ═══════════════════════════════════════════════════════════════
 terminal = "alacritty"  # only terminal installed on this box
@@ -68,28 +69,19 @@ keys = [
         lazy.spawn("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),
         desc="Toggle mic mute",
     ),
-    # Driven through the bar widget rather than by spawning brightnessctl, so
-    # the meter and the keys cannot disagree: the widget owns the step, the
-    # exponential curve and the floor, and still shells out to brightnessctl -
-    # which writes /sys/class/backlight unprivileged thanks to the
-    # brightness-udev rule plus video-group membership.
-    #
-    # -e puts the 5% steps on an exponential curve: the panel's response to raw
-    # values is perceptually non-linear, so linear steps crawl at the top and
-    # lurch at the bottom. The curve makes each press feel like the same change.
-    # That curve has no floor of its own - "brightnessctl -e set 5%-" walks
-    # happily down to a raw 0 and a black panel - so the widget's
-    # min_brightness is what stops the last press going dark.
+    # Nothing in the bar tracks the backlight, so these call brightness.py,
+    # which owns the step, the -e curve and the floor and posts the dunst
+    # notification that replaced the meter.
     Key(
         [],
         "XF86MonBrightnessUp",
-        lazy.widget["brightness"].change_backlight(ChangeDirection.UP),
+        lazy.function(brightness.up),
         desc="Raise screen brightness",
     ),
     Key(
         [],
         "XF86MonBrightnessDown",
-        lazy.widget["brightness"].change_backlight(ChangeDirection.DOWN),
+        lazy.function(brightness.down),
         desc="Lower screen brightness",
     ),
     # --- screenshots ---

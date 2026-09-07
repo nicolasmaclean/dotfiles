@@ -27,12 +27,10 @@ from remap import group_keys, keys, mouse  # noqa: F401
 from tabbed_column import EvenColumns, TabbedColumns
 from theme import B, C, F, G
 from widgets import (
-    BrightnessBar,
     ColorizedCPU,
-    ColorizedMemory,
     KeyboardLayout,
     StatusNotifier,
-    VolumeBar,
+    VolumeIcon,
 )
 
 # ═══ groups ══════════════════════════════════════════════════════════════
@@ -98,7 +96,7 @@ extension_defaults = widget_defaults.copy()
 # ═══ taskbar ═════════════════════════════════════════════════════════════════
 # One flat bar, one background. Everything sits straight on the body and the
 # grouping is done with rules alone —
-#   Left    power, battery, brightness, volume  |  thermal, CPU, memory
+#   Left    power, battery, volume  |  thermal, CPU
 #   Centre  clock
 #   Right   the two trays, input source, network  |  group numbers
 #
@@ -171,23 +169,13 @@ bar_widgets = [
         low_percentage=0.15,
         low_foreground=C.fg_urgent,
     ),
-    BrightnessBar(
+    # No brightness widget: the XF86MonBrightness keys go straight to
+    # brightness.py, which posts a dunst notification instead of metering it
+    # here.
+    VolumeIcon(
         **_bar_text(padding=5),
-        # remap.py's XF86MonBrightness keys drive this widget by name, so they
-        # and a scroll over it step the backlight identically.
-        name="brightness",
-        segments=5,
-        # A floor, because nothing below it has one: brightnessctl clamps
-        # neither its relative nor its absolute form, and the curve collapses
-        # anything under ~7% to a raw 0 - a black panel with no way back except
-        # the keys you cannot see to find. 10% of the curve is the dimmest the
-        # panel still lights at.
-        min_brightness=10,
-    ),
-    VolumeBar(
-        **_bar_text(padding=5),
-        # VolumeBar would otherwise be addressed as "volumebar", and remap.py's
-        # XF86Audio* keys look the widget up as "volume".
+        # VolumeIcon would otherwise be addressed as "volumeicon", and
+        # remap.py's XF86Audio* keys look the widget up as "volume".
         name="volume",
         emoji=True,
         emoji_list=["\U000f075f", "\U000f057f", "\U000f0580", "\U000f057e"],

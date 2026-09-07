@@ -1,5 +1,7 @@
 # ═══ imports ══════════════════════════════════════════════════════
 # qtile core
+from typing import ClassVar
+
 from libqtile import hook, layout
 from libqtile.config import ScreenRect
 
@@ -116,8 +118,8 @@ class _TabStrip:
             gap, pad = _as_int(lay.tab_spacing), _as_int(lay.tab_padding)
             span = (w - gap * (len(clients) - 1)) / len(clients)
             for i, c in enumerate(clients):
-                x0 = int(round(i * (span + gap)))
-                x1 = int(round(i * (span + gap) + span))
+                x0 = round(i * (span + gap))
+                x1 = round(i * (span + gap) + span)
                 focused = c is col.cw
                 d.set_source_rgb(lay.tab_active_bg if focused else lay.tab_inactive_bg)
                 d.fillrect(x0, 0, x1 - x0, h, 1)
@@ -148,7 +150,9 @@ class TabbedColumns(EvenColumns):
     """Columns, with a tab strip along the top of every stacked column."""
 
     # Values live in theme.py (Tabs); only the descriptions are here.
-    defaults = [
+    # ClassVar because add_defaults reads this off the class and never mutates
+    # it - the list is a declaration, not per-instance state.
+    defaults: ClassVar = [
         ("tab_height", T.height, "Height in px of the tab strip on a stacked column."),
         ("tab_bg", T.bg, "Colour behind the tabs; shows through the gaps."),
         ("tab_inactive_bg", T.inactive_bg, "Background of an unfocused tab."),

@@ -14,11 +14,12 @@ from libqtile.widget.helpers.status_notifier.statusnotifier import (
     STATUS_NOTIFIER_ITEM_SPEC,
 )
 
+from notify import VOLUME_ID, notify_value
 from theme import C, G
 
 # ═══ custom widgets ══════════════════════════════════════════════════════
-# Stock qtile has no threshold colouring on CPU/Memory, no glyph-based layout
-# indicator, and no icon substitution in TaskList. These three fill those gaps.
+# Stock qtile has no threshold colouring on CPU, no glyph-based layout
+# indicator, and no icon substitution in TaskList. These fill those gaps.
 
 
 class _Thresholded:
@@ -46,114 +47,75 @@ class ColorizedCPU(_Thresholded, widget.CPU):
         return self._colorize(float(text.replace("%", "").strip()), text)
 
 
-class ColorizedMemory(_Thresholded, widget.Memory):
-    def __init__(self, threshold_medium=65, threshold_high=85, **config):
-        self.threshold_medium = threshold_medium
-        self.threshold_high = threshold_high
-        widget.Memory.__init__(self, **config)
-
-    def poll(self):
-        import psutil
-
-        text = widget.Memory.poll(self)
-        return self._colorize(psutil.virtual_memory().percent, text)
+# ═══ volume ═══════════════════════════════════════════════════════════════
+# Just the speaker glyph. The level itself lives in the dunst notification
+# below, which is where you are actually looking when you reach for the volume
+# keys - a block meter in a corner of a 34px strip was telling you the same
+# thing somewhere you were not.
 
 
-# ═══ meters ═══════════════════════════════════════════════════════════════
-# After rodrigokimura/qtile-config: instead of a glyph or a bare percentage, a
-# reading is drawn inline as a run of block characters, so it reads at a glance
-# without opening anything.
-#
-# Both halves of the meter are U+2588 FULL BLOCK and the empty one is dimmed
-# with markup, rather than the usual U+2593 DARK SHADE. The shade characters
-# are dither patterns - a grid of dots is what the glyph *is*, in every font -
-# so they read as texture next to the solid run. One character for both halves
-# also keeps the meter exactly as wide at 0% as at 100%.
+class VolumeIcon(widget.Volume):
+    """The stock speaker glyph, plus a dunst notification on every change.
 
+    With emoji=True and no theme_path the parent already draws exactly one
+    thing - the glyph for the current level, or the muted one - so nothing here
+    touches the drawing. This subclass only adds the notification.
 
-class _BlockMeter:
-    """Draws a 0-100 reading as a run of blocks: ██████████
+    That cannot be posted from the commands below: they only run a mixer
+    command, and the widget does not learn the new level until do_volume()
+    polls for it. Announcing what self.volume held at the moment of the press
+    would report the level *before* it, and would be a press behind for as long
+    as a key is held.
 
-    A mixin rather than a widget, so it can sit on top of whichever stock
-    widget already knows how to read the value being metered.
-    """
-
-    def _init_meter(self, config):
-        """Take the meter's own options out of a widget's **config."""
-        self.segments = config.pop("segments", 10)
-        self.block = config.pop("block", "\u2588")
-        self.empty_foreground = config.pop("empty_foreground", C.fg_dim)
-
-    def _meter(self, percent):
-        filled = min(self.segments, max(0, round(percent * self.segments / 100)))
-        meter = self.block * filled
-        if filled < self.segments:
-            # markup, not a second widget: the whole meter has to stay one
-            # string so it draws as an unbroken run of cells
-            meter += (
-                f'<span foreground="{self.empty_foreground}">'
-                f"{self.block * (self.segments - filled)}</span>"
-            )
-        return meter
-
-
-class VolumeBar(_BlockMeter, widget.Volume):
-    """Volume as a block meter, the empty run dimmed: 󰕾 ██████████
-
-    No percentage: the meter carries the level, and dropping the readout also
-    makes the widget one fixed width, so nothing to its left shifts as the
-    volume changes.
-
-    The stock widget's own text is kept as the leading icon - with emoji=True
-    that is the speaker glyph, which shows mute. Mute reads as zero here rather
-    than as the level waiting behind it, so the meter agrees with the icon.
+    So a press only arms a flag, and the next poll - within update_interval,
+    0.2s - posts the reading it actually got back. Holding a key down then
+    coalesces to one notification per poll rather than one per repeat, which
+    keeps a held key from spawning dunstify thirty times a second.
     """
 
     def __init__(self, **config):
-        self._init_meter(config)
+        self._announce = False
         widget.Volume.__init__(self, **config)
 
-    def _update_drawer(self):
-        # sets self.text to the icon and recolours for mute
-        widget.Volume._update_drawer(self)
-        icon = self.text if (self.emoji or self.theme_path) else ""
-        # get_volume() reports -1 when the mixer command fails
-        volume = 0 if self.is_mute else max(0, self.volume or 0)
-        self.text = f"{icon} {self._meter(volume)}".strip()
+    def _volume_icon(self, volume, muted):
+        """The glyph _update_drawer picks, on the same thresholds."""
+        if not self.emoji or len(self.emoji_list) < 4:
+            return ""
+        if muted or volume <= 0:
+            return self.emoji_list[0]
+        if volume <= 30:
+            return self.emoji_list[1]
+        if volume < 80:
+            return self.emoji_list[2]
+        return self.emoji_list[3]
 
+    async def get_volume(self):
+        volume, muted = await widget.Volume.get_volume(self)
+        if self._announce:
+            self._announce = False
+            # get_volume() reports -1 when the mixer command fails
+            level = 0 if muted else max(0, volume)
+            icon = self._volume_icon(volume, muted)
+            # Mute reads as zero rather than as the level waiting behind it, so
+            # the progress bar agrees with the glyph.
+            label = "Muted" if muted else f"Volume  {level}%"
+            notify_value(f"{icon}  {label}".strip(), level, VOLUME_ID)
+        return volume, muted
 
-class BrightnessBar(_BlockMeter, widget.Backlight):
-    """Screen brightness on the same meter as VolumeBar: 󰃠 ██████████
+    @expose_command()
+    def increase_vol(self):
+        widget.Volume.increase_vol(self)
+        self._announce = True
 
-    Reported on brightnessctl's -e curve rather than as the raw sysfs ratio,
-    which is what remap.py's XF86MonBrightness keys move along. The two scales
-    are far apart - a panel at raw 30% is 74% of the way up the curve - so a
-    raw meter would sit still through several presses near the bottom and then
-    leap by segments near the top.
+    @expose_command()
+    def decrease_vol(self):
+        widget.Volume.decrease_vol(self)
+        self._announce = True
 
-    Everything else (scroll, min_brightness) then works in curve percent too,
-    because it all goes through _get_info.
-    """
-
-    def __init__(self, icon=G.brightness, exponent=4, **config):
-        self._init_meter(config)
-        self.icon = icon
-        self.exponent = exponent
-        # the stock default drives xbacklight, which isn't installed here
-        config.setdefault("change_command", "brightnessctl -e set {0:.0f}%")
-        config.setdefault("step", 5)  # matches the keys in remap.py
-        widget.Backlight.__init__(self, **config)
-
-    def _get_info(self):
-        """Position along the -e curve, 0.0-1.0, from the raw sysfs ratio."""
-        return widget.Backlight._get_info(self) ** (1 / self.exponent)
-
-    def poll(self):
-        try:
-            percent = 100 * self._get_info()
-        except RuntimeError:  # backlight device went away
-            percent = 0
-        return f"{self.icon} {self._meter(percent)}"
+    @expose_command()
+    def mute(self):
+        widget.Volume.mute(self)
+        self._announce = True
 
 
 # Only the two layouts actually configured above; extend if you add more.
