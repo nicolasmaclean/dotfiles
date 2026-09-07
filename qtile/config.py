@@ -81,6 +81,10 @@ floating_layout = layout.Floating(
         Match(wm_class="makebranch"),
         Match(wm_class="maketag"),
         Match(wm_class="ssh-askpass"),
+        # Flameshot's overlay is a normal window, and tiled it covers one
+        # monitor and shows the desktop *underneath* the bar rather than the
+        # frozen screen. Floating it is the documented fix for tiling WMs.
+        Match(wm_class="flameshot"),
         Match(title="branchdialog"),
         Match(title="pinentry"),
     ],

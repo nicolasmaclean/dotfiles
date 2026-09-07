@@ -4,11 +4,13 @@
 #   /usr/share/xsessions/qtile.desktop the entry GDM lists
 #   ~/.config/systemd/user/*           the units the session is made of
 #   ~/.config/dunst                    symlink to this repo's dunstrc
+#   ~/.config/flameshot                symlink to this repo's flameshot.ini
 #   ibus                               the input sources the bar's widget cycles
 #
-# Expects policykit-1-gnome and dunst to be installed - the first ships the
-# authentication agent polkit-agent.service runs, the second is the session's
-# notification daemon: sudo apt install policykit-1-gnome dunst
+# Expects policykit-1-gnome, dunst and flameshot to be installed - the first
+# ships the authentication agent polkit-agent.service runs, the second is the
+# session's notification daemon, the third is what the Print key drives:
+#   sudo apt install policykit-1-gnome dunst flameshot
 #
 # Run as yourself, NOT with sudo. The user units and the gsettings values below
 # belong to your own session - run as root they would land in root's systemd
@@ -53,11 +55,14 @@ install -Dm644 "$HERE/session/polkit-agent.service" "$UNITS/polkit-agent.service
 # - then fails with "No notification daemon". This unit deliberately shadows
 # the one the dunst package ships in /usr/lib/systemd/user.
 install -Dm644 "$HERE/session/dunst.service" "$UNITS/dunst.service"
+# flameshot has to be resident for the Print key to be able to copy a shot at
+# all - the unit itself explains why.
+install -Dm644 "$HERE/session/flameshot.service" "$UNITS/flameshot.service"
 systemctl --user daemon-reload
 systemctl --user enable picom.service protonvpn.service polkit-agent.service \
-    dunst.service >/dev/null
+    dunst.service flameshot.service >/dev/null
 echo "installed and enabled: qtile-session.target, picom.service, protonvpn.service,"
-echo "                       polkit-agent.service, dunst.service"
+echo "                       polkit-agent.service, dunst.service, flameshot.service"
 
 # nm-applet is deliberately not shipped: network.py draws the indicator now,
 # and running the applet as well would dock a second one in the tray. This
@@ -79,6 +84,21 @@ if [ -L "$DUNSTCFG" ] || [ ! -e "$DUNSTCFG" ]; then
 else
     echo "warning: ~/.config/dunst is a real directory - left alone. Move it" >&2
     echo "         aside and rerun to pick up this repo's dunstrc." >&2
+fi
+
+# ═══ flameshot's config ══════════════════════════════════════════════════
+# Same reasoning as dunst: flameshot reads ~/.config/flameshot/flameshot.ini
+# and takes no --config flag, so the file has to sit at the XDG path. Note that
+# flameshot *rewrites* this file when a setting is changed from its own UI, and
+# through the symlink that edits the repo - which is the intent, but it does
+# drop the comments.
+FLAMECFG="$HOME/.config/flameshot"
+if [ -L "$FLAMECFG" ] || [ ! -e "$FLAMECFG" ]; then
+    ln -sfn "$(dirname "$HERE")/flameshot" "$FLAMECFG"
+    echo "linked ~/.config/flameshot -> $(dirname "$HERE")/flameshot"
+else
+    echo "warning: ~/.config/flameshot is a real directory - left alone. Move" >&2
+    echo "         it aside and rerun to pick up this repo's flameshot.ini." >&2
 fi
 
 # ═══ input sources ═══════════════════════════════════════════════════════

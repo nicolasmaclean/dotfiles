@@ -1,0 +1,20 @@
+[Unit]
+Description=flameshot screenshot daemon
+PartOf=qtile-session.target
+After=qtile-session.target
+Requisite=qtile-session.target
+
+# Not a convenience. On X11 a selection is owned by the process that set it,
+# so a one-shot "flameshot gui" hands the clipboard an image and then exits,
+# taking the image with it - flameshot's most-reported bug, and unfixable from
+# the calling side. A resident daemon keeps owning the selection, so the paste
+# works. It also means Print opens the overlay immediately instead of paying
+# Qt's startup cost on every press.
+[Service]
+Type=simple
+ExecStart=/usr/bin/flameshot
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=qtile-session.target
