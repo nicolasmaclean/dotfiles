@@ -1,0 +1,20 @@
+[Unit]
+Description=PolicyKit authentication agent
+PartOf=qtile-session.target
+After=qtile-session.target
+Requisite=qtile-session.target
+
+[Service]
+Type=simple
+# The agent GNOME Shell would normally embed. Nothing in a bare qtile session
+# registers one, so polkit has no way to raise a password prompt and any
+# auth_admin action fails with "Authorization requires interaction" - which is
+# how a snap install from App Center surfaces as a bare "unknown error".
+ExecStart=/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
+# always, not on-failure: the agent has no clean-exit case worth honouring, and
+# a session that has silently lost it looks exactly like the bug above.
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=qtile-session.target

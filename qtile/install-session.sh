@@ -5,6 +5,9 @@
 #   ~/.config/systemd/user/*           the units the session is made of
 #   ibus                               the input sources the bar's widget cycles
 #
+# Expects policykit-1-gnome to be installed (it ships the authentication agent
+# polkit-agent.service runs): sudo apt install policykit-1-gnome
+#
 # Run as yourself, NOT with sudo. The user units and the gsettings values below
 # belong to your own session - run as root they would land in root's systemd
 # manager and root's dconf, where nothing of yours would ever read them. The
@@ -39,9 +42,14 @@ echo "installed /usr/share/xsessions/qtile.desktop"
 install -Dm644 "$HERE/session/qtile-session.target" "$UNITS/qtile-session.target"
 install -Dm644 "$HERE/session/picom.service" "$UNITS/picom.service"
 install -Dm644 "$HERE/session/protonvpn.service" "$UNITS/protonvpn.service"
+# polkit-agent is what lets anything in the session ask for a password. Without
+# it polkit can only answer "Authorization requires interaction", and GUI apps
+# report that as their own vague failure - App Center calls it "unknown error".
+install -Dm644 "$HERE/session/polkit-agent.service" "$UNITS/polkit-agent.service"
 systemctl --user daemon-reload
-systemctl --user enable picom.service protonvpn.service >/dev/null
-echo "installed and enabled: qtile-session.target, picom.service, protonvpn.service"
+systemctl --user enable picom.service protonvpn.service polkit-agent.service >/dev/null
+echo "installed and enabled: qtile-session.target, picom.service, protonvpn.service,"
+echo "                       polkit-agent.service"
 
 # nm-applet is deliberately not shipped: network.py draws the indicator now,
 # and running the applet as well would dock a second one in the tray. This
