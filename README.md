@@ -2,7 +2,11 @@
 
 ## Alacritty
 
-`ln -s ~/dotfiles/alacritty.toml ~/.alacritty.toml`
+`ln -s ~/dotfiles/alacritty.toml ~/.config/alacritty/alacritty.toml`
+
+Must be this path, not `~/.alacritty.toml`. Alacritty checks
+`~/.config/alacritty/alacritty.toml` first and stops at the first hit, so a file
+there shadows the home-directory one completely rather than merging with it.
 
 ## Qtile
 

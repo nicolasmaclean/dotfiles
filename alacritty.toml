@@ -9,3 +9,9 @@ normal = { family="0xProto Nerd Font Mono", style="Regular" }
 opacity = 0.9
 startup_mode = "Maximized"
 
+# Shift+Return sends ESC+CR, which Claude Code reads as a newline rather than submit.
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"
+
