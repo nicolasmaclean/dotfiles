@@ -198,7 +198,7 @@ bar_widgets = [
     ),
     widget.Spacer(length=bar.STRETCH),
     widget.Clock(
-        format="%b %d, %I:%M %p",
+        format="%b %d, %I:%M:%S %p",
         font=F.normal,
         fontsize=F.icon_size,
         foreground=C.fg_normal,
