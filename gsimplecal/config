@@ -1,0 +1,53 @@
+# The calendar popup behind the bar clock. Bound in dotfiles/qtile/config.py,
+# where the clock widget spawns `gsimplecal` on Button1 and pages it with the
+# scroll wheel. Running gsimplecal a second time kills the first, so the same
+# spawn both opens and closes it.
+
+show_calendar = 1
+# The bar already has a clock, and it is directly above this window.
+show_timezones = 0
+show_week_numbers = 0
+mark_today = 1
+
+# Click anywhere else and it goes away, which is how the other bar popups
+# behave. close_on_mouseleave would shut it the moment you moved off to read
+# something else.
+close_on_unfocus = 1
+close_on_mouseleave = 0
+
+# Sunday-first weeks. There is no setting for the first day of the week - it
+# comes from the locale - so this overrides LANG for gsimplecal alone. Must be
+# a name `locale -a` lists.
+force_lang = en_US.utf8
+
+# GTK_WIN_POS_MOUSE centres the window on the pointer, and the pointer is on
+# the clock you just clicked - so it lands centred under the clock without
+# qtile having to place it.
+#
+# Horizontally that is exact once xoffset makes up 2px: GTK centres using the
+# window's natural size *before* show_timezones=0 collapses the clock row,
+# i.e. as if it were 200 wide rather than the 204 it ends up.
+#
+# Vertically the centring would put the top half off the top of the screen, and
+# GTK clamps the window into the monitor *before* adding yoffset - so the top
+# pins to 0 and the top edge ends up at exactly yoffset. That makes this a
+# straight "how far down the screen" value, and it does not drift with where in
+# the bar you happen to click. 46 = the bar's bottom edge (B.gutter 6 + height
+# 34 = 40) plus another gutter, so the popup sits under the bar by the same
+# margin the bar floats by.
+mainwindow_position = mouse
+mainwindow_xoffset = -2
+mainwindow_yoffset = 46
+
+mainwindow_decorated = 0
+mainwindow_keep_above = 1
+mainwindow_sticky = 0
+# resizable = 0 pins min == max size hints, which is what tells a tiling WM to
+# float the window rather than tile it.
+mainwindow_resizable = 0
+# skip_taskbar = 0, against the sample config, because with it set the window
+# is never given focus - and an unfocused window gets no key events, so Escape
+# and the n/p/g accelerators would all be dead and close_on_unfocus above could
+# never fire. Nothing on this bar shows a window list, so there is no taskbar
+# for it to clutter.
+mainwindow_skip_taskbar = 0

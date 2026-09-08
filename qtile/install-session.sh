@@ -5,12 +5,14 @@
 #   ~/.config/systemd/user/*           the units the session is made of
 #   ~/.config/dunst                    symlink to this repo's dunstrc
 #   ~/.config/flameshot                symlink to this repo's flameshot.ini
+#   ~/.config/gsimplecal               symlink to this repo's calendar config
 #   ibus                               the input sources the bar's widget cycles
 #
-# Expects policykit-1-gnome, dunst and flameshot to be installed - the first
-# ships the authentication agent polkit-agent.service runs, the second is the
-# session's notification daemon, the third is what the Print key drives:
-#   sudo apt install policykit-1-gnome dunst flameshot
+# Expects policykit-1-gnome, dunst, flameshot and gsimplecal to be installed -
+# the first ships the authentication agent polkit-agent.service runs, the second
+# is the session's notification daemon, the third is what the Print key drives,
+# and the fourth is the calendar the bar clock opens:
+#   sudo apt install policykit-1-gnome dunst flameshot gsimplecal
 #
 # Run as yourself, NOT with sudo. The user units and the gsettings values below
 # belong to your own session - run as root they would land in root's systemd
@@ -99,6 +101,18 @@ if [ -L "$FLAMECFG" ] || [ ! -e "$FLAMECFG" ]; then
 else
     echo "warning: ~/.config/flameshot is a real directory - left alone. Move" >&2
     echo "         it aside and rerun to pick up this repo's flameshot.ini." >&2
+fi
+
+# ═══ gsimplecal's config ═════════════════════════════════════════════════
+# The calendar the bar clock opens. Same XDG-path reasoning as the two above:
+# gsimplecal takes no config flag and reads $XDG_CONFIG_HOME/gsimplecal/config.
+GCALCFG="$HOME/.config/gsimplecal"
+if [ -L "$GCALCFG" ] || [ ! -e "$GCALCFG" ]; then
+    ln -sfn "$(dirname "$HERE")/gsimplecal" "$GCALCFG"
+    echo "linked ~/.config/gsimplecal -> $(dirname "$HERE")/gsimplecal"
+else
+    echo "warning: ~/.config/gsimplecal is a real directory - left alone. Move" >&2
+    echo "         it aside and rerun to pick up this repo's calendar config." >&2
 fi
 
 # ═══ input sources ═══════════════════════════════════════════════════════

@@ -141,6 +141,15 @@ mouse = [
 ]
 
 
+# --- taskbar ---
+# Also a function, and for the same reason group_keys() below is: the toggle this
+# binds owns the override that config.py's bar hooks read, so it has to be handed
+# in - importing config.py back here would be a cycle.
+def bar_keys(toggle):
+    """mod+d to hide or show the bar, overriding the per-layout default."""
+    return [Key([mod], "d", lazy.function(toggle), desc="Toggle the taskbar")]
+
+
 # --- group switching ---
 # A function, not a module-level loop: the groups are defined in config.py, and
 # importing them back here would be a cycle. config.py calls this and extends

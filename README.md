@@ -37,3 +37,29 @@ settings that only exist in the newer one are marked inline in the file.
     notify-send "hello" "body text"          # test it
     dunstctl set-paused toggle               # do-not-disturb, all-or-nothing on 1.9.2
     dunstctl history-pop                      # bring the last one back
+
+## Calendar
+
+Clicking the bar clock opens `gsimplecal`; scrolling on it pages through months.
+`gsimplecal/config`, symlinked to `~/.config/gsimplecal` by
+`install-session.sh`.
+
+It is a separate program rather than another `qtile_extras` popup (as the power
+and network menus are) because it already toggles itself — running it a second
+time kills the first, so one `lazy.spawn` on the clock both opens and closes it
+— and `prev_month`/`next_month` start it if it is not up, which is what lets a
+scroll on the clock open the calendar already moved by a month.
+
+Two things about the placement are worth knowing before touching the offsets.
+It positions itself on the pointer, so it lands under the clock you clicked
+without qtile placing it; and because GTK clamps the window into the monitor
+*before* applying `mainwindow_yoffset`, that offset ends up being the window's
+absolute distance from the top of the screen rather than a nudge. The file
+explains both inline.
+
+    gsimplecal                  # toggle it
+    gsimplecal next_month       # open it, or page a month if already open
+
+The month header sits in the same band as a `TabbedColumns` tab strip, and a
+tab strip is an Internal window, so it paints over the popup. `config.py`'s
+`_raise_calendar_popup` hook raises the popup once it is managed.

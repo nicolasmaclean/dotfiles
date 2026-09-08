@@ -13,6 +13,9 @@
 #   popups.py         shared popup keymap and liveness check
 #   power.py          power menu popup
 #   network.py        network widget and its Wi-Fi menu
+#
+# The clock's calendar popup is the one bar affordance not built in here:
+# it is gsimplecal, configured in this repo's gsimplecal/config.
 
 # ═══ imports ═══════════════════════════════════════════════════════════════
 import subprocess
@@ -20,10 +23,11 @@ import subprocess
 import libqtile
 from libqtile import bar, hook, layout, widget
 from libqtile.config import Group, Match, Screen
+from libqtile.lazy import lazy
 
 from network import NetworkButton
 from power import PowerButton, power_menu
-from remap import group_keys, keys, mouse  # noqa: F401
+from remap import bar_keys, group_keys, keys, mouse  # noqa: F401
 from tabbed_column import EvenColumns, TabbedColumns
 from theme import B, C, F, G
 from widgets import (
@@ -84,6 +88,11 @@ floating_layout = layout.Floating(
         # monitor and shows the desktop *underneath* the bar rather than the
         # frozen screen. Floating it is the documented fix for tiling WMs.
         Match(wm_class="flameshot"),
+        # The clock's calendar popup. mainwindow_resizable=0 already pins
+        # min == max size hints, which is usually enough to get a window
+        # floated, but naming it here means the popup cannot end up tiled
+        # into a column by a stray hint change.
+        Match(wm_class="gsimplecal"),
         Match(title="branchdialog"),
         Match(title="pinentry"),
     ],
@@ -203,6 +212,20 @@ bar_widgets = [
         fontsize=F.icon_size,
         foreground=C.fg_normal,
         padding=2,
+        # Click for a month calendar, scroll to page through months.
+        #
+        # gsimplecal rather than a popup built here: it toggles itself, so the
+        # one spawn both opens and closes it, and prev_month/next_month start
+        # it if it is not already up - which is what makes a scroll on the
+        # clock open the calendar already moved by a month. It places itself
+        # centred on the pointer, so it lands under the clock you clicked;
+        # the repo's gsimplecal/config carries the offsets that lift it clear
+        # of the bar, and everything else about how it looks.
+        mouse_callbacks={
+            "Button1": lazy.spawn("gsimplecal"),
+            "Button4": lazy.spawn("gsimplecal prev_month"),
+            "Button5": lazy.spawn("gsimplecal next_month"),
+        },
     ),
     widget.Spacer(length=bar.STRETCH),
     # Two tray protocols, two widgets: Systray speaks XEmbed, StatusNotifier
@@ -379,6 +402,18 @@ def _stop_systemd_session():
 # (layout_change) and switching group swaps in whatever layout that group was
 # left on (setgroup). setgroup is passed nothing, so both go through the same
 # walk over the screens rather than being handed the one that changed.
+#
+# mod+d sets _bar_override to True or False and it wins from then on; None means
+# "no opinion, follow the layout". It has to be state out here rather than
+# something recomputed per press, because these same two hooks are what would
+# otherwise undo the toggle on the next mod+Tab or group switch.
+#
+# A config reload drops it: qtile re-executes this file, so the None comes back
+# and the bar returns to whatever the layout wants. Not worth working around -
+# the reload builds a fresh Bar too, so there is no state to carry over anyway.
+_bar_override = None
+
+
 def _sync_bar_to_layout():
     for scr in getattr(libqtile.qtile, "screens", ()):
         top = scr.top
@@ -388,6 +423,9 @@ def _sync_bar_to_layout():
         if not isinstance(top, bar.Bar) or getattr(top, "window", None) is None:
             continue
         if scr.group is None:
+            continue
+        if _bar_override is not None:
+            top.show(_bar_override)
             continue
         top.show(scr.group.layout.name not in _BARLESS_LAYOUTS)
 
@@ -400,3 +438,34 @@ def _bar_follows_layout(new_layout, group):
 @hook.subscribe.setgroup
 def _bar_follows_group():
     _sync_bar_to_layout()
+
+
+# Which way to toggle is read off the bar rather than off _bar_override: on the
+# first press the override has no opinion yet, and on Max the bar is already
+# hidden - inverting the override there would ask for a hide you cannot see.
+def _toggle_bar(qtile):
+    global _bar_override
+    top = qtile.current_screen.top
+    if not isinstance(top, bar.Bar):
+        return
+    _bar_override = not top.is_show()
+    _sync_bar_to_layout()
+
+
+# Down here rather than up with the other keys, because bar_keys needs the
+# toggle and the toggle needs _sync_bar_to_layout.
+keys += bar_keys(_toggle_bar)
+
+
+# ═══ calendar popup ══════════════════════════════════════════════════════════
+# The clock spawns gsimplecal (see the widget above), configured to sit just
+# under the bar - which is also the band TabbedColumns draws its tab strip in.
+# A tab strip is an Internal window, and those stack above ordinary clients, so
+# the strip paints over the top of the popup and swallows its month header.
+#
+# Raising the popup once it is managed fixes it: the strip only repaints on a
+# layout change, and the popup is gone before the next one.
+@hook.subscribe.client_managed
+def _raise_calendar_popup(window):
+    if "gsimplecal" in (window.get_wm_class() or ()):
+        window.bring_to_front()
