@@ -12,6 +12,9 @@ class Colors:
     fg_light_blue: str = "#80d3ff"
     fg_yellow: str = "#ffcc00"
     fg_orange: str = "#ff9500"
+    # Spotify's own green, and used for nothing else: the now-playing glyph is
+    # the one thing on the bar that names the app it came from.
+    fg_green: str = "#1db954"
     fg_grey: str = "#b0b0b0"  # was fg_purple: the memory readout icon
     fg_dim: str = "#7a7a7a"  # groups other than the current one
     fg_white: str = "#ffffff"
@@ -70,6 +73,10 @@ class Glyphs:
     check: str = "\U000f012c"  # the network you are actually on
     # --- input sources ---
     keyboard: str = "\U000f030c"
+    # --- now playing ---
+    # nf-fa-spotify. The Material Design set has no Spotify mark - nf-md-spotify
+    # is a cube in this font - so this one comes from Font Awesome.
+    spotify: str = "\uf1bc"
 
 
 # ═══ the bar ═════════════════════════════════════════════════════════════

@@ -1,18 +1,20 @@
 # ═══ imports ══════════════════════════════════════════════════════════════
+import string
 import subprocess
 import xml.etree.ElementTree as ET
 from typing import ClassVar
 
 from dbus_fast import InterfaceNotFoundError, InvalidObjectPathError, Variant
 from dbus_fast.errors import DBusError
-from libqtile import hook, widget
+from libqtile import hook, pangocffi, widget
 from libqtile.command.base import expose_command
 from libqtile.utils import create_task
 from libqtile.widget import base
-from libqtile.widget.helpers.status_notifier import StatusNotifierItem
+from libqtile.widget.helpers.status_notifier import StatusNotifierItem, host
 from libqtile.widget.helpers.status_notifier.statusnotifier import (
     STATUS_NOTIFIER_ITEM_SPEC,
 )
+from libqtile.widget.mpris2widget import Mpris2Formatter
 
 from notify import VOLUME_ID, notify_value
 from theme import C, G
@@ -23,16 +25,31 @@ from theme import C, G
 
 
 class _Thresholded:
-    """Recolour a polled widget as its reading crosses the medium/high marks."""
+    """Recolour a polled widget as its reading crosses the medium/high marks.
+
+    Colour and nothing else: the text is handed back untouched, so a readout
+    padded to a fixed width by the caller's format string stays that width in
+    every state and nothing further along the bar steps sideways as the reading
+    climbs and falls.
+
+    The colour goes on the text layout and not only on self.foreground. That
+    attribute is read once, when _configure builds the layout, and update()
+    never syncs it again - so setting it alone changes what the widget thinks
+    its colour is and nothing about what it draws. The layout reads .colour at
+    draw time, which is also why writing it from a poll thread is safe: the
+    draw itself happens later, back on the event loop.
+    """
 
     def _colorize(self, value, text):
         if value > self.threshold_high:
-            self.foreground = C.fg_orange
-            return f"🔥 {text}"
-        if value > self.threshold_medium:
-            self.foreground = C.fg_yellow
-            return text
-        self.foreground = C.fg_normal
+            color = C.fg_orange
+        elif value > self.threshold_medium:
+            color = C.fg_yellow
+        else:
+            color = C.fg_normal
+        self.foreground = color
+        if self.layout is not None:
+            self.layout.colour = color
         return text
 
 
@@ -145,6 +162,66 @@ class CurrentLayoutIcon(base._TextBox):
     def finalize(self):
         hook.unsubscribe.layout_change(self._on_change)
         base._TextBox.finalize(self)
+
+
+# ═══ now playing ══════════════════════════════════════════════════════════
+
+
+class NowPlaying(widget.Mpris2):
+    """Mpris2 that elides a long track line instead of scrolling it.
+
+    The stock widget's scrolling shifts the whole layout, so the player glyph -
+    which has to live inside the text, being the only part of the widget that
+    can disappear along with the track - is dragged out of view with it. The
+    glyph belongs at the left edge, so the line is cut to fit instead and
+    nothing moves.
+
+    The cut is made on the raw metadata, before it is escaped: trimming the
+    finished string could slice a pango escape (&amp;) in half and hand the
+    text layout markup it cannot parse. So the line is built twice - once
+    unescaped, to measure and cut, and once escaped, on the way out.
+    """
+
+    defaults: ClassVar = [
+        ("max_track_chars", 40, "Longest track line drawn, in characters."),
+    ]
+
+    class _PlainFormatter(Mpris2Formatter):
+        """The widget's own formatter, with the markup escaping taken out."""
+
+        def get_value(self, key, args, kwargs):
+            kwargs = {k.replace(":", "_"): v for k, v in kwargs.items()}
+            try:
+                return string.Formatter.get_value(self, key, args, kwargs)
+            except (IndexError, KeyError):
+                return self._default
+
+    def __init__(self, **config):
+        widget.Mpris2.__init__(self, **config)
+        self.add_defaults(NowPlaying.defaults)
+        self._plain_formatter = self._PlainFormatter()
+        # Mpris2 turns scrolling on in its own defaults, and _configure then
+        # logs "You must specify a width when enabling scrolling" and turns it
+        # straight back off. Eliding is the whole point of this subclass, so
+        # settle it here rather than leave that warning on every reload.
+        self.scroll = False
+
+    def get_track_info(self, metadata):
+        # Called for the values it leaves in self.metadata - the raw strings,
+        # already unwrapped out of their dbus variants - rather than for the
+        # escaped line it returns, which is rebuilt from those below.
+        widget.Mpris2.get_track_info(self, metadata)
+        line = self._plain_formatter.format(self.format, **self.metadata)
+        return pangocffi.markup_escape_text(
+            _elide(line.replace("\n", ""), self.max_track_chars)
+        )
+
+
+def _elide(text, limit):
+    """`text` cut to `limit` characters, with an ellipsis where it was cut."""
+    if limit <= 0 or len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "…"
 
 
 # ═══ input sources ════════════════════════════════════════════════════════
@@ -391,6 +468,17 @@ _SPEC_PROPERTIES = {
 _SPEC_SIGNALS = [f"on_{_snake(s.get('name'))}" for s in _SPEC.findall("signal")]
 
 
+# The errors a badly behaved item can raise on any of the dbus work below.
+# AttributeError is in here for the same reason this whole section exists: an
+# accessor the item's introspection never declared.
+_ITEM_ERRORS = (
+    AttributeError,
+    DBusError,
+    InterfaceNotFoundError,
+    InvalidObjectPathError,
+)
+
+
 def _property_reader(properties, interface, name):
     """An accessor with dbus-fast's signature, reading through Properties.Get."""
 
@@ -435,6 +523,27 @@ async def _restore_accessors(item):
             setattr(item, subscribe, lambda _callback: None)
 
 
+async def _remember_app_id(item):
+    """Read the item's Id once and keep it on the item as .app_id.
+
+    Id is the app's own name for itself - "spotify-client",
+    "proton.vpn.app.gtk" - and the only stable handle there is on an item: the
+    bus name is a unique connection name that changes with every launch, and
+    the object path is whatever the app's indicator library happened to build.
+
+    It is read here, at start, because the widget filters on it from
+    available_icons, which draws and so cannot await anything.
+    """
+    if getattr(item, "app_id", None) is not None:
+        return
+    try:
+        item.app_id = await item.item.get_id()
+    except _ITEM_ERRORS:
+        # Nothing to filter on. An empty id matches no substring, so an item
+        # that will not say what it is stays visible.
+        item.app_id = ""
+
+
 # A config reload re-imports this module, so take the stock method out of a
 # patch already applied rather than wrapping the wrapper: that chain grows by
 # one call per reload and ends in "maximum recursion depth exceeded".
@@ -450,6 +559,7 @@ async def _get_local_icon(self, fallback=True):
     # AttributeError above was raised - so the accessors are in place before
     # anything reads one.
     await _restore_accessors(self.item)
+    await _remember_app_id(self)
     return await _stock_get_local_icon(self, fallback)
 
 
@@ -474,16 +584,6 @@ StatusNotifierItem._get_local_icon = _get_local_icon
 
 DBUSMENU_INTERFACE = "com.canonical.dbusmenu"
 WINDOW_ENTRY_LABELS = frozenset({"show", "hide", "open", "restore", "show window"})
-
-# The errors a badly behaved item can raise on any of this. AttributeError is
-# in here for the same reason the tray fix above exists: an accessor the item's
-# introspection never declared.
-_ITEM_ERRORS = (
-    AttributeError,
-    DBusError,
-    InterfaceNotFoundError,
-    InvalidObjectPathError,
-)
 
 
 def _prop(properties, name, default):
@@ -542,6 +642,58 @@ class StatusNotifier(widget.StatusNotifier):
     Also where the module-level fix above is anchored: config.py imports the
     tray from here, so the patch cannot be lost to a tidied-up import.
     """
+
+    defaults: ClassVar = [
+        (
+            "hidden_ids",
+            (),
+            "Substrings of an item's Id whose icon should not be drawn.",
+        ),
+    ]
+
+    def __init__(self, **config):
+        widget.StatusNotifier.__init__(self, **config)
+        self.add_defaults(StatusNotifier.defaults)
+
+    async def _config_async(self):
+        await widget.StatusNotifier._config_async(self)
+        # The host is a module-level singleton in libqtile and outlives a
+        # config reload, along with every item already registered with it.
+        # Those items ran their start() - and so the id read patched into it -
+        # under the previous instance of this widget, or under one that never
+        # asked for an id at all, so fill in whatever is missing before the
+        # first draw filters on it.
+        for item in host.items:
+            await _remember_app_id(item)
+        self.bar.draw()
+
+    @property
+    def available_icons(self):
+        """The drawable items, less anything hidden_ids names.
+
+        Every part of the stock widget - its width, its hit testing and its
+        drawing - reads the icons through this one property, so filtering here
+        is all it takes for an item to be gone rather than merely invisible.
+
+        Matched on a substring of the app id, the way APP_ICONS above is: it
+        has to survive an app renaming itself from "spotify" to
+        "spotify-client".
+        """
+        return [
+            item
+            for item in widget.StatusNotifier.available_icons.fget(self)
+            if not any(
+                hidden in getattr(item, "app_id", "") for hidden in self.hidden_ids
+            )
+        ]
+
+    def calculate_length(self):
+        # The stock method returns a padding's worth of width for an empty
+        # tray as long as *some* item is registered, which after filtering can
+        # be a gap in the bar with nothing in it.
+        if not self.available_icons:
+            return 0
+        return widget.StatusNotifier.calculate_length(self)
 
     def activate(self):
         # The item is read off self now rather than in the coroutine: a click
