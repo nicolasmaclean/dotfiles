@@ -77,6 +77,13 @@ class Glyphs:
     # nf-fa-spotify. The Material Design set has no Spotify mark - nf-md-spotify
     # is a cube in this font - so this one comes from Font Awesome.
     spotify: str = "\uf1bc"
+    # Playing on some other device on the account, keyed off the device types
+    # Spotify reports. Drawn beside the Spotify mark, not instead of it: the
+    # track is still Spotify's, the speaker is just somewhere else.
+    device_phone: str = "\U000f011c"  # md-cellphone
+    device_computer: str = "\U000f0379"  # md-monitor
+    device_speaker: str = "\U000f04c3"  # md-speaker
+    device_cast: str = "\U000f0118"  # md-cast
 
 
 # ═══ the bar ═════════════════════════════════════════════════════════════

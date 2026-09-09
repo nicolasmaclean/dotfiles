@@ -204,6 +204,32 @@ bar_widgets = [
         # Spotify does broadcast its changes, but not every one of them - a
         # slow poll picks up whatever the signals missed.
         poll_interval=5,
+        # And when nothing is playing here at all, ask Spotify what the account
+        # is playing anywhere - music started on the phone shows up on the bar
+        # without the desktop client ever being opened. Needs the one-time
+        # login in qtile/spotify_auth.py; without it these are simply inert.
+        #
+        # The device glyph goes after the Spotify mark rather than replacing
+        # it: the track is still Spotify's, it is only the speaker that is
+        # somewhere else. Dim, because it is a note about the track and not
+        # part of it.
+        remote_playing_text=(
+            f'<span foreground="{C.fg_green}">{G.spotify}</span>'
+            f'<span foreground="{C.fg_dim}"> {{device_glyph}}</span> {{track}}'
+        ),
+        remote_paused_text=(
+            f'<span foreground="{C.fg_dim}">{G.spotify} {{device_glyph}}</span> {{track}}'
+        ),
+        remote_device_glyphs={
+            "Smartphone": G.device_phone,
+            "Tablet": G.device_phone,
+            "Computer": G.device_computer,
+            "Speaker": G.device_speaker,
+            "CastAudio": G.device_cast,
+            "CastVideo": G.device_cast,
+            "default": G.device_speaker,
+        },
+        remote_poll_interval=10,
     ),
     widget.Spacer(length=bar.STRETCH),
     widget.Clock(

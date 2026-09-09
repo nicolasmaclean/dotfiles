@@ -1,4 +1,5 @@
 # ═══ imports ══════════════════════════════════════════════════════════════
+import asyncio
 import string
 import subprocess
 import xml.etree.ElementTree as ET
@@ -17,6 +18,7 @@ from libqtile.widget.helpers.status_notifier.statusnotifier import (
 from libqtile.widget.mpris2widget import Mpris2Formatter
 
 from notify import VOLUME_ID, notify_value
+from spotify_web import SpotifyWeb
 from theme import C, G
 
 # ═══ custom widgets ══════════════════════════════════════════════════════
@@ -180,10 +182,50 @@ class NowPlaying(widget.Mpris2):
     finished string could slice a pango escape (&amp;) in half and hand the
     text layout markup it cannot parse. So the line is built twice - once
     unescaped, to measure and cut, and once escaped, on the way out.
+
+    It also falls back to Spotify's Web API when nothing is playing on this
+    machine. MPRIS is a local bus and knows nothing about the account, so
+    playing from the phone left the bar blank; the API answers for the account
+    and so covers every device signed into it. MPRIS stays the primary source
+    wherever it has an answer - it is pushed, and instant, where the API is
+    polled and lags by up to remote_poll_interval.
     """
 
     defaults: ClassVar = [
         ("max_track_chars", 40, "Longest track line drawn, in characters."),
+        (
+            "remote_playing_text",
+            None,
+            (
+                "Text to show when the account is playing on another device. "
+                "Takes {track}, {device} and {device_glyph}. "
+                "``None`` turns the Web API fallback off entirely."
+            ),
+        ),
+        (
+            "remote_paused_text",
+            None,
+            (
+                "As remote_playing_text, for a paused remote device. "
+                "``None`` shows nothing for one."
+            ),
+        ),
+        (
+            "remote_poll_interval",
+            10,
+            (
+                "Seconds between Web API polls. Spotify rate limits on a rolling "
+                "30 second window, which this is nowhere near."
+            ),
+        ),
+        (
+            "remote_device_glyphs",
+            {},
+            (
+                "Spotify device type ('Computer', 'Smartphone', ...) to glyph, "
+                "for {device_glyph}. The 'default' key covers unlisted types."
+            ),
+        ),
     ]
 
     class _PlainFormatter(Mpris2Formatter):
@@ -205,6 +247,12 @@ class NowPlaying(widget.Mpris2):
         # straight back off. Eliding is the whole point of this subclass, so
         # settle it here rather than leave that warning on every reload.
         self.scroll = False
+        # The two halves of what could be on the bar, kept apart so either can
+        # change without the other having to be recomputed.
+        self._local_text = ""
+        self._remote_text = ""
+        self._remote: SpotifyWeb | None = None
+        self._remote_timer: asyncio.TimerHandle | None = None
 
     def get_track_info(self, metadata):
         # Called for the values it leaves in self.metadata - the raw strings,
@@ -215,6 +263,121 @@ class NowPlaying(widget.Mpris2):
         return pangocffi.markup_escape_text(
             _elide(line.replace("\n", ""), self.max_track_chars)
         )
+
+    # ─── choosing between the local player and the account ────────────────
+
+    def update(self, text):
+        """Take `text` as the local player's line and redraw.
+
+        Every path in Mpris2 that changes the text - a property signal, the
+        background poll, the player dropping off the bus - lands here, which
+        makes this the one place to capture the local half without having to
+        touch the parent's logic.
+        """
+        self._local_text = text
+        base._TextBox.update(self, self._display_text())
+
+    def _display_text(self):
+        """Which source gets the bar: whichever one is actually playing.
+
+        Not simply "local if there is one". The desktop client stays on the bus
+        when you start playing from the phone - paused, still holding the last
+        track it played - and preferring it there would leave the bar naming a
+        song that stopped an hour ago.
+        """
+        if self._local_text and self.is_playing:
+            return self._local_text
+        return self._remote_text or self._local_text
+
+    # ─── remote playback ──────────────────────────────────────────────────
+
+    async def _config_async(self):
+        await widget.Mpris2._config_async(self)
+        if self.remote_playing_text is None:
+            return
+        self._remote = SpotifyWeb()
+        self._poll_remote()
+
+    def _poll_remote(self):
+        if self.finalized:
+            return
+        create_task(self._check_remote())
+
+    async def _check_remote(self):
+        """Ask the account what it is playing, then book the next poll.
+
+        The reschedule sits in a finally: a poll that raises still has to book
+        its successor, or one bad response ends the fallback for the session.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+            # now_playing blocks on the network, so it goes to a thread - on
+            # the event loop a slow reply would stall every widget on the bar.
+            track = await loop.run_in_executor(None, self._remote.now_playing)
+            self._remote_text = self._remote_line(track)
+            base._TextBox.update(self, self._display_text())
+        finally:
+            if not self.finalized:
+                self._remote_timer = self.timeout_add(
+                    self.remote_poll_interval, self._poll_remote
+                )
+
+    def _remote_line(self, track):
+        """`track` as bar text, or "" if it is not the thing to show."""
+        if track is None or not track.title:
+            return ""
+        # Anything playing on this machine is MPRIS's to report: same track,
+        # and it gets there a poll sooner.
+        if track.is_local:
+            return ""
+        template = (
+            self.remote_playing_text if track.is_playing else self.remote_paused_text
+        )
+        if not template:
+            return ""
+        # Run through the configured format, so a remote track is laid out
+        # exactly like a local one - same fields, same order, same eliding.
+        line = self._plain_formatter.format(
+            self.format,
+            **{
+                "xesam:title": track.title,
+                "xesam:artist": track.artist,
+                "qtile:player": track.device,
+            },
+        )
+        return template.format(
+            track=pangocffi.markup_escape_text(
+                _elide(line.replace("\n", ""), self.max_track_chars)
+            ),
+            device=pangocffi.markup_escape_text(track.device),
+            device_glyph=self.remote_device_glyphs.get(track.device_type)
+            or self.remote_device_glyphs.get("default", ""),
+        )
+
+    @expose_command()
+    def info(self):
+        """Mpris2's info, plus which of the two sources is on the bar.
+
+        The inherited fields describe the local player alone, so both of them
+        read as "nothing playing" while the bar is showing a track from the
+        phone - true, but not what someone querying this wants to know.
+        """
+        d = widget.Mpris2.info(self)
+        text = self._display_text()
+        d.update(
+            remote_text=self._remote_text,
+            source="local"
+            if text and text == self._local_text
+            else "remote"
+            if text
+            else "none",
+        )
+        return d
+
+    def finalize(self):
+        if self._remote_timer is not None:
+            self._remote_timer.cancel()
+        widget.Mpris2.finalize(self)
 
 
 def _elide(text, limit):
