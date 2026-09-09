@@ -161,7 +161,7 @@ def main() -> int:
             },
             creds,
         )
-    except Exception as e:  # noqa: BLE001 - whatever went wrong, the user needs to see it
+    except Exception as e:
         print(f"error: could not exchange the code for a token: {e}", file=sys.stderr)
         return 1
 
