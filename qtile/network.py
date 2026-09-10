@@ -9,7 +9,7 @@ from libqtile.command.base import expose_command
 from libqtile.widget import base
 from qtile_extras.popup.toolkit import PopupAbsoluteLayout, PopupText
 
-from popups import POPUP_KEYMAP, popup_alive
+from popups import POPUP_KEYMAP, bar_widget, popup_alive
 from theme import C, F, G
 
 # ═══ network ══════════════════════════════════════════════════════════════
@@ -382,8 +382,11 @@ def _show_menu(rows):
 
     # Right-align under the button, clamped to the screen edge: the widget
     # sits near the right end of the bar, so centring would hang the popup
-    # off it. widgets_map keys on the widget's name (set in config.py).
-    button = qtile.widgets_map.get("network")
+    # off it. Found on the current screen's own bar (popups.bar_widget), so
+    # offsetx and the clamp measure along the same bar - and so a mirrored
+    # NetworkButton on a second monitor anchors under itself rather than under
+    # screen 0's copy.
+    button = bar_widget("network")
     if button is not None:
         x = button.offsetx + button.length - NET_W
     else:

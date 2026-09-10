@@ -5,7 +5,7 @@ from functools import partial
 from libqtile import qtile, widget
 from qtile_extras.popup.toolkit import PopupAbsoluteLayout, PopupText
 
-from popups import POPUP_KEYMAP, popup_alive
+from popups import POPUP_KEYMAP, bar_widget, popup_alive
 from theme import C, F, G
 
 # ═══ power menu ══════════════════════════════════════════════════════════
@@ -88,10 +88,13 @@ def _show_power_popup(controls, height, initial_focus=None):
     global _power_popup
     _close_power_popup()
 
-    # centre under the power glyph, clamped to the screen edge. The widget is a
-    # named subclass because widgets_map keys on the class name and a plain
-    # TextBox would collide with the other text boxes in the bar.
-    btn = qtile.widgets_map.get("powerbutton")
+    # centre under the power glyph, clamped to the screen edge. Found on the
+    # current screen's own bar rather than in qtile.widgets_map - see
+    # popups.bar_widget - so offsetx and the clamp below measure along the same
+    # bar on a multi-monitor box. The widget is a named subclass because the
+    # lookup keys on the class name and a plain TextBox would collide with the
+    # other text boxes in the bar.
+    btn = bar_widget("powerbutton")
     x = btn.offsetx + btn.length // 2 - POWER_W // 2 if btn is not None else 0
     x = max(0, min(x, qtile.current_screen.width - POWER_W))
 

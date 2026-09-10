@@ -31,3 +31,32 @@ def popup_alive(popup):
         return False
     win = getattr(getattr(popup, "popup", None), "win", None)
     return win is not None and win.wid in qtile.windows_map
+
+
+# ═══ anchoring ════════════════════════════════════════════════════════════
+def bar_widget(name):
+    """The widget called `name` on the *current* screen's bar, or None.
+
+    Not qtile.widgets_map[name], which is what the popups here used to use.
+    That map is global and keyed by name, and register_widget renames
+    duplicates - "powerbutton", then "powerbutton_1", "powerbutton_2" - so the
+    bare name always resolves to screen 0's widget however many screens there
+    are. Its offsetx is measured along screen 0's bar, while the clamp beside
+    it uses qtile.current_screen.width: two frames of reference mixed, and the
+    popup lands on the right monitor under the wrong glyph. Latent on one
+    screen, wrong on every screen but the first as soon as there are two.
+
+    Searching this screen's own bar gives an offsetx in the same frame as the
+    clamp. Matching through .reflects is what makes a shared widget work: a
+    widget handed to more than one bar appears on the others as a Mirror that
+    paints the original's pixels and forwards clicks back to it. The Mirror is
+    the object with this bar's offsetx - and its own .name is just "mirror" -
+    so match on what it reflects and return the mirror itself.
+    """
+    top = getattr(getattr(qtile, "current_screen", None), "top", None)
+    for widget in getattr(top, "widgets", ()):
+        # A Mirror reflects the widget it copies; anything else is its own.
+        target = getattr(widget, "reflects", None) or widget
+        if getattr(target, "name", None) == name:
+            return widget
+    return None

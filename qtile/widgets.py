@@ -63,7 +63,15 @@ class ColorizedCPU(_Thresholded, widget.CPU):
 
     def poll(self):
         text = widget.CPU.poll(self)
-        return self._colorize(float(text.replace("%", "").strip()), text)
+        try:
+            load = float(text.replace("%", "").strip())
+        except ValueError:
+            # The parse only works for config.py's format="{load_percent:5.1f}%",
+            # which is a coupling between two files that nothing enforces. A
+            # format carrying anything else is a colour we cannot compute, not a
+            # readout worth dropping - draw it in the last colour we set.
+            return text
+        return self._colorize(load, text)
 
 
 # ═══ volume ═══════════════════════════════════════════════════════════════
