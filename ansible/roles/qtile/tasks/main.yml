@@ -29,6 +29,17 @@
   when: qtile_version not in (qtile_installed.stdout | default(''))
 
 # ═══ the launcher and the session entry ═══════════════════════════════════
+# `uv tool install` above creates ~/.local/bin as a side effect, so on a real
+# run this task is redundant. It exists for --check: command: does not execute
+# in check mode, so the directory is never created and the copy below fails on
+# a box that has not been provisioned yet — which is every box the dry run is
+# actually useful on. Making the dependency explicit costs one idempotent task.
+- name: Create the user bin directory
+  ansible.builtin.file:
+    path: "{{ qtile_session_bin | dirname }}"
+    state: directory
+    mode: "0755"
+
 # The launcher is what publishes DISPLAY to systemd --user and dbus; without it
 # every unit below would start with no display to draw on.
 - name: Install the session launcher
@@ -38,10 +49,23 @@
     remote_src: true
     mode: "0755"
 
+# The path is the same on Arch as it was on Ubuntu, but the directory is not:
+# Ubuntu's lightdm package ships /usr/share/xsessions, Arch's does not
+# (`pacman -Ql lightdm | grep xsessions` is empty on a box with both lightdm
+# and lightdm-gtk-greeter installed). Nothing else in a minimal profile creates
+# it either, so on a fresh CachyOS box the template below has nowhere to land
+# and the run dies here. Same shape as the Xorg and LightDM drop-in
+# directories the gpu and display_manager roles already create by hand.
+- name: Create the xsessions directory
+  become: true
+  ansible.builtin.file:
+    path: /usr/share/xsessions
+    state: directory
+    mode: "0755"
+
 # A .desktop entry cannot expand $HOME and this one is installed as root, so
 # the launcher path is substituted in. install-session.sh sed'd the same
 # placeholder; this is the same rendering by the intended route.
-# /usr/share/xsessions is the same path on Arch, so the template is unchanged.
 - name: Install the greeter's session entry
   become: true
   ansible.builtin.template:

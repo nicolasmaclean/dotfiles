@@ -9,8 +9,14 @@ Type=simple
 # The agent GNOME Shell would normally embed. Nothing in a bare qtile session
 # registers one, so polkit has no way to raise a password prompt and any
 # auth_admin action fails with "Authorization requires interaction" - which is
-# how a snap install from App Center surfaces as a bare "unknown error".
-ExecStart=/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
+# how a GUI package or printer operation surfaces as a bare "unknown error".
+#
+# /usr/lib/polkit-gnome/, not Ubuntu's /usr/lib/policykit-1-gnome/: same
+# upstream binary, different vendor directory. Arch's polkit-gnome 0.105 puts
+# it here (`pacman -Qo` confirms), and the Ubuntu path fails as 203/EXEC -
+# which Restart=always then hides in an auto-restart loop rather than
+# surfacing, so the session looks fine and only polkit prompts are missing.
+ExecStart=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
 # always, not on-failure: the agent has no clean-exit case worth honouring, and
 # a session that has silently lost it looks exactly like the bug above.
 Restart=always
