@@ -1,12 +1,35 @@
 # My dotfiles!
 
+You're welcome to take peek or try out my dotfiles/pc setup. I have some old instructions for how to mealpiece each software, but I'm switching to having my setup configured with ansible so that documentation may be stale. In the future, I'll improve documentation for how to grab parts of the ansible setup, maybe. 
+
+## Config fresh CachyOS install with ansible/
+
+1. Install CachyOS to your machine or VM
+   - no desktop environment
+   - name the pc 'cnick' for desktop or 'unick' for laptop (or add a new ansible/inventory host)
+   - bootloader doesn't matter
+2. Run the bootstrap as yourself (NOT with sudo), it will call sudo and prompt for password later:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nicolasmaclean/dotfiles/main/ansible/bootstrap.sh | bash
+```
+
+    - this will install ansible, clone this repo to `~/dotfiles`, and run ansbile.
+    - it will run sudo and ask for your password once.
+    - if you are overwriting your setup, consider a dry run `ansible/bootstrap.sh --check --diff`.
+3. The run pauses once: at the Spotify prompt, either follow the four
+   steps it prints or press ENTER to skip — the widget degrades to MPRIS-only.
+4. Reboot. LightDM comes up; pick the **qtile** session.
+
+Re-runs are idempotent.
+
+Individual roles: `cd ansible && ansible-playbook site.yml --limit "$(hostname)" --ask-become-pass --tags qtile`.
+
+---
+
 ## Alacritty
 
 `ln -s ~/dotfiles/alacritty.toml ~/.config/alacritty/alacritty.toml`
-
-Must be this path, not `~/.alacritty.toml`. Alacritty checks
-`~/.config/alacritty/alacritty.toml` first and stops at the first hit, so a file
-there shadows the home-directory one completely rather than merging with it.
 
 ## Qtile
 

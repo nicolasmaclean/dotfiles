@@ -61,12 +61,43 @@
 # the user fish, which never reads this file. roles/base sets the shell back to
 # bash for exactly that reason (base_login_shell); the task here is unchanged
 # either way.
-- name: Source the repo bashrc from the stock one
+#
+# The installer does not always leave one. A minimal CachyOS install that hands
+# the user fish may write no ~/.bashrc at all, and the append below then stops
+# the play twelve roles deep. Seeding from /etc/skel is what useradd would have
+# done, and `force: false` means an existing ~/.bashrc is never touched — so
+# this is a no-op on every box that already has one, including both of these.
+- name: Look for the skeleton bashrc
+  ansible.builtin.stat:
+    path: /etc/skel/.bashrc
+  register: dotfiles_skel_bashrc
+
+- name: Seed the stock bashrc from /etc/skel
+  ansible.builtin.copy:
+    src: /etc/skel/.bashrc
+    dest: "{{ ansible_env.HOME }}/.bashrc"
+    remote_src: true
+    force: false
+    mode: "0644"
+  when: dotfiles_skel_bashrc.stat.exists
+
+# create: true rather than false, and only as the second half of the guard
+# above: it covers the box with no /etc/skel/.bashrc to copy, where the choice
+# is a ~/.bashrc holding just this line or no ~/.bashrc at all. The reason the
+# old `create: false` existed — never invent a bashrc when the stock one is
+# missing its prompt, history and completion setup — is now served by the seed
+# task, which gets the real file whenever the box has one to give.
+#
+# No `mode:` here, and for the same reason the directory task at the top of
+# this file has none: lineinfile applies file attributes to a file that already
+# exists, so naming a mode would rewrite the permissions of every adopted
+# machine's ~/.bashrc. The seed task above sets 0644 on the one it creates.
+- name: Source the repo bashrc from the stock one  # noqa: risky-file-permissions
   ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
     line: "source ~/dotfiles/.bashrc"
     state: present
-    create: false
+    create: true
     backup: true
 
 # ~/.alacritty.toml is shadowed by ~/.config/alacritty/alacritty.toml and can

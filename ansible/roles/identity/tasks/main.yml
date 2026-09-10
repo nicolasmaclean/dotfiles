@@ -15,8 +15,8 @@
     mode: "0700"
 
 # No key material is committed, and none is fetched. A fresh per-host key is
-# generated here and added to GitHub by hand — which is also what lets the
-# first clone be HTTPS and the remote be flipped to SSH afterwards.
+# generated here; what it gets registered with, if anything, is left to you.
+# Nothing in this playbook depends on it — the dotfiles remote stays HTTPS.
 - name: Look for an existing ssh key
   ansible.builtin.stat:
     path: "{{ identity_ssh_key }}"
@@ -44,36 +44,9 @@
   when: not ansible_check_mode
   failed_when: false
 
-# noqa: command-instead-of-module — ansible.builtin.git clones and checks
-# out; it has no remote-management capability at all, so reading and
-# rewriting origin's URL can only be the git binary.
-- name: Check whether the remote is already SSH  # noqa: command-instead-of-module
-  ansible.builtin.command:
-    cmd: git -C "{{ dotfiles_dir }}" remote get-url origin
-  register: identity_remote
-  changed_when: false
-  check_mode: false
-  failed_when: false
-
-- name: Add this host's key to GitHub
-  ansible.builtin.pause:
-    prompt: |
-
-      This host's public key:
-
-        {{ identity_pubkey.content | b64decode | trim }}
-
-      Add it at https://github.com/settings/keys, then press ENTER.
-      The dotfiles remote will be switched from HTTPS to SSH after this.
-  when:
-    - not ansible_check_mode
-    - identity_remote.stdout is defined
-    - not identity_remote.stdout.startswith('git@')
-
-- name: Switch the dotfiles remote to SSH  # noqa: command-instead-of-module
-  ansible.builtin.command:
-    cmd: git -C "{{ dotfiles_dir }}" remote set-url origin {{ identity_repo_ssh }}
-  changed_when: true
-  when:
-    - identity_remote.stdout is defined
-    - not identity_remote.stdout.startswith('git@')
+# Printed, never prompted on. Registering this key anywhere is a manual step
+# that has nothing to do with provisioning, so the run does not stop for it.
+- name: Report this host's public key
+  ansible.builtin.debug:
+    msg: "{{ identity_pubkey.content | b64decode | trim }}"
+  when: identity_pubkey.content is defined

@@ -7,7 +7,8 @@
 # `sudo pacman -S` for build dependencies.
 #
 # The answer is a dedicated build account, which is the Arch wiki's pattern and
-# the one kewlfft.aur's own documentation uses.
+# the one kewlfft.aur's own documentation uses. paru itself is installed by the
+# first task in the block below, so this role stands alone under `--tags aur`.
 #
 # THE HONEST CAVEAT, and it applies to any automated AUR route: a PKGBUILD runs
 # arbitrary code as the build user, so an NOPASSWD-pacman build account means a
@@ -35,6 +36,23 @@
 - name: AUR
   when: not (aur_manual | bool)
   block:
+    # The role installs its own helper rather than assuming bootstrap.sh put it
+    # there. bootstrap.sh does install paru, but it is not the only way in: the
+    # `--tags aur` invocation documented in site.yml, and any direct
+    # ansible-playbook run, reach this role on a box bootstrap never touched —
+    # and the failure is a bare `env: 'paru': No such file or directory` from
+    # the kewlfft task below, which names neither paru nor this role.
+    #
+    # cachyos/paru, and it is NOT preinstalled on the minimal profile despite
+    # what the ISO's package list suggests — verified on the VM. base-devel is
+    # the other half of the prerequisite and still comes from roles/base, which
+    # names it in base_packages; only the helper is installed here.
+    - name: Install the AUR helper
+      become: true
+      community.general.pacman:
+        name: paru
+        state: present
+
     # Three properties matter and each is load-bearing:
     #   - no password and no login shell, so nothing can authenticate *as* it;
     #   - therefore the only way to become it is to already be root;
