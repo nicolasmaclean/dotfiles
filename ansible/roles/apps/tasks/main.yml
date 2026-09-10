@@ -9,6 +9,21 @@
     name: "{{ apps_repo_packages }}"
     state: present
 
+# xdg-settings writes to ~/.config/mimeapps.list, so this runs as the login
+# user, not become — matching roles/desktop_apps' gsettings task, read-then-
+# write keeps it idempotent since the module itself always reports changed.
+- name: Read the current default browser
+  ansible.builtin.command:
+    cmd: xdg-settings get default-web-browser
+  register: apps_current_browser
+  changed_when: false
+  check_mode: false
+
+- name: Set Firefox as the default browser
+  ansible.builtin.command:
+    cmd: xdg-settings set default-web-browser firefox.desktop
+  when: apps_current_browser.stdout | trim != 'firefox.desktop'
+
 # multilib/steam. roles/base enables the [multilib] repository and flushes its
 # handler before this role runs, which is the only reason this resolves.
 - name: Install Steam
