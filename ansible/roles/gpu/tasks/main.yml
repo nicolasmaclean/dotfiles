@@ -2,45 +2,53 @@
 # `gpu` is which card drives X, not which cards are present — unick has a GTX
 # 1650 sitting next to the UHD 630 and still takes the intel branch, because
 # PRIME is set to on-demand and X runs on i915.
-- name: Nothing to do for Intel — mesa is already in the base install
-  ansible.builtin.debug:
-    msg: "gpu=intel: mesa ships with Ubuntu, no driver work needed."
+#
+# Unlike Ubuntu, a minimal Arch install does not include mesa, so the intel
+# branch is no longer a debug message. modesetting rather than
+# xf86-video-intel: the DDX driver is unmaintained and worse on modern parts.
+# Laptop-only today, and therefore untested.
+- name: Install the Intel graphics stack
+  become: true
+  community.general.pacman:
+    name:
+      - mesa
+      - vulkan-intel
+    state: present
   when: gpu == 'intel'
 
+# THE CONSTRAINT THAT SHAPES THIS BRANCH: nvidia-dkms no longer exists in the
+# Arch repositories. What exists is extra/nvidia-open and extra/nvidia-open-dkms
+# at 610.57.04, and the package metadata says why — nvidia-open carries
+# replaces=['nvidia<=580.119.02-2'] and nvidia-open-dkms carries
+# replaces=['nvidia-dkms']. The proprietary kernel module was not renamed, it
+# was superseded at the 580 branch and the open module took its name.
+#
+# nvidia-open supports Turing and newer only. cnick's RTX 3060 Ti is Ampere
+# (GA104), two generations past that, so this resolves the easy way: everything
+# comes from the repos and no AUR build sits in the path to a desktop.
+#
+# If a pre-Turing card ever runs this playbook, that is not a small edit. It
+# needs the last proprietary branch that supports it — AUR nvidia-580xx-dkms
+# (Maxwell/Pascal/Volta) or nvidia-470xx-dkms (Kepler) — which means DKMS on a
+# rolling custom kernel, and it means the `aur` role has to move ahead of this
+# one in site.yml with its package list split in two.
 - name: NVIDIA
   when: gpu == 'nvidia'
   become: true
   block:
-    - name: Install the driver detector
-      ansible.builtin.apt:
-        name: ubuntu-drivers-common
+    # From host_vars. No detection step: see defaults/main.yml on chwd.
+    - name: Install the NVIDIA driver packages
+      community.general.pacman:
+        name: "{{ nvidia_packages }}"
         state: present
 
-    # `ubuntu-drivers autoinstall` is not idempotent and reports changed every
-    # run, which would sink the zero-changed-tasks proof. Asking it what it
-    # recommends and handing that to apt is the same outcome, idempotently.
-    - name: Ask which driver Ubuntu recommends
-      ansible.builtin.command:
-        cmd: ubuntu-drivers devices
-      register: gpu_recommended
-      changed_when: false
-      check_mode: false
-
-    - name: Install the recommended NVIDIA driver
-      ansible.builtin.apt:
-        name: "{{ gpu_driver_package }}"
-        state: present
-      vars:
-        gpu_driver_package: >-
-          {{ gpu_recommended.stdout
-             | regex_search('driver\s+:\s+(nvidia-driver-\S+)\s+-\s+.*recommended', '\1')
-             | first }}
-      when: "'recommended' in gpu_recommended.stdout"
-
-    # nouveau and the proprietary driver cannot both own the card; when nouveau
-    # wins the race the X server comes up on the wrong driver and every NVIDIA
-    # setting below is silently inert.
+    # nouveau and the NVIDIA module cannot both own the card; when nouveau wins
+    # the race the X server comes up on the wrong driver and every setting
+    # below is silently inert. Probably redundant on Arch — see
+    # gpu_blacklist_nouveau in defaults/main.yml for the one command that
+    # settles it.
     - name: Blacklist nouveau
+      when: gpu_blacklist_nouveau | bool
       ansible.builtin.copy:
         dest: /etc/modprobe.d/blacklist-nouveau.conf
         content: |
@@ -49,18 +57,7 @@
           options nouveau modeset=0
         mode: "0644"
         backup: true
-      notify: Update the initramfs
-
-    - name: Set the NVIDIA DRM modeset flag
-      ansible.builtin.copy:
-        dest: /etc/modprobe.d/nvidia-drm-modeset.conf
-        content: |
-          # Managed by Ansible (roles/gpu). qtile runs -b x11, so the DRM/KMS
-          # path that exists for Wayland compositors is off.
-          options nvidia-drm modeset={{ 1 if gpu_nvidia_drm_modeset else 0 }}
-        mode: "0644"
-        backup: true
-      notify: Update the initramfs
+      notify: Rebuild the initramfs
 
     - name: Create the Xorg drop-in directory
       ansible.builtin.file:

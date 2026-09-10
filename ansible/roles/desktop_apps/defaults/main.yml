@@ -6,23 +6,31 @@ desktop_apps_packages:
   - flameshot
   - brightnessctl           # brightness.py drives the panel through this
   - gsimplecal              # the calendar the bar clock opens
-  - network-manager
-  - network-manager-gnome   # nmcli's backend; network.py polls it
-  - libnotify-bin
+  - networkmanager          # not enabled by the package on Arch — see tasks/
+  - network-manager-applet  # nmcli's backend; network.py polls it
+  - libnotify
+  # Arch splits what Ubuntu's `pipewire` pulled in, so the compatibility
+  # shims have to be named: without pipewire-pulse nothing implements the
+  # PulseAudio API, and wpctl (volume.py) has nothing to talk to.
   - pipewire
+  - pipewire-pulse
+  - pipewire-alsa
   - wireplumber             # volume.py drives wpctl
   - ibus
   - ibus-libpinyin
   - dmenu                   # dunstrc references /usr/bin/dmenu by full path
 
 # Deliberately NOT lm-sensors: qtile reads temperatures through psutil, which
-# walks /sys/class/hwmon directly. It is absent on this laptop and the thermal
-# widget works.
+# walks /sys/class/hwmon directly. It is absent on the laptop and the thermal
+# widget works — and psutil's route is distro-independent, so this stays true.
 
 # preload-engines is the list ibus honours outside a GNOME session, and it is
 # what widgets.py's KeyboardLayout cycles through. GNOME's own
 # org.gnome.desktop.input-sources is not read here, so an engine missing from
 # this key cannot be selected at all.
+#
+# The daemon that reads these is started by ibus.service, installed and enabled
+# by roles/qtile — nothing on a no-DE Arch install starts it otherwise.
 desktop_apps_gsettings:
   - key: org.freedesktop.ibus.general preload-engines
     value: "['xkb:us::eng', 'libpinyin']"

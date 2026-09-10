@@ -2,15 +2,27 @@
 # Launch qtile as a systemd-aware X11 session.
 # Referenced by /usr/share/xsessions/qtile.desktop (Exec=).
 
-# Qt apps have no theme of their own here; the gtk3 platform theme plugin
-# (qt5-gtk2-platformtheme / qt6-gtk-platformtheme) makes them follow GTK.
+# Qt apps have no theme of their own here; the gtk3 platform theme plugin makes
+# them follow GTK. On Arch that plugin (platformthemes/libqgtk3.so) is shipped
+# by qt5-base and qt6-base themselves — there is no separate package to install,
+# unlike Ubuntu's qt5-gtk2-platformtheme / qt6-gtk-platformtheme. roles/xorg
+# installs gtk3 so the plugin has something to read.
 export QT_QPA_PLATFORMTHEME=gtk3
+
+# Input method. ibus.service starts the daemon (--xim, and it owns the layout
+# this session cycles through); these three tell toolkits to route through it.
+# GTK and Qt apps read their own variables, and XMODIFIERS is what everything
+# else — including the XIM path ibus-daemon --xim serves — looks at. Exported
+# before the import-environment below so the user units inherit them too.
+export GTK_IM_MODULE=ibus
+export QT_IM_MODULE=ibus
+export XMODIFIERS=@im=ibus
 
 # Make the X display + session vars visible to systemd --user and dbus,
 # so user services started by qtile-session.target can reach the display.
-systemctl --user import-environment DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME
+systemctl --user import-environment DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_IM_MODULE QT_IM_MODULE XMODIFIERS
 if command -v dbus-update-activation-environment >/dev/null 2>&1; then
-    dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME
+    dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_IM_MODULE QT_IM_MODULE XMODIFIERS
 fi
 
 exec "$HOME/.local/bin/qtile" start -b x11

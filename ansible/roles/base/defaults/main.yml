@@ -1,14 +1,30 @@
 ---
-# `upgrade: dist` is slow and is the one task in this role that can change
-# hundreds of packages. Left on because a provisioning run should leave a
-# current machine, but easy to turn off for a quick targeted re-run:
-#     ansible-playbook site.yml --limit "$(hostname)" -e base_dist_upgrade=false
-base_dist_upgrade: true
+# There is no base_dist_upgrade knob any more, and its removal is not cosmetic.
+# On Ubuntu it was a convenience for a quick targeted re-run. On a rolling
+# distro a partial upgrade — installing a new package against a stale sync
+# database — is the documented way to break the system, so the upgrade in
+# tasks/main.yml is unconditional. It is also what keeps linux-cachyos and
+# linux-cachyos-nvidia-open (roles/gpu) moving in the same transaction, which
+# they must.
 
 base_packages:
-  - build-essential
-  - curl
+  - base-devel      # the build-essential of Arch: ships make, and is what paru builds with
   - git
-  - make
-  - unzip          # the fonts role unpacks a release zip
+  - curl            # in core, so already present — named so the dependency is written down
+  - unzip
   - ca-certificates
+  # A minimal CachyOS install has almost no fonts. Without these, every
+  # non-glyph character in rofi, dunst and GTK dialogs falls back to nothing.
+  # The Nerd Font the bar needs is roles/fonts; these are the fallbacks under it.
+  - ttf-dejavu
+  - noto-fonts
+
+# The login shell. The CachyOS ISO ships fish 4.8.1 plus fish-autopair and
+# fish-pure-prompt — a distro does not package a prompt theme for a shell it
+# does not intend you to use — so a minimal install may well hand the user
+# fish. roles/dotfiles' one non-symlink task appends `source ~/dotfiles/.bashrc`
+# to ~/.bashrc, a file fish never reads. Setting the shell is one task; porting
+# .bashrc to fish is real work (gitll is a bash function wrapping an embedded
+# awk program), so this is the cheap answer and fish is a later decision on its
+# own merits. Set to "" to leave whatever the installer chose alone.
+base_login_shell: /bin/bash

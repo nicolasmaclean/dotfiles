@@ -8,7 +8,9 @@
       takes effect on a new login, so the XF86MonBrightness keys will not work
       until you log out and back in.
 
-- name: Refresh the apt cache
+# The [multilib] database does not exist until it is synced, and roles/apps
+# reaches `steam` later in the same play.
+- name: Sync the pacman databases
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     update_cache: true

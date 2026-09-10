@@ -7,6 +7,12 @@ qtile_units_dir: "{{ ansible_env.HOME }}/.config/systemd/user"
 # stdlib-only (urllib) precisely so the now-playing widget adds nothing to it,
 # and uv-receipt.toml records exactly these five. Anything that "tidies"
 # spotify_web.py to requests breaks the venv.
+#
+# Worth recording and rejecting: extra/qtile is 0.37.0 and extra/python-psutil
+# is 7.2.2 — exactly two of these pins — so a native install is tempting. It is
+# still wrong. qtile-extras is AUR-only, so the native route splits this
+# five-package set across two package managers and gives up the version
+# lockstep this list exists to hold.
 qtile_packages:
   - "qtile=={{ qtile_version }}"
   - "qtile-extras=={{ qtile_extras_version }}"
@@ -16,6 +22,13 @@ qtile_packages:
 
 # Every unit is WantedBy=qtile-session.target, which config.py's startup_once
 # hook starts and its shutdown hook stops — so they come and go with qtile.
+#
+# ibus.service is new with CachyOS and is not an optional extra: on Ubuntu the
+# distro's im-config/xinput.d autostart started ibus-daemon, and a no-DE Arch
+# install has no equivalent. Nothing else in this repo starts it —
+# install-session.sh only ever set the two gsettings keys — so without this
+# unit KeyboardLayout._ibus() fails and the bar's input-source widget reads
+# `--` forever, which widgets.py is explicit means "ibus is not running".
 qtile_units:
   - qtile-session.target
   - picom.service
@@ -23,6 +36,7 @@ qtile_units:
   - dunst.service
   - flameshot.service
   - protonvpn.service
+  - ibus.service
 
 # The target is not a service and has nothing to enable; protonvpn is added
 # only when the vpn role runs.
@@ -31,3 +45,4 @@ qtile_services:
   - polkit-agent.service
   - dunst.service
   - flameshot.service
+  - ibus.service

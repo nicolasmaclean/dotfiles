@@ -1,103 +1,42 @@
 ---
 # ═══ uv ═══════════════════════════════════════════════════════════════════
-# qtile lives in a uv tool venv rather than apt or pip --user: qtile-extras is
-# not in the archive, and the venv is what keeps the five pinned packages
-# together. The qtile role does the install; this only puts uv on the box.
+# qtile lives in a uv tool venv rather than in the repos: the venv is what
+# keeps the five pinned packages in lockstep, and qtile-extras is AUR-only, so
+# a native install would split that set across two package managers. The qtile
+# role does the install; this only puts uv on the box.
+#
+# extra/uv puts the binary at /usr/bin/uv rather than ~/.local/bin/uv where the
+# install script put it — group_vars/all.yml's uv_bin is that path and
+# roles/qtile reads the same var, which is the only reason this role is
+# threaded into another one. `uv tool install` still places the tools it
+# installs under ~/.local/bin, so ~/.local/bin/qtile and
+# ~/.local/bin/qtile-nested are unaffected.
 - name: Install uv
-  ansible.builtin.shell:
-    cmd: set -o pipefail && curl -LsSf https://astral.sh/uv/install.sh | sh
-    creates: "{{ toolchains_uv_bin }}"
-  args:
-    executable: /bin/bash
-
-# ═══ rust ═════════════════════════════════════════════════════════════════
-# Needed for exactly one thing: building alacritty. --no-modify-path because
-# .bashrc in this repo owns PATH; letting rustup append its own line would give
-# an adopted machine a duplicate.
-- name: Install rustup
-  ansible.builtin.shell:
-    cmd: >-
-      set -o pipefail &&
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
-      | sh -s -- -y --no-modify-path
-    creates: "{{ toolchains_cargo_bin }}/cargo"
-  args:
-    executable: /bin/bash
-
-- name: Install alacritty's build dependencies
   become: true
-  ansible.builtin.apt:
-    name: "{{ toolchains_alacritty_build_deps }}"
+  community.general.pacman:
+    name: uv
     state: present
 
 # ═══ alacritty ════════════════════════════════════════════════════════════
-- name: Read the installed alacritty version
-  ansible.builtin.command:
-    cmd: "{{ toolchains_cargo_bin }}/alacritty --version"
-  register: toolchains_alacritty_installed
-  changed_when: false
-  check_mode: false
-  failed_when: false
-
-# The version guard is what keeps a re-run from recompiling alacritty, which
-# takes minutes and would break the zero-changed-tasks idempotency proof.
-- name: Build and install alacritty {{ alacritty_version }}
-  ansible.builtin.command:
-    cmd: >-
-      {{ toolchains_cargo_bin }}/cargo install alacritty
-      --version {{ alacritty_version }} --locked
-  register: toolchains_alacritty_build
-  changed_when: true
-  when: alacritty_version not in (toolchains_alacritty_installed.stdout | default(''))
-
-# `cargo install` builds the binary and nothing else. The desktop entry, icon
-# and terminfo live in the crate's source tree, which cargo leaves unpacked in
-# the registry — under a hash-named directory, hence the glob rather than a
-# path. Without this, alacritty exists but no launcher lists it.
-- name: Locate the unpacked alacritty source
-  ansible.builtin.find:
-    paths: "{{ ansible_env.HOME }}/.cargo/registry/src"
-    patterns: "alacritty-{{ alacritty_version }}"
-    file_type: directory
-    recurse: true
-    depth: 2
-  register: toolchains_alacritty_src
-
-- name: Install alacritty's desktop entry, icon and terminfo
-  when: toolchains_alacritty_src.files | length > 0
-  vars:
-    src: "{{ toolchains_alacritty_src.files[0].path }}"
-  block:
-    - name: Create the user application and icon directories  # noqa: risky-file-permissions
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-      loop:
-        - "{{ ansible_env.HOME }}/.local/share/applications"
-        - "{{ ansible_env.HOME }}/.local/share/icons/hicolor/scalable/apps"
-
-    # Templated rather than copied from the source tree — see the template for
-    # why upstream's bare `Exec=alacritty` cannot be used as shipped.
-    - name: Install the alacritty desktop entry
-      ansible.builtin.template:
-        src: Alacritty.desktop.j2
-        dest: "{{ ansible_env.HOME }}/.local/share/applications/Alacritty.desktop"
-        mode: "0644"
-        backup: true
-
-    - name: Install the alacritty icon the desktop entry names
-      ansible.builtin.copy:
-        src: "{{ src }}/extra/logo/alacritty-term.svg"
-        dest: "{{ ansible_env.HOME }}/.local/share/icons/hicolor/scalable/apps/Alacritty.svg"
-        remote_src: true
-        mode: "0644"
-
-    # Alacritty sets TERM=alacritty, and without this entry every curses
-    # program inside it falls back to something dumber — this laptop has been
-    # running without it, which is why nothing here was copied from it.
-    - name: Compile the alacritty terminfo entry
-      ansible.builtin.command:
-        cmd: tic -xe alacritty,alacritty-direct "{{ src }}/extra/alacritty.info"
-        creates: "{{ ansible_env.HOME }}/.terminfo/a/alacritty"
-      environment:
-        TERMINFO: "{{ ansible_env.HOME }}/.terminfo"
+# From the repo, not cargo. The Ubuntu archive carried only 0.13.2, which is
+# why this used to be rustup plus seven build dependencies plus a version-
+# guarded `cargo install` plus a hash-directory search of the cargo registry;
+# extra/alacritty is 0.17.0 and all of that goes with it. So do three things
+# that only existed to paper over a cargo install:
+#   - the templated Alacritty.desktop (upstream's bare `Exec=alacritty` only
+#     failed to resolve because the binary was in ~/.cargo/bin, which no
+#     session PATH carries; from /usr/bin the bare name is fine, and the
+#     package ships the entry and the icon itself);
+#   - the icon copy out of the unpacked crate source;
+#   - `tic -xe alacritty,alacritty-direct` — core/ncurses ships
+#     usr/share/terminfo/a/alacritty, alacritty+common and alacritty-direct,
+#     and ncurses is always installed.
+#
+# The version pin is gone too. 0.16.1 → 0.17.0 is one minor version; start it
+# once after the switch and read stderr for config deprecations rather than
+# fighting a rolling repo.
+- name: Install alacritty
+  become: true
+  community.general.pacman:
+    name: alacritty
+    state: present

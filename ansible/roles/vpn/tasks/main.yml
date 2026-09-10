@@ -1,54 +1,19 @@
 ---
-- name: Check whether the Proton repository is configured
-  ansible.builtin.stat:
-    path: /etc/apt/sources.list.d/protonvpn-stable.sources
-  register: vpn_repo
-
-# Skipped in check mode for the same reason as the apps role's pinned debs:
-# `get_url` reports without writing the file, so the install below would fail
-# on a missing path. unick already has the repository so this block is skipped
-# here anyway — but a fresh box could not be dry-run past it.
-- name: Add the Proton repository
-  become: true
-  when:
-    - not vpn_repo.stat.exists
-    - not ansible_check_mode
-  block:
-    - name: Create the download cache
-      ansible.builtin.file:
-        path: "{{ vpn_deb_cache }}"
-        state: directory
-        mode: "0700"
-
-    - name: Download the Proton release package
-      ansible.builtin.get_url:
-        url: "{{ vpn_release_url }}"
-        dest: "{{ vpn_deb_cache }}/protonvpn-stable-release.deb"
-        mode: "0644"
-
-    - name: Install the Proton release package
-      ansible.builtin.apt:
-        deb: "{{ vpn_deb_cache }}/protonvpn-stable-release.deb"
-        state: present
-      notify: Update the apt cache for the vpn repo
-
-    - name: Drop the downloaded package
-      ansible.builtin.file:
-        path: "{{ vpn_deb_cache }}"
-        state: absent
-
-- name: Refresh the cache before installing
-  ansible.builtin.meta: flush_handlers
-
 - name: Install the Proton VPN app
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     name: "{{ vpn_package }}"
     state: present
 
 # protonvpn.service is installed and enabled by the qtile role along with the
 # rest of the session, gated on this same install_vpn flag. Login stays manual:
 # the app keeps its own credentials and there is nothing here to template.
+#
+# Worth one check on first run: the laptop had 0.10.1 and this is 4.18.1. The
+# session unit passes --start-minimized, and its comment explains why that flag
+# matters (the tray icon needs the bar's StatusNotifier to already own the
+# watcher name). Confirm the flag survived four major versions with
+# `protonvpn-app --help`.
 - name: Note the manual step
   ansible.builtin.debug:
     msg: >-

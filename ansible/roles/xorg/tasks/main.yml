@@ -1,6 +1,6 @@
 ---
 - name: Install the X session packages
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     name: "{{ xorg_packages }}"
     state: present

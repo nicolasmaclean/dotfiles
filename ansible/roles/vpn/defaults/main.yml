@@ -1,15 +1,10 @@
 ---
-# Proton distributes its repository as a .deb rather than a key plus a source
-# file, so this is the documented install route rather than the deb822 shape
-# the apps role uses.
-vpn_release_url: >-
-  https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_{{ protonvpn_release_version }}_all.deb
-
-# NOT protonvpn-app: that name has no candidate in the Proton repo. The
-# metapackage is proton-vpn-gnome-desktop, and the binary the session unit
-# execs (/usr/bin/protonvpn-app) is shipped by proton-vpn-gtk-app, which the
-# metapackage pulls in.
-vpn_package: proton-vpn-gnome-desktop
-
-# Not /tmp — same reasoning as the apps role's deb cache.
-vpn_deb_cache: "{{ ansible_env.HOME }}/.cache/dotfiles/debs"
+# extra/proton-vpn-gtk-app 4.18.1, and it is verified to ship
+# usr/bin/protonvpn-app — which is exactly the ExecStart in
+# qtile/session/protonvpn.service, so the unit needs no change.
+#
+# On Ubuntu this was a metapackage (proton-vpn-gnome-desktop) reached through a
+# release .deb that installed the apt repository, because `protonvpn-app` had
+# no candidate there. All of that is gone: the download, the cache directory,
+# the stat guard, the `not ansible_check_mode` block and the cache handler.
+vpn_package: proton-vpn-gtk-app

@@ -1,29 +1,25 @@
 ---
-# The archive has an older neovim; the PPA is where 0.12.x comes from, and
-# after/plugin/lsp.lua uses the modern vim.lsp API that needs it.
-neovim_ppa: "ppa:neovim-ppa/stable"
-
+# extra/neovim is 0.12.5, so the PPA this role used to detect and add is gone
+# with the whole apt story. after/plugin/lsp.lua's modern vim.lsp API needs
+# 0.12.x and gets it from the repo.
 neovim_packages:
   - neovim
-  - python3-pynvim
+  - python-pynvim
   - nodejs         # intelephense is an npm package
   - npm
 
-# The servers after/plugin/lsp.lua registers, by the route each actually comes
-# from. Only clangd is an apt package: ruff and pyright have no candidate in
-# the Ubuntu archive at all and are uv tools on this laptop (their receipts
-# under ~/.local/share/uv/tools say so), lua-language-server is a GitHub
-# tarball, and intelephense is npm. lua_ls and intelephense are missing even
-# here, so those two currently attach to nothing.
-neovim_apt_servers:
-  - clangd
-
-neovim_uv_servers:
-  - "ruff=={{ ruff_version }}"
-  - "pyright=={{ pyright_version }}"
-
-neovim_lua_ls_dir: "{{ ansible_env.HOME }}/.local/share/lua-language-server"
-neovim_lua_ls_url: >-
-  https://github.com/LuaLS/lua-language-server/releases/download/{{ lua_ls_version }}/lua-language-server-{{ lua_ls_version }}-linux-x64.tar.gz
+# The servers after/plugin/lsp.lua registers. On Ubuntu these came four
+# different ways — apt for clangd, uv tools for ruff and pyright, a pinned
+# GitHub tarball plus a PATH symlink for lua-language-server — and three of
+# those routes existed only because the archive had no candidate. All four are
+# packages here, and extra/lua-language-server is 3.19.1, exactly the version
+# the old lua_ls_version pin named.
+#
+# clangd is shipped by the `clang` package rather than one of its own.
+neovim_lsp_packages:
+  - clang
+  - lua-language-server
+  - ruff
+  - pyright
 
 neovim_packer_dir: "{{ ansible_env.HOME }}/.local/share/nvim/site/pack/packer/start/packer.nvim"

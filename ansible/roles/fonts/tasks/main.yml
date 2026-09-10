@@ -1,20 +1,16 @@
 ---
-# Installed on the laptop today but shipped by nothing — the single biggest
-# "fresh clone looks broken" gap after the config itself. theme.py asks for
-# "0xProto Nerd Font" and every bar glyph plus every dunstrc icon is a Nerd
-# Font codepoint, so without this the whole bar renders as boxes.
-# No mode, for the same reason as roles/dotfiles: this directory is 0775 on
-# the laptop and forcing 0755 would report changed on every adopted box.
-- name: Create the user font directory  # noqa: risky-file-permissions
-  ansible.builtin.file:
-    path: "{{ fonts_dir }}"
-    state: directory
-
-- name: Install the Nerd Font {{ nerd_font_name }}
-  ansible.builtin.unarchive:
-    src: "{{ fonts_url }}"
-    dest: "{{ fonts_dir }}"
-    remote_src: true
-    creates: "{{ fonts_marker }}"
-    mode: "0644"
-  notify: Rebuild the font cache
+# Shipped by nothing on a fresh box, and the single biggest "the clone looks
+# broken" gap after the config itself: theme.py asks for "0xProto Nerd Font"
+# and every bar glyph plus every dunstrc icon is a Nerd Font codepoint, so
+# without this the whole bar renders as boxes.
+#
+# This is the whole role now. extra/ttf-0xproto-nerd is 3.5.1 — exactly the
+# version the old nerd_font_version pin named — so the release-zip download,
+# the user font directory, the marker-file guard and the fc-cache handler all
+# go. Arch's fontconfig ships a pacman hook that rebuilds the cache after any
+# package touching /usr/share/fonts, which is what the handler existed for.
+- name: Install the 0xProto Nerd Font
+  become: true
+  community.general.pacman:
+    name: ttf-0xproto-nerd
+    state: present

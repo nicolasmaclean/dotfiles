@@ -1,19 +1,26 @@
 ---
 xorg_packages:
-  - xserver-xorg
-  # dbus-bin, NOT dbus-x11: `dpkg -S` says dbus-bin is what owns
-  # /usr/bin/dbus-update-activation-environment, which qtile-session calls to
-  # publish DISPLAY to the user bus. dbus-x11 is not installed on this laptop
-  # and is not needed.
-  - dbus-bin
+  - xorg-server
+  # core/dbus, NOT dbus-x11 or a -bin split: verified against the package's own
+  # file list, core/dbus is what ships
+  # usr/bin/dbus-update-activation-environment, which qtile-session calls to
+  # publish DISPLAY to the user bus.
+  - dbus
   # bin/qtile-nested runs the config in a nested X server; it is the only way
   # to test a config change without betting the session on it.
-  - xserver-xephyr
+  - xorg-server-xephyr
   # polkit-agent.service execs this package's agent. Without it polkit can only
   # answer "Authorization requires interaction" and GUI apps report that as
   # their own vague failure.
-  - policykit-1-gnome
-  # qtile-session exports QT_QPA_PLATFORMTHEME=gtk3; these are the plugins that
-  # makes true for Qt5 and Qt6 apps respectively.
-  - qt5-gtk2-platformtheme
-  - qt6-gtk-platformtheme
+  - polkit-gnome
+  # qtile-session exports QT_QPA_PLATFORMTHEME=gtk3, and the plugin that makes
+  # that mean anything is shipped by qt5-base and qt6-base themselves on Arch
+  # (both carry platformthemes/libqgtk3.so) — so there is no separate
+  # qt*-gtk-platformtheme package to install, unlike Ubuntu. gtk3 is named here
+  # so the plugin has something to read rather than arriving by luck as an
+  # optional dependency of something else.
+  - gtk3
+  # Not needed by qtile, which reads RandR through xcffib — but the
+  # multi-monitor verification steps and any later autorandr profile both want
+  # xrandr on the box.
+  - xorg-xrandr

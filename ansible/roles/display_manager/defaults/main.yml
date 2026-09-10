@@ -2,7 +2,16 @@
 # Autologin skips the greeter entirely. Replaces both set-default-session.sh
 # (deleted) and install-session.sh's --autologin GDM sed.
 display_manager_autologin: false
+
+# Display managers to disable, and optionally remove, in favour of LightDM.
 # Purging the running display manager mid-play is the one genuinely destructive
-# thing in this playbook, so it is off by default and turned on per host —
-# cnick sets it, because a fresh Ubuntu desktop install arrives with GDM.
-display_manager_purge_gdm: false
+# thing in this playbook, so removal is off by default and the list is empty on
+# a minimal CachyOS install, which arrives with no greeter at all. This is the
+# generalised form of the old display_manager_purge_gdm flag, which named a
+# Debian package; it is the hook for an `sddm` if the edition decision ever
+# changes.
+display_manager_conflicting: []
+# Left installed but disabled unless this is set. On an adopted machine that is
+# the safe half of the switch: the other greeter stays available to boot from
+# if LightDM misbehaves.
+display_manager_purge_conflicting: false

@@ -1,5 +1,6 @@
 ---
-# Laptop.
+# Laptop. Still Ubuntu 24.04 and therefore unmanaged — see inventory/hosts.yml.
+# This file costs nothing and is the target for the eventual conversion.
 #
 # No hardware values belong in this file. Battery, backlight, thermal sensor,
 # wallpaper and the number of screens are detected at runtime by
@@ -10,9 +11,13 @@ form_factor: laptop
 
 # Which GPU drives X, not which GPUs are present. This box is hybrid — Intel
 # UHD 630 plus a GTX 1650 Mobile on PRIME on-demand, so X runs on i915 and the
-# nvidia branch of the `gpu` role (nouveau blacklist, ForceFullCompositionPipeline)
-# must not fire here.
+# nvidia branch of the `gpu` role must not fire here. (The 1650 is Turing, so
+# whenever this box is converted it lands in nvidia-open's supported range too,
+# for whatever that is worth given it takes the intel branch.)
 gpu: intel
 
 install_steam: false
-install_vpn: true      # proton-vpn-gnome-desktop 0.10.1 is installed today
+install_vpn: true
+
+# No nvidia_packages / display_manager_conflicting here: both have empty role
+# defaults, and the intel branch of roles/gpu reads neither.

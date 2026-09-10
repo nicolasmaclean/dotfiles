@@ -1,9 +1,22 @@
 ---
 # A modprobe.d change only takes effect once it is baked into the initramfs,
-# and then only after a reboot — which is exactly what verification step 12
-# is for.
-- name: Update the initramfs
+# and then only after a reboot — which is what the NVIDIA verification step is
+# for.
+#
+# mkinitcpio, not dracut: the cachyos-desktop-linux-260809 ISO's own package
+# manifest lists mkinitcpio 41-5 plus mkinitcpio-archiso/-busybox/-nfs-utils/
+# -openswap, and no dracut at all. It still branches on which binary exists,
+# because that is three lines and it survives someone switching later.
+- name: Rebuild the initramfs
   become: true
-  ansible.builtin.command:
-    cmd: update-initramfs -u
+  ansible.builtin.shell:
+    cmd: |
+      if command -v mkinitcpio >/dev/null 2>&1; then
+          mkinitcpio -P
+      elif command -v dracut-rebuild >/dev/null 2>&1; then
+          dracut-rebuild
+      else
+          echo "neither mkinitcpio nor dracut-rebuild is installed" >&2
+          exit 1
+      fi
   changed_when: true

@@ -1,0 +1,91 @@
+---
+# Nine packages exist only in the AUR, and no AUR helper can be driven
+# non-interactively without root: paru builds as an unprivileged user and then
+# calls `sudo pacman -U` itself, and ansible's --ask-become-pass password lives
+# inside ansible's own become plugin — paru's inner sudo gets a pipe with no
+# tty and fails. `makepkg -s` does not escape it either; it shells out to
+# `sudo pacman -S` for build dependencies.
+#
+# The answer is a dedicated build account, which is the Arch wiki's pattern and
+# the one kewlfft.aur's own documentation uses.
+#
+# THE HONEST CAVEAT, and it applies to any automated AUR route: a PKGBUILD runs
+# arbitrary code as the build user, so an NOPASSWD-pacman build account means a
+# malicious AUR package can reach root. That is the standard AUR trust model
+# and is exactly as true when you type your own password into paru by hand. It
+# is a reason to read PKGBUILDs for anything obscure, not a reason to prefer a
+# different design. The list this role is handed is all high-vote, long-lived
+# vendor-binary and theme packages, which is the lowest-risk end of the AUR.
+
+- name: Install the AUR packages by hand
+  when:
+    - aur_manual | bool
+    - aur_packages | length > 0
+    - not ansible_check_mode
+  ansible.builtin.pause:
+    prompt: |
+
+      aur_manual is set, so this role builds nothing. In another terminal:
+
+        paru -S --needed {{ aur_packages | join(' ') }}
+
+      Press ENTER when done — or skip it. Nothing else in the play needs an
+      AUR package at install time; the box is degraded, not broken.
+
+- name: AUR
+  when: not (aur_manual | bool)
+  block:
+    # Three properties matter and each is load-bearing:
+    #   - no password and no login shell, so nothing can authenticate *as* it;
+    #   - therefore the only way to become it is to already be root;
+    #   - therefore the NOPASSWD grant below opens no path root does not have.
+    #
+    # Granting NOPASSWD pacman to `nick` instead would widen what a compromised
+    # *session* can do, because `pacman -U` on an arbitrary file is
+    # root-equivalent. Granting it to a locked, shell-less system account widens
+    # nothing — which is what makes it safe to leave in place permanently, and
+    # permanent is what makes it idempotent. The temporary-drop-in version of
+    # this needed a block/always, a stale-file clear for SIGKILLed runs and a
+    # `pacman -Qq` skip guard; none of that is here because none of it is needed.
+    - name: Create the AUR build account
+      become: true
+      ansible.builtin.user:
+        name: "{{ aur_builder_user }}"
+        system: true
+        create_home: true          # makepkg needs somewhere to build
+        shell: /usr/bin/nologin
+        password: "!"              # locked, not empty
+
+    - name: Let the build account call pacman without a password
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/10-aur-builder
+        # Scoped to one binary and one account. paru needs `pacman -S` for
+        # build deps and `pacman -U` to install what it built; there is no
+        # narrower grant that still resolves dependencies.
+        content: "{{ aur_builder_user }} ALL=(root) NOPASSWD: /usr/bin/pacman\n"
+        mode: "0440"
+        # A syntactically invalid file in /etc/sudoers.d/ makes sudo refuse to
+        # run at all, and recovering from that needs a rescue shell. validate
+        # runs before the file is put in place, which is the whole point of it.
+        validate: "visudo -cf %s"
+
+    # become_user rather than become: false — either avoids building as root,
+    # which makepkg refuses outright, but become_user is what routes the build
+    # through the account the grant above is scoped to.
+    #
+    # Passing the whole list rather than looping is the module's own advice.
+    # It is check-mode aware (it runs `pacman -T` and reports what would be
+    # built without building), so this task is genuinely dry-runnable — better
+    # than the Ubuntu tasks it replaces. And it is idempotent twice over:
+    # state: present short-circuits on `pacman -Q`, and the paru invocation is
+    # `paru -S --noconfirm --needed --cleanafter`. So it is `ok` on a re-run and
+    # contributes nothing to the zero-changed-tasks proof.
+    - name: Install the AUR packages
+      become: true
+      become_user: "{{ aur_builder_user }}"
+      kewlfft.aur.aur:
+        name: "{{ aur_packages }}"
+        use: paru
+        state: present
+      when: aur_packages | length > 0

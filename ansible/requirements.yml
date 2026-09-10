@@ -1,10 +1,13 @@
 ---
-# Redundant on Ubuntu 24.04 as bootstrap.sh installs it: the apt `ansible`
-# package (9.2.0) already bundles every collection below. Kept because it records the floor these roles are written against, and
-# because it becomes load-bearing the moment ansible arrives as `ansible-core`
-# or from pip instead.
+# Load-bearing, unlike the Ubuntu version of this file. Arch's `ansible`
+# package is the full distribution, so it does carry community.general and
+# community.crypto — but kewlfft.aur is bundled with nothing, and the `aur`
+# role does not exist without it. bootstrap.sh runs
+# `ansible-galaxy collection install -r requirements.yml` for that one line.
 collections:
-  - name: community.general      # snap:, ini_file:
+  - name: community.general      # pacman:, ini_file:, npm:, git_config:, timezone:, locale_gen:
     version: ">=8.3.0"
   - name: community.crypto       # openssh_keypair: (roles/identity)
     version: ">=2.17.1"
+  - name: kewlfft.aur            # aur: (roles/aur) — NOT bundled with the `ansible` package
+    version: ">=0.13.0"

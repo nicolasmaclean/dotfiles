@@ -1,6 +1,6 @@
 ---
-# Desktop. Does not exist yet — this file is the target being built toward, and
-# `cnick` is the hostname to type at the Ubuntu installer.
+# Desktop. CachyOS, minimal profile — no desktop environment, so the playbook
+# builds onto empty ground and there is nothing to purge.
 #
 # As with the laptop: no hardware values. qtile/hardware.py answers None for
 # battery and backlight on this box, drops the two widgets, and builds one bar
@@ -12,4 +12,28 @@ gpu: nvidia
 
 install_steam: true
 install_vpn: true
-display_manager_purge_gdm: true       # fresh Ubuntu desktop installs arrive with GDM
+
+# Which NVIDIA package set, named here rather than detected. `chwd` is this
+# distro's `ubuntu-drivers` and has the same defect: it is not idempotent and
+# reports changed every run. Ask it once by hand at install time
+# (`chwd --list`), then name the answer here and let pacman be idempotent.
+#
+# nvidia-open only — the proprietary kernel module no longer exists in the Arch
+# repos (extra/nvidia-open carries replaces=['nvidia<=580.119.02-2']). That
+# constrains nothing here: this box has an RTX 3060 Ti, which is Ampere, two
+# generations past nvidia-open's Turing cutoff. A pre-Turing card would need an
+# AUR DKMS branch instead and would have to move the `aur` role ahead of `gpu`;
+# see roles/gpu/tasks/main.yml.
+#
+# linux-cachyos-nvidia-open is the module prebuilt against the CachyOS kernel,
+# preferred over -dkms so nothing rebuilds on every kernel update. It is
+# versioned in lockstep with linux-cachyos, so the two must move in one
+# transaction — which roles/base's unconditional full `pacman -Syu` guarantees.
+nvidia_packages:
+  - linux-cachyos-nvidia-open
+  - nvidia-utils
+  - lib32-nvidia-utils        # Steam
+
+# Nothing to purge on a minimal install. This is the hook for an `sddm` if the
+# edition decision ever changes; see roles/display_manager.
+display_manager_conflicting: []

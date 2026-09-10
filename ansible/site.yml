@@ -1,8 +1,6 @@
 ---
-# The single playbook. Roles arrive in phase 5, each gated on the host_vars
-# below and each independently runnable with --tags; until then this is the
-# plumbing on its own, which is deliberately runnable and check-runnable so the
-# wiring can be proved before there is a role to blame.
+# The single playbook. Every role is gated on the host_vars below and each is
+# independently runnable with --tags.
 #
 #     ansible-playbook site.yml --limit "$(hostname)" --ask-become-pass
 #
@@ -32,15 +30,25 @@
         quiet: true
       tags: always
 
-    - name: Only Ubuntu 24.04 is supported
+    # Read off ansible's own fact code rather than guessed: OSDIST_LIST[0] is
+    # {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True}
+    # and process_dist_files short-circuits on it, so CachyOS — which uses
+    # Arch's `filesystem` package and therefore has an empty /etc/arch-release
+    # — reports distribution 'Archlinux'. The string 'CachyOS' appears nowhere
+    # in that file.
+    #
+    # There is deliberately no version clause. ansible_distribution_version
+    # comes from the `distro` library, which on rolling Arch has nothing to
+    # report and answers 'NA'. Asserting on it would fail every run.
+    - name: Only Arch-family systems are supported
       ansible.builtin.assert:
         that:
-          - ansible_distribution == 'Ubuntu'
-          - ansible_distribution_version == '24.04'
+          - ansible_os_family == 'Archlinux'
         fail_msg: >-
-          Found {{ ansible_distribution }} {{ ansible_distribution_version }}.
-          The roles are structured so a second distro could be added, but none
-          is tested and the apt tasks would run regardless.
+          Found {{ ansible_distribution }} ({{ ansible_os_family }}). Every
+          role here installs with community.general.pacman; there is no apt
+          path left to fall back to — it was deleted rather than branched when
+          this playbook was retargeted at CachyOS.
         quiet: true
       tags: always
 
@@ -55,9 +63,17 @@
       tags: always
 
   # Ordered as they must run. Only two orderings are load-bearing: toolchains
-  # installs uv, which the qtile role then uses, and apps adds the Spotify repo
-  # that spotify_now_playing's widget depends on being installed from. Every
-  # role is independently runnable with --tags.
+  # installs uv, which the qtile role then uses, and apps names the AUR list
+  # that the aur role immediately after it consumes. Every role is
+  # independently runnable with --tags.
+  #
+  # `aur` sits after `apps`, not before it: role defaults are resolved as the
+  # play is built rather than as each role runs, so nothing needs that ordering
+  # to see apps_aur_packages — and nothing earlier in the play needs an AUR
+  # package at install time. yaru-icon-theme is the only AUR package another
+  # role's config names, and rofi reads its icon theme at runtime. (The one
+  # case that would flip this is a pre-Turing NVIDIA card needing an AUR DKMS
+  # driver; see roles/gpu. cnick's 3060 Ti is Ampere, so it does not arise.)
   roles:
     - {role: base, tags: [base]}
     - {role: fonts, tags: [fonts]}
@@ -70,6 +86,14 @@
     - {role: dotfiles, tags: [dotfiles]}
     - {role: neovim, tags: [neovim]}
     - {role: apps, tags: [apps]}
+    # Passed explicitly rather than read from inside the role, so the coupling
+    # is visible in the play and so the role can be run alone while iterating:
+    #     ansible-playbook site.yml --tags aur -e '{"aur_packages":["gitkraken"]}'
+    # which is worth having on a role whose failure mode is a ten-minute build.
+    - role: aur
+      tags: [aur]
+      vars:
+        aur_packages: "{{ apps_aur_packages }}"
     - {role: vpn, tags: [vpn], when: install_vpn | bool}
     - {role: spotify_now_playing, tags: [spotify]}
     - {role: identity, tags: [identity]}

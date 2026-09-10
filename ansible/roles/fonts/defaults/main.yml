@@ -1,7 +1,0 @@
----
-fonts_dir: "{{ ansible_env.HOME }}/.local/share/fonts"
-fonts_url: >-
-  https://github.com/ryanoasis/nerd-fonts/releases/download/v{{ nerd_font_version }}/{{ nerd_font_name }}.zip
-# One file out of the archive, used only as the `creates:` guard. The archive
-# unpacks flat, so this is a real path rather than a directory.
-fonts_marker: "{{ fonts_dir }}/{{ nerd_font_name }}NerdFontMono-Regular.ttf"

@@ -1,88 +1,66 @@
 ---
-# Not /tmp: a predictable path in a world-writable directory is a symlink
-# target waiting to happen, and these are packages that get installed as root.
-# The downloads are removed again once dpkg has them.
-apps_deb_cache: "{{ ansible_env.HOME }}/.cache/dotfiles/debs"
-
-# Each entry becomes a deb822 source plus its key. Every URL here was checked
-# to resolve on 2026-09-09.
-apps_repos:
-  - name: mozilla
-    key_url: https://packages.mozilla.org/apt/repo-signing-key.gpg
-    uris: https://packages.mozilla.org/apt
-    suites: mozilla
-    components: main
-  - name: google-chrome
-    key_url: https://dl.google.com/linux/linux_signing_key.pub
-    uris: https://dl.google.com/linux/chrome/deb/
-    suites: stable
-    components: main
-  - name: vscode
-    key_url: https://packages.microsoft.com/keys/microsoft.asc
-    uris: https://packages.microsoft.com/repos/code
-    suites: stable
-    components: main
-  - name: 1password
-    key_url: https://downloads.1password.com/linux/keys/1password.asc
-    uris: https://downloads.1password.com/linux/debian/amd64
-    suites: stable
-    components: main
-  - name: signal
-    key_url: https://updates.signal.org/desktop/apt/keys.asc
-    uris: https://updates.signal.org/desktop/apt
-    suites: xenial
-    components: main
-  - name: spotify
-    key_url: https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg
-    uris: https://repository.spotify.com
-    suites: stable
-    components: non-free
-
-# Split by where the package comes from, because check mode cannot see past a
-# repository it has not actually added: in a dry run the deb822 sources above
-# are only *reported*, so apt still has no candidate for anything below and the
-# task fails with "No package matching ...". Only the archive list can be
-# meaningfully checked, so only it runs unconditionally.
-apps_archive_packages:
-  - vlc
+# The biggest deletion in the playbook, and worth saying what went and why.
+# Gone entirely: six deb822 sources and their keyring directory, the six
+# get_url key fetches, the Mozilla apt pin that existed to beat Ubuntu's
+# transitional firefox package, the Firefox-snap removal that pin could not
+# reach, a legacy-sources cleanup, two PPAs, the Unity repo block with its
+# binary keyring, two snaps, and two pinned .deb downloads with a dpkg-query
+# guard, a cache directory and a `not ansible_check_mode` wrapper around the
+# lot. On Arch every one of those is a package name.
+#
+# THE SPLIT IS GONE TOO, AND THAT IS THE POINT. apps_archive_packages vs
+# apps_repo_packages existed because check mode cannot install from a
+# repository it has only reported adding, so two thirds of this role could not
+# be dry-run at all. Nothing here adds a repository, so every package below is
+# genuinely checkable and there is not one check-mode guard left in the role.
+# That is the single largest gain in dry-run coverage in this conversion.
 
 apps_repo_packages:
-  - firefox
-  - google-chrome-stable
-  - code
-  - 1password
+  - firefox                # extra/firefox 155.0.1, direct from the repo
+  - vlc
+  - discord                # extra/discord is 1.0.157 — byte-for-byte the old pin
   - signal-desktop
-  # Also a bar dependency, not just an app: the now-playing widget takes
-  # Spotify's MPRIS interface as its primary source.
-  - spotify-client
-
-# No apt repo exists for either, so both are pinned .deb downloads.
-apps_debs:
-  - name: discord
-    url: "https://stable.dl2.discordapp.net/apps/linux/{{ discord_version }}/discord-{{ discord_version }}.deb"
-  - name: slack-desktop
-    url: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-desktop-{{ slack_version }}-amd64.deb"
-
-# Kept as snaps: neither has a maintained apt repo worth the trouble.
-apps_snaps:
-  - name: onlyoffice-desktopeditors
-    classic: false
-  - name: gitkraken
-    classic: true
-
-# Sources this role replaces with a deb822 equivalent. unick carries a
-# hand-added spotify.list from before; leaving it would give apt the same
-# repository twice, from two files, signed by two different key paths.
-apps_legacy_sources:
-  - spotify.list
-
-apps_ppas:
-  - ppa:obsproject/obs-studio
-
-apps_ppa_packages:
   - obs-studio
+  # spotify-launcher, not the AUR `spotify` PKGBUILD with its GPG-key dance: it
+  # is the official thin launcher that fetches and runs the real client. Also a
+  # bar dependency, not just an app — the now-playing widget takes Spotify's
+  # MPRIS interface as its primary source, so see roles/spotify_now_playing.
+  #
+  # Two exact strings in the qtile config depend on what the launcher's client
+  # calls itself, and both are UNVERIFIED against it:
+  #   config.py:297 objname="org.mpris.MediaPlayer2.spotify" — an exact bus name
+  #   config.py:246 hidden_ids=("spotify",)                  — a tray-id substring
+  # The second is the lower risk: widgets.py:701 says outright that the
+  # substring exists to survive the app renaming itself from `spotify` to
+  # `spotify-client`, so a third spelling is probably absorbed too. Settle both
+  # with the commands config.py:244 already documents for this —
+  #   busctl --user list | grep -i mpris
+  #   busctl --user get-property <service> <path> org.kde.StatusNotifierItem Id
+  - spotify-launcher
+
+# Consumed by the `aur` role, which site.yml runs immediately after this one —
+# the list lives here so the answer to "which apps does this box get" stays in
+# one place next to the repo packages. Every one is a long-lived, high-vote
+# vendor-binary or theme package, which is the lowest-risk end of the AUR; see
+# roles/aur for the trust argument and the build account that makes it work.
+apps_aur_packages:
+  - google-chrome
+  - visual-studio-code-bin
+  - 1password
+  - 1password-cli
+  - slack-desktop          # 4.52.155 — the same version the old .deb pinned
+  - gitkraken
+  - onlyoffice-bin
+  - unityhub               # the AUR flags this out-of-date as of 2026-09-10
+  # rofi/config.rasi:12 sets icon-theme: "Yaru-dark", and Yaru is Ubuntu's — so
+  # on a fresh Arch box rofi's icons resolve to nothing. Chosen over
+  # extra/papirus-icon-theme specifically to keep rofi pixel-identical to the
+  # laptop, which means the repo's .rasi file needs no change at all. It is an
+  # AUR build, which is why it is in this list rather than roles/desktop_apps.
+  - yaru-icon-theme
 
 # JetBrains Toolbox is deliberately out of scope for this pass — it
-# self-manages its IDEs and its licences are manual either way, so nothing
-# here can make a fresh box usefully closer to done. Rider is likewise left as
-# whatever the machine already has. Both are a later decision, not a gap.
+# self-manages its IDEs and its licences are manual either way, so nothing here
+# can make a fresh box usefully closer to done. Rider is likewise left as
+# whatever the machine already has. (AUR `jetbrains-toolbox` exists, 220 votes,
+# if that ever changes.) Both are a later decision, not a gap.

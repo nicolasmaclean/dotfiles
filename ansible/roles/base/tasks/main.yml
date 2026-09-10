@@ -1,15 +1,13 @@
 ---
-- name: Update the apt cache
+# One task, not the two apt needed. pacman's sync-then-upgrade is a single
+# transaction and splitting it is exactly the partial upgrade that is
+# unsupported on a rolling distro — see defaults/main.yml for why there is no
+# longer a knob to skip it.
+- name: Sync the databases and upgrade everything
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     update_cache: true
-    cache_valid_time: 3600
-
-- name: Upgrade everything already installed
-  become: true
-  ansible.builtin.apt:
-    upgrade: dist
-  when: base_dist_upgrade | bool
+    upgrade: true
 
 - name: Set the timezone
   become: true
@@ -17,8 +15,12 @@
     name: "{{ system_timezone }}"
 
 # gsimplecal/config names this locale explicitly (force_lang = en_US.utf8, for
-# Sunday-first weeks) and silently falls back to C if it is not generated, so
-# this is not the usual boilerplate locale task.
+# Sunday-first weeks) and silently falls back to C if it is not generated. On
+# Ubuntu that was near-boilerplate; on a minimal Arch install *no* locale is
+# generated at all, so this is the only thing standing between gsimplecal and
+# the C locale. The module edits /etc/locale.gen and runs locale-gen, which is
+# exactly the Arch mechanism — its /var/lib/locales/supported.d/ code path is
+# Debian-specific and simply does not fire here.
 - name: Generate the locale gsimplecal names
   become: true
   community.general.locale_gen:
@@ -27,19 +29,40 @@
 
 - name: Install the base packages
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     name: "{{ base_packages }}"
     state: present
 
-# brightnessctl writes /sys/class/backlight, which is root-owned. Two things
-# make that work unprivileged and they are useless apart: the video group, and
-# the udev rule that chgrps the sysfs attributes to it. The rule is shipped by
-# brightness-udev — do not hand-write /lib/udev/rules.d/90-brightnessctl.rules.
-- name: Install the brightnessctl udev rule (laptop only — a desktop has no panel)
+# See defaults: a minimal CachyOS install may hand the user fish, and
+# roles/dotfiles appends a source line to ~/.bashrc that fish never reads.
+# Settle which shell it actually is with `getent passwd $USER`.
+- name: Make bash the login shell
   become: true
-  ansible.builtin.apt:
-    name: brightness-udev
-    state: present
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    shell: "{{ base_login_shell }}"
+  when: base_login_shell | length > 0
+
+# TODO(unick): laptop-only and deliberately not converted, because no laptop
+# runs this playbook yet. There is no `brightness-udev` on Arch, and
+# extra/brightnessctl ships *only* the binary — verified, 10 files, none under
+# udev/ — depending on systemd-libs, which suggests Arch builds it against
+# logind's SetBrightness D-Bus method rather than the sysfs-plus-udev route
+# described below. If that is right, neither a udev rule nor the video group is
+# needed at all and both of these tasks disappear. Check `brightnessctl set
+# 50%` as a normal user first.
+#
+# The Ubuntu rationale, kept because it cost a round to learn: brightnessctl
+# writes /sys/class/backlight, which is root-owned. Two things make that work
+# unprivileged and they are useless apart — the video group, and the udev rule
+# that chgrps the sysfs attributes to it. The rule was shipped by
+# brightness-udev; do not hand-write /lib/udev/rules.d/90-brightnessctl.rules.
+- name: Note that the laptop backlight path is unconverted
+  ansible.builtin.debug:
+    msg: >-
+      form_factor=laptop: brightnessctl's udev rule has no packaged Arch
+      equivalent. Confirm brightnessctl works unprivileged before assuming this
+      is a gap — see the TODO in roles/base/tasks/main.yml.
   when: form_factor == 'laptop'
 
 - name: Put the user in the video group
@@ -51,28 +74,28 @@
   when: form_factor == 'laptop'
   notify: Warn about the video group
 
-- name: Read the enabled foreign architectures
-  ansible.builtin.command:
-    cmd: dpkg --print-foreign-architectures
-  register: base_foreign_arches
-  changed_when: false
-  check_mode: false
-  when: install_steam | bool
-
-# Steam is 32-bit, so without this the steam-installer package has no
-# installable dependencies at all and apt fails with an unhelpful conflict.
-- name: Enable i386 multiarch for Steam
+# Steam is 32-bit. On Arch that is the [multilib] repository rather than a
+# foreign dpkg architecture. CachyOS very likely ships it enabled already —
+# Steam is a headline use case — so this is written as an uncomment that
+# matches nothing when the block is already live, rather than as an append that
+# would duplicate the section. Idempotent by construction: no match, no change,
+# no handler. Settle which it is with `grep -c '^\[multilib\]' /etc/pacman.conf`.
+- name: Enable the [multilib] repository for Steam
   become: true
-  ansible.builtin.command:
-    cmd: dpkg --add-architecture i386
-  changed_when: true
-  when:
-    - install_steam | bool
-    - "'i386' not in base_foreign_arches.stdout_lines"
-  notify: Refresh the apt cache
+  ansible.builtin.replace:
+    path: /etc/pacman.conf
+    # [ \t] rather than \s throughout: \s would swallow the blank line after
+    # the Include and silently reflow the file. This matches the commented pair
+    # exactly as pacman.conf ships it, and matches nothing once it is live —
+    # which is what makes the task idempotent without a guard task in front.
+    # It does not match [multilib-testing], which is a different section.
+    regexp: '^#[ \t]*\[multilib\][ \t]*\n#[ \t]*(Include[ \t]*=[ \t]*\S+)[ \t]*$'
+    replace: '[multilib]\n\1'
+    backup: true
+  when: install_steam | bool
+  notify: Sync the pacman databases
 
-# The i386 lists do not exist until the cache is refreshed, so this has to
-# happen before the apps role reaches steam-installer rather than at the end
-# of the play.
-- name: Refresh the cache before any later role installs a 32-bit package
+# The [multilib] db does not exist until the sync above runs, so this has to
+# happen before the apps role reaches steam rather than at the end of the play.
+- name: Sync the databases before any later role installs a 32-bit package
   ansible.builtin.meta: flush_handlers

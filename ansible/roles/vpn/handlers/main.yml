@@ -1,6 +1,0 @@
----
-# Role-unique name — see the note in roles/apps/handlers/main.yml.
-- name: Update the apt cache for the vpn repo
-  become: true
-  ansible.builtin.apt:
-    update_cache: true

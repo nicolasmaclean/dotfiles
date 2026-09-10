@@ -1,0 +1,16 @@
+---
+# A system account that exists only to run makepkg. See tasks/main.yml for why
+# it is a dedicated account rather than a temporary grant to the real user.
+aur_builder_user: aur_builder
+
+# The escape hatch, for a machine where the build account is unwanted: with
+# this set the role installs nothing and pauses with the paru command to run by
+# hand instead. Nothing else in the play depends on an AUR package at install
+# time, so skipping it degrades the box rather than breaking the run.
+aur_manual: false
+
+# Defaulted empty and passed in from the play, so this role stays "install AUR
+# packages" rather than "install these AUR packages" — and so the answer to
+# "which apps does this box get" stays in roles/apps/defaults next to the repo
+# ones. site.yml wires apps_aur_packages in at the call site.
+aur_packages: []

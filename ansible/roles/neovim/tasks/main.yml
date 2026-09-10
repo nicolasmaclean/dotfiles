@@ -1,74 +1,19 @@
 ---
-# unick already carries this PPA as a deb822 `.sources` file added by
-# add-apt-repository, while ansible's apt_repository writes the older `.list`
-# form under a different name — so adding it unconditionally gives apt the same
-# repository twice, from two files, with two different signing-key mechanisms.
-# Check for either spelling before adding.
-- name: Look for an existing neovim source
-  ansible.builtin.find:
-    paths: /etc/apt/sources.list.d
-    patterns: "*neovim*"
-    file_type: file
-  register: neovim_existing_source
-
-- name: Add the neovim PPA
-  become: true
-  ansible.builtin.apt_repository:
-    repo: "{{ neovim_ppa }}"
-    state: present
-    update_cache: true
-  when: neovim_existing_source.files | length == 0
-
 - name: Install neovim and its runtime dependencies
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     name: "{{ neovim_packages }}"
     state: present
 
-- name: Install the LSP servers the archive carries
+- name: Install the LSP servers
   become: true
-  ansible.builtin.apt:
-    name: "{{ neovim_apt_servers }}"
+  community.general.pacman:
+    name: "{{ neovim_lsp_packages }}"
     state: present
 
-# `uv tool install` is idempotent on its own: it is a no-op when the requested
-# version is already the installed one, so no version guard is needed here the
-# way the qtile venv needs one.
-- name: Install the LSP servers that are uv tools
-  ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/uv tool install {{ item }}"
-  loop: "{{ neovim_uv_servers }}"
-  register: neovim_uv_install
-  changed_when: "'Installed' in (neovim_uv_install.stderr | default(''))"
-
-# lua-language-server is not in the Ubuntu archive at all — not under that name,
-# not under any other. A pinned release tarball is the only route.
-#
-# The tarball unpacks flat (bin/, main.lua, meta/, script/ at the top level), so
-# it needs a directory of its own. That directory is made by tar rather than by
-# a preceding `file:` task: `unarchive` refuses a dest that does not exist yet,
-# and in check mode a preceding task has only *reported* that it would create
-# it — which failed the dry run outright. Extracting into ~/.local/share, which
-# already exists, and letting --one-top-level make the subdirectory keeps the
-# dry run meaningful instead of hiding the task behind a check-mode guard.
-- name: Install lua-language-server {{ lua_ls_version }}
-  ansible.builtin.unarchive:
-    src: "{{ neovim_lua_ls_url }}"
-    dest: "{{ ansible_env.HOME }}/.local/share"
-    remote_src: true
-    extra_opts:
-      - "--one-top-level={{ neovim_lua_ls_dir | basename }}"
-    creates: "{{ neovim_lua_ls_dir }}/bin/lua-language-server"
-
-# The tarball has no bin/ on PATH, and lsp.lua asks for a bare
-# `lua-language-server`, so it needs a link into ~/.local/bin.
-- name: Put lua-language-server on PATH
-  ansible.builtin.file:
-    src: "{{ neovim_lua_ls_dir }}/bin/lua-language-server"
-    dest: "{{ ansible_env.HOME }}/.local/bin/lua-language-server"
-    state: link
-    force: true
-
+# Still npm, because there is no package for it — and npm is the route
+# upstream ships. `global: true` with become, so it lands in /usr/lib/node_modules
+# and on PATH for the bare `intelephense` lsp.lua asks for.
 - name: Install intelephense
   community.general.npm:
     name: intelephense
@@ -77,8 +22,8 @@
   become: true
 
 # packer.nvim is unmaintained upstream. Out of scope here, but a lazy.nvim
-# migration is the natural follow-up — nvim/lua/nick/packer.lua is the file
-# that would change.
+# migration is the natural follow-up and is the highest-value one left in this
+# repo — nvim/lua/nick/packer.lua is the file that would change.
 - name: Bootstrap packer.nvim
   ansible.builtin.git:
     repo: https://github.com/wbthomason/packer.nvim

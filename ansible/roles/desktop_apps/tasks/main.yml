@@ -1,14 +1,38 @@
 ---
 - name: Install the desktop packages
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     name: "{{ desktop_apps_packages }}"
     state: present
+
+# New on Arch, and not optional. Ubuntu's network-manager package enables the
+# unit at install time; Arch's does not, so without this there is no wifi at
+# all and network.py — which polls nmcli — draws a permanently disconnected
+# indicator.
+#
+# The check-mode guard is the same one every service enable downstream of an
+# install carries: in a dry run the install above has only *reported* that it
+# would install networkmanager, so the unit genuinely does not exist yet and
+# systemd fails rather than reports.
+- name: Enable NetworkManager
+  become: true
+  ansible.builtin.systemd_service:
+    name: NetworkManager
+    enabled: true
+    state: started
+  when: not ansible_check_mode
 
 # gsettings rather than community.general.dconf: these schemas are relocatable
 # and their dconf paths are not the schema id with slashes, so writing dconf
 # directly would put the values where ibus never looks. Read-then-write keeps
 # it idempotent and check-mode honest.
+#
+# On a fresh box this read can fail outright, because gsettings needs the
+# schemas compiled and extra/ibus only compiles them in its own pacman hook
+# during the install task above — in the same play. `failed_when: false` covers
+# that, and the write below then fires because an empty stdout never equals the
+# wanted value. That is correct behaviour rather than luck by accident, but it
+# is only correct by one line: do not "tidy" the failed_when away.
 - name: Read the current ibus settings
   ansible.builtin.command:
     cmd: "gsettings get {{ item.key }}"

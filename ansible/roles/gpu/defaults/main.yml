@@ -1,8 +1,34 @@
 ---
+# Named per host in inventory/host_vars/, not detected. `chwd` is this distro's
+# `ubuntu-drivers` and has the same defect the Ubuntu version of this role
+# already worked around: it is not idempotent and reports changed on every run.
+# Ask it once by hand at install time (`chwd --list`) and write the answer down.
+#
+# Unprefixed on purpose, and the linter is silenced rather than obeyed: this
+# var is written in inventory/host_vars/, which is the whole reason it exists,
+# and a gpu_ prefix would read as role-internal in the one file where it is not.
+nvidia_packages: []  # noqa: var-naming[no-role-prefix]
+
 # Whether to force a full composition pipeline in the Xorg device section. This
 # is what stops tearing on NVIDIA under picom; it costs a frame of latency, so
-# it is a var rather than a constant.
+# it is a var rather than a constant. picom.conf's `unredir-if-possible`
+# comment names it explicitly — and cnick is the first machine that comment is
+# actually true on.
 gpu_force_composition_pipeline: true
-# qtile runs `-b x11`, so nothing here wants the DRM/KMS path that exists to
-# serve Wayland compositors.
-gpu_nvidia_drm_modeset: false
+
+# The nouveau blacklist. extra/nvidia-utils ships
+# usr/lib/modprobe.d/nvidia-utils.conf and it is very likely that this is
+# already in it — in which case this task is redundant and should be turned off
+# here rather than left as a second managed file saying the same thing. It is
+# still ON because it is UNVERIFIED and the failure mode of being wrong is X
+# coming up on nouveau with every NVIDIA setting below silently inert. One
+# command settles it on the box:
+#     grep -r nouveau /usr/lib/modprobe.d/
+gpu_blacklist_nouveau: true
+
+# There is deliberately no gpu_nvidia_drm_modeset var. The Ubuntu role set
+# modeset=0, reasoning that qtile runs `-b x11` and the DRM/KMS path exists to
+# serve Wayland compositors. On driver 545+ that stopped being true — modeset
+# is the default and increasingly assumed — and this box is on 610. Forcing it
+# off now invites exactly the problems the setting was written to avoid, so the
+# driver default is taken and the reversal is deliberate.

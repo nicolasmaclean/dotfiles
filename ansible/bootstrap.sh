@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# The single entry point on a fresh Ubuntu 24.04 install. Run as the normal
-# user — it calls sudo itself for the steps that need it:
+# The single entry point on a fresh CachyOS install (minimal profile, no
+# desktop). Run as the normal user — it calls sudo itself for the steps that
+# need it:
 #
 #     curl -fsSL https://raw.githubusercontent.com/nicolasmaclean/dotfiles/main/ansible/bootstrap.sh | bash
 #
@@ -21,10 +22,16 @@ REPO_SSH="git@github.com:nicolasmaclean/dotfiles.git"
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 
 # `ansible`, not `ansible-core`: the full package is what ships
-# community.general and ansible.posix, which is where snap: and ini_file: come
-# from. requirements.yml pins them anyway.
-sudo apt update
-sudo apt install -y ansible git
+# community.general and community.crypto, which is where pacman:, ini_file:,
+# npm: and openssh_keypair: come from. requirements.yml pins them anyway, and
+# is genuinely load-bearing for kewlfft.aur, which is bundled with nothing.
+#
+# base-devel and paru are prerequisites of the `aur` role rather than things it
+# installs: paru is what builds, base-devel is what it builds with. The CachyOS
+# ISO ships paru already, so --needed usually makes both a no-op — which is
+# also why this needs no guard. --needed is the --noconfirm-safe idempotent
+# form; without it pacman reinstalls on every run.
+sudo pacman -Sy --needed --noconfirm ansible git base-devel paru
 
 if [ -d "$DOTFILES/.git" ]; then
     echo "==> $DOTFILES exists, updating"

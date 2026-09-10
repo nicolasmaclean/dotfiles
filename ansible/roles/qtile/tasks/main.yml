@@ -1,5 +1,7 @@
 ---
-# Replaces qtile/install-session.sh entirely.
+# Replaces qtile/install-session.sh entirely. Almost unchanged by the move to
+# CachyOS, which was the point of putting qtile in a uv venv rather than in the
+# distro's packages.
 
 # ═══ the venv ═════════════════════════════════════════════════════════════
 - name: Read the installed qtile version
@@ -10,12 +12,17 @@
   check_mode: false
   failed_when: false
 
-# One `uv tool install` with four --with packages, all pinned. apt cannot do
-# this job: qtile-extras is not in the Ubuntu archive at all.
+# One `uv tool install` with four --with packages, all pinned. See the contract
+# note in defaults/main.yml for why this is not a pacman task even though two
+# of the five are in the repos.
+#
+# uv_bin, not a hardcoded ~/.local/bin/uv: extra/uv installs to /usr/bin. The
+# tools uv installs still land in ~/.local/bin, which is why the version read
+# above and the launcher below are unchanged.
 - name: Install the qtile tool venv
   ansible.builtin.command:
     cmd: >-
-      {{ ansible_env.HOME }}/.local/bin/uv tool install --force
+      {{ uv_bin }} tool install --force
       qtile=={{ qtile_version }}
       {% for pkg in qtile_packages[1:] %}--with {{ pkg }} {% endfor %}
   changed_when: true
@@ -34,6 +41,7 @@
 # A .desktop entry cannot expand $HOME and this one is installed as root, so
 # the launcher path is substituted in. install-session.sh sed'd the same
 # placeholder; this is the same rendering by the intended route.
+# /usr/share/xsessions is the same path on Arch, so the template is unchanged.
 - name: Install the greeter's session entry
   become: true
   ansible.builtin.template:
@@ -72,7 +80,10 @@
 
 # network.py draws the network indicator itself now, so the applet would dock a
 # second icon saying the same thing. Only fires on a box still carrying the
-# unit from before that change.
+# unit from before that change — which is unick archaeology and can never be
+# true on cnick. Kept anyway: it is two tasks, both `ok` on a fresh box, and
+# they are what makes adopting the laptop later a no-op rather than a manual
+# cleanup step.
 - name: Remove the leftover nm-applet unit
   ansible.builtin.systemd_service:
     name: nm-applet.service

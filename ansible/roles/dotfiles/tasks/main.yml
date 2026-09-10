@@ -52,8 +52,15 @@
     - not item.stat.islnk
 
 # ~/.bashrc is the exception: a real file, not a link, with one sourcing line
-# appended. Converting it to a symlink would throw away Ubuntu's stock bashrc,
-# which sets up the prompt, history and completion this repo's .bashrc assumes.
+# appended. Converting it to a symlink would throw away the stock bashrc — from
+# /etc/skel here rather than Ubuntu's — which sets up the prompt, history and
+# completion this repo's .bashrc assumes.
+#
+# This task assumes bash is the login shell, and on CachyOS that is not free:
+# the ISO ships fish and a prompt theme for it, so a minimal install may hand
+# the user fish, which never reads this file. roles/base sets the shell back to
+# bash for exactly that reason (base_login_shell); the task here is unchanged
+# either way.
 - name: Source the repo bashrc from the stock one
   ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"

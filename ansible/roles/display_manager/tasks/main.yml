@@ -1,11 +1,11 @@
 ---
-# LightDM rather than GDM: GDM drags in a large part of GNOME, defaults to a
-# Wayland seat qtile cannot use, and stores the per-user default session in
+# LightDM rather than GDM or SDDM: GDM drags in a large part of GNOME, defaults
+# to a Wayland seat qtile cannot use, and stores the per-user default session in
 # AccountsService — which is what set-default-session.sh existed to poke.
 # LightDM keeps all of that in one config file this role owns.
 - name: Install LightDM and its greeter
   become: true
-  ansible.builtin.apt:
+  community.general.pacman:
     name:
       - lightdm
       - lightdm-gtk-greeter
@@ -26,18 +26,12 @@
     mode: "0644"
     backup: true
 
-# Installing lightdm alongside gdm3 does not switch the boot-time greeter:
-# /etc/X11/default-display-manager decides, and it is only rewritten by
-# dpkg-reconfigure or by writing it directly. Writing it is idempotent and
-# needs no interactive frontend.
-- name: Make LightDM the default display manager
-  become: true
-  ansible.builtin.copy:
-    dest: /etc/X11/default-display-manager
-    content: "/usr/sbin/lightdm\n"
-    mode: "0644"
-    backup: true
-
+# There is no /etc/X11/default-display-manager task any more, and it was not
+# dropped by accident: that file is Debian's mechanism for choosing the
+# boot-time greeter and has no meaning on Arch. Here `systemctl enable lightdm`
+# creates the display-manager.service alias symlink, and that is the whole
+# story — so the enable below is the only thing needed.
+#
 # Skipped in check mode on purpose. The install task above only *reports* that
 # it would install lightdm when checking, so the unit genuinely does not exist
 # yet and systemd answers "Could not find the requested service lightdm" — a
@@ -50,28 +44,26 @@
   when: not ansible_check_mode
 
 # Off unless the host asks. On a machine you are logged into, removing the
-# running display manager can end the session you are running this from.
-- name: Remove GDM
+# running display manager can end the session you are running this from. Empty
+# on cnick, which arrives with no greeter.
+- name: Remove the conflicting display managers
   become: true
-  ansible.builtin.apt:
-    name: gdm3
+  community.general.pacman:
+    name: "{{ display_manager_conflicting }}"
     state: absent
-    purge: true
-  when: display_manager_purge_gdm | bool
+  when:
+    - display_manager_conflicting | length > 0
+    - display_manager_purge_conflicting | bool
 
-- name: Check whether GDM is present
-  ansible.builtin.stat:
-    path: /usr/sbin/gdm3
-  register: display_manager_gdm
-  when: not (display_manager_purge_gdm | bool)
-
-# Left installed but not enabled: on an adopted machine this is the safe half
-# of the switch, and gdm3 stays available to boot from if LightDM misbehaves.
-- name: Disable GDM without removing it
+- name: Disable the conflicting display managers without removing them
   become: true
   ansible.builtin.systemd_service:
-    name: gdm3
+    name: "{{ item }}"
     enabled: false
+  loop: "{{ display_manager_conflicting }}"
+  register: display_manager_disable
+  failed_when: false
+  changed_when: display_manager_disable.changed | default(false)
   when:
-    - not (display_manager_purge_gdm | bool)
-    - display_manager_gdm.stat.exists | default(false)
+    - not (display_manager_purge_conflicting | bool)
+    - not ansible_check_mode

@@ -1,0 +1,25 @@
+[Unit]
+Description=ibus input method daemon
+PartOf=qtile-session.target
+After=qtile-session.target
+Requisite=qtile-session.target
+
+[Service]
+# Nothing else on a no-DE Arch install starts this. Ubuntu's im-config /
+# xinput.d autostart did, which is why this unit did not exist before CachyOS;
+# install-session.sh only ever set the two gsettings keys (roles/desktop_apps).
+# Without a running daemon, widgets.py's KeyboardLayout._ibus("engine") fails
+# and the bar's input-source indicator reads `--` forever — and nothing else
+# breaks, which is what makes this the easiest gap on the box to miss.
+#
+# --xim is load-bearing: widgets.py:373 says outright that ibus-daemon runs
+# with --xim and owns the layout in this session. --replace makes a restart of
+# this unit take over from any daemon a stray autostart already started, rather
+# than exiting because the bus name is taken.
+Type=simple
+ExecStart=/usr/bin/ibus-daemon --xim --replace
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=qtile-session.target
