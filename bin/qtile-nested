@@ -1,0 +1,25 @@
+#!/bin/bash
+# Run qtile in a nested X server (window inside your current session).
+# Usage: qtile-nested [WxH]  — default 1600x900. Close the window to exit.
+#
+# This execs qtile in its own environment, so the QTILE_* overrides that
+# hardware.py reads pass straight through - which is how the desktop's
+# widget path and a multi-monitor bar get exercised from this laptop:
+#
+#   QTILE_BATTERY= QTILE_THERMAL= qtile-nested   # a batteryless desktop
+#   QTILE_FAKE_OUTPUTS=3 qtile-nested            # three screens on one panel
+set -euo pipefail
+GEOM="${1:-1600x900}"
+DISP=":7"
+while [ -e "/tmp/.X11-unix/X${DISP#:}" ]; do DISP=":$(( ${DISP#:} + 1 ))"; done
+
+Xephyr -screen "$GEOM" -ac -br -resizeable -title "qtile (nested $DISP)" "$DISP" &
+XPID=$!
+trap 'kill $XPID 2>/dev/null' EXIT
+sleep 2
+echo "qtile starting on $DISP — mod4+Return for a terminal, mod4+ctrl+q to quit"
+# Tells config.py not to touch qtile-session.target: that target belongs to
+# the session you launched this from, and a nested instance stopping it on
+# exit would take picom, dunst, flameshot and the polkit agent down with it.
+export QTILE_NESTED=1
+DISPLAY="$DISP" exec "$HOME/.local/bin/qtile" start -b x11

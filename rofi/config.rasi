@@ -1,0 +1,84 @@
+/* rofi launcher — GNOME-overview-like app search for qtile */
+
+configuration {
+    modes:               "drun,run,window";
+    drun-display-format: "{name}";
+    drun-match-fields:   "name,generic,exec,categories,keywords";
+    matching:            "fuzzy";
+    sort:                true;
+    sorting-method:      "fzf";
+    show-icons:          true;
+    icon-theme:          "Yaru-dark";
+    terminal:            "alacritty";
+    display-drun:        "Apps";
+    display-run:         "Run";
+    display-window:      "Windows";
+}
+
+* {
+    bg:       #1a1b26;
+    bg-alt:   #24283b;
+    fg:       #c0caf5;
+    fg-dim:   #565f89;
+    accent:   #7aa2f7;
+    background-color: transparent;
+    text-color:       @fg;
+}
+
+window {
+    location:         center;
+    anchor:           center;
+    width:            42em;
+    border:           2px;
+    border-color:     @accent;
+    border-radius:    10px;
+    background-color: @bg;
+    padding:          0;
+}
+
+mainbox  { children: [ inputbar, listview ]; spacing: 0; padding: 0; }
+
+inputbar {
+    children:         [ prompt, entry ];
+    padding:          14px 16px;
+    spacing:          10px;
+    background-color: @bg-alt;
+    border:           0 0 1px 0;
+    border-color:     @fg-dim;
+}
+
+prompt  { text-color: @accent; }
+entry   { text-color: @fg; placeholder: "Type to search…"; placeholder-color: @fg-dim; }
+
+listview {
+    lines:        10;
+    columns:      1;
+    scrollbar:    false;
+    fixed-height: false;
+    padding:      8px;
+    spacing:      2px;
+    dynamic:      true;
+    background-color: transparent;
+}
+
+element { padding: 8px 10px; spacing: 12px; border-radius: 6px; }
+
+/* rofi merges its built-in default theme underneath this file, and that theme
+   sets per-state element colors. A plain `element` rule loses to those, so each
+   state has to be named explicitly or the rows render in the default palette. */
+element normal.normal    { background-color: transparent; text-color: @fg;      }
+element alternate.normal { background-color: transparent; text-color: @fg;      }
+element selected.normal  { background-color: @accent;     text-color: @bg;      }
+element normal.active    { background-color: transparent; text-color: @accent;  }
+element alternate.active { background-color: transparent; text-color: @accent;  }
+element selected.active  { background-color: @accent;     text-color: @bg;      }
+element normal.urgent    { background-color: transparent; text-color: #f7768e;  }
+element alternate.urgent { background-color: transparent; text-color: #f7768e;  }
+element selected.urgent  { background-color: #f7768e;     text-color: @bg;      }
+
+element-icon { size: 1.6em; vertical-align: 0.5; background-color: transparent; }
+element-text { vertical-align: 0.5; background-color: transparent; text-color: inherit; }
+
+message  { padding: 10px; background-color: @bg-alt; }
+textbox  { text-color: @fg; }
+error-message { padding: 12px; background-color: @bg; }
