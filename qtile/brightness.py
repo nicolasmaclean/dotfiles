@@ -5,6 +5,7 @@ import subprocess
 from libqtile import qtile
 from libqtile.log_utils import logger
 
+import hardware
 from notify import BRIGHTNESS_ID, notify_value
 from theme import G
 
@@ -22,7 +23,6 @@ from theme import G
 # the curve, so the two scales are far apart and mixing them would show one
 # number while moving by another.
 
-BACKLIGHT_DIR = "/sys/class/backlight"
 EXPONENT = 4  # brightnessctl -e is a fourth-power curve
 STEP = 5  # percent of the curve per press
 # A floor, because nothing below it has one: brightnessctl clamps neither its
@@ -32,19 +32,23 @@ STEP = 5  # percent of the curve per press
 MIN_PERCENT = 10
 
 
-def _find_device():
-    """First entry in /sys/class/backlight, or None if there is no panel."""
-    try:
-        return next(iter(sorted(os.listdir(BACKLIGHT_DIR))), None)
-    except OSError:
-        return None
-
-
-_DEVICE = _find_device()
+# Which panel, decided in hardware.py alongside the battery and the thermal
+# sensor - the split is detection versus control. A backlight device name is a
+# fact about the box; the curve, the step, the floor and the notification below
+# are behaviour, and they stay here.
+#
+# This is read at import time, so it has to be a value that cannot raise -
+# which is exactly what hardware's @safe wrapper guarantees. It is also where
+# the QTILE_BACKLIGHT override and the brightnessctl-on-PATH check live, so
+# neither is written twice.
+#
+# None is the normal answer on a desktop: monitors dim over DDC/CI and register
+# nothing in /sys/class/backlight. _change() logs one line per keypress.
+_DEVICE = hardware.BACKLIGHT
 # brightnessctl writes /sys/class/backlight unprivileged here thanks to the
 # brightness-udev rule plus video-group membership, so none of this needs root.
-_BRIGHTNESS_FILE = os.path.join(BACKLIGHT_DIR, _DEVICE or "", "brightness")
-_MAX_FILE = os.path.join(BACKLIGHT_DIR, _DEVICE or "", "max_brightness")
+_BRIGHTNESS_FILE = os.path.join(hardware.BACKLIGHT_DIR, _DEVICE or "", "brightness")
+_MAX_FILE = os.path.join(hardware.BACKLIGHT_DIR, _DEVICE or "", "max_brightness")
 
 # Set while a brightnessctl call is still in flight. Key repeat outruns the
 # process, and without this a held key queues a backlog that keeps moving the
@@ -83,7 +87,7 @@ def _apply(percent):
 def _change(step):
     global _future
     if _DEVICE is None:
-        logger.warning("No backlight device in %s", BACKLIGHT_DIR)
+        logger.warning("No backlight device in %s", hardware.BACKLIGHT_DIR)
         return
     if _future is not None and not _future.done():
         return
