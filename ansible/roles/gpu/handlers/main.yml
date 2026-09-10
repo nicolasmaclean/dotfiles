@@ -1,0 +1,9 @@
+---
+# A modprobe.d change only takes effect once it is baked into the initramfs,
+# and then only after a reboot — which is exactly what verification step 12
+# is for.
+- name: Update the initramfs
+  become: true
+  ansible.builtin.command:
+    cmd: update-initramfs -u
+  changed_when: true

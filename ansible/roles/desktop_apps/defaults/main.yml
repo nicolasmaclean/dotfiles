@@ -1,0 +1,33 @@
+---
+desktop_apps_packages:
+  - picom                   # the compositor; alacritty.toml's opacity needs it
+  - dunst                   # ships dunstify, which notify.py shells out to
+  - rofi
+  - flameshot
+  - brightnessctl           # brightness.py drives the panel through this
+  - gsimplecal              # the calendar the bar clock opens
+  - network-manager
+  - network-manager-gnome   # nmcli's backend; network.py polls it
+  - libnotify-bin
+  - pipewire
+  - wireplumber             # volume.py drives wpctl
+  - ibus
+  - ibus-libpinyin
+  - dmenu                   # dunstrc references /usr/bin/dmenu by full path
+
+# Deliberately NOT lm-sensors: qtile reads temperatures through psutil, which
+# walks /sys/class/hwmon directly. It is absent on this laptop and the thermal
+# widget works.
+
+# preload-engines is the list ibus honours outside a GNOME session, and it is
+# what widgets.py's KeyboardLayout cycles through. GNOME's own
+# org.gnome.desktop.input-sources is not read here, so an engine missing from
+# this key cannot be selected at all.
+desktop_apps_gsettings:
+  - key: org.freedesktop.ibus.general preload-engines
+    value: "['xkb:us::eng', 'libpinyin']"
+  # The bar draws its own input-source indicator, so ibus's GTK tray icon would
+  # be a second one saying the same thing. Only the icon is hidden —
+  # ibus-ui-gtk3 keeps running, because it also draws the pinyin candidates.
+  - key: org.freedesktop.ibus.panel show-icon-on-systray
+    value: "false"

@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+# Rendered by roles/display_manager. LightDM reads every file in
+# /etc/lightdm/lightdm.conf.d/ in name order, so this drop-in overrides the
+# packaged lightdm.conf without editing it.
+[Seat:*]
+user-session=qtile
+{% if display_manager_autologin %}
+autologin-user={{ ansible_user_id }}
+autologin-user-timeout=0
+{% endif %}

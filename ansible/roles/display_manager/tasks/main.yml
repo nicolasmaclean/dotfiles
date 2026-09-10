@@ -1,0 +1,77 @@
+---
+# LightDM rather than GDM: GDM drags in a large part of GNOME, defaults to a
+# Wayland seat qtile cannot use, and stores the per-user default session in
+# AccountsService — which is what set-default-session.sh existed to poke.
+# LightDM keeps all of that in one config file this role owns.
+- name: Install LightDM and its greeter
+  become: true
+  ansible.builtin.apt:
+    name:
+      - lightdm
+      - lightdm-gtk-greeter
+    state: present
+
+- name: Create the LightDM drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/lightdm/lightdm.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Configure the qtile seat
+  become: true
+  ansible.builtin.template:
+    src: 50-qtile.conf.j2
+    dest: /etc/lightdm/lightdm.conf.d/50-qtile.conf
+    mode: "0644"
+    backup: true
+
+# Installing lightdm alongside gdm3 does not switch the boot-time greeter:
+# /etc/X11/default-display-manager decides, and it is only rewritten by
+# dpkg-reconfigure or by writing it directly. Writing it is idempotent and
+# needs no interactive frontend.
+- name: Make LightDM the default display manager
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/X11/default-display-manager
+    content: "/usr/sbin/lightdm\n"
+    mode: "0644"
+    backup: true
+
+# Skipped in check mode on purpose. The install task above only *reports* that
+# it would install lightdm when checking, so the unit genuinely does not exist
+# yet and systemd answers "Could not find the requested service lightdm" — a
+# dry run would fail here on any box that does not already have LightDM.
+- name: Enable the LightDM service
+  become: true
+  ansible.builtin.systemd_service:
+    name: lightdm
+    enabled: true
+  when: not ansible_check_mode
+
+# Off unless the host asks. On a machine you are logged into, removing the
+# running display manager can end the session you are running this from.
+- name: Remove GDM
+  become: true
+  ansible.builtin.apt:
+    name: gdm3
+    state: absent
+    purge: true
+  when: display_manager_purge_gdm | bool
+
+- name: Check whether GDM is present
+  ansible.builtin.stat:
+    path: /usr/sbin/gdm3
+  register: display_manager_gdm
+  when: not (display_manager_purge_gdm | bool)
+
+# Left installed but not enabled: on an adopted machine this is the safe half
+# of the switch, and gdm3 stays available to boot from if LightDM misbehaves.
+- name: Disable GDM without removing it
+  become: true
+  ansible.builtin.systemd_service:
+    name: gdm3
+    enabled: false
+  when:
+    - not (display_manager_purge_gdm | bool)
+    - display_manager_gdm.stat.exists | default(false)

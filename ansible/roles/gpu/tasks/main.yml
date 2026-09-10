@@ -1,0 +1,86 @@
+---
+# `gpu` is which card drives X, not which cards are present — unick has a GTX
+# 1650 sitting next to the UHD 630 and still takes the intel branch, because
+# PRIME is set to on-demand and X runs on i915.
+- name: Nothing to do for Intel — mesa is already in the base install
+  ansible.builtin.debug:
+    msg: "gpu=intel: mesa ships with Ubuntu, no driver work needed."
+  when: gpu == 'intel'
+
+- name: NVIDIA
+  when: gpu == 'nvidia'
+  become: true
+  block:
+    - name: Install the driver detector
+      ansible.builtin.apt:
+        name: ubuntu-drivers-common
+        state: present
+
+    # `ubuntu-drivers autoinstall` is not idempotent and reports changed every
+    # run, which would sink the zero-changed-tasks proof. Asking it what it
+    # recommends and handing that to apt is the same outcome, idempotently.
+    - name: Ask which driver Ubuntu recommends
+      ansible.builtin.command:
+        cmd: ubuntu-drivers devices
+      register: gpu_recommended
+      changed_when: false
+      check_mode: false
+
+    - name: Install the recommended NVIDIA driver
+      ansible.builtin.apt:
+        name: "{{ gpu_driver_package }}"
+        state: present
+      vars:
+        gpu_driver_package: >-
+          {{ gpu_recommended.stdout
+             | regex_search('driver\s+:\s+(nvidia-driver-\S+)\s+-\s+.*recommended', '\1')
+             | first }}
+      when: "'recommended' in gpu_recommended.stdout"
+
+    # nouveau and the proprietary driver cannot both own the card; when nouveau
+    # wins the race the X server comes up on the wrong driver and every NVIDIA
+    # setting below is silently inert.
+    - name: Blacklist nouveau
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/blacklist-nouveau.conf
+        content: |
+          # Managed by Ansible (roles/gpu).
+          blacklist nouveau
+          options nouveau modeset=0
+        mode: "0644"
+        backup: true
+      notify: Update the initramfs
+
+    - name: Set the NVIDIA DRM modeset flag
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/nvidia-drm-modeset.conf
+        content: |
+          # Managed by Ansible (roles/gpu). qtile runs -b x11, so the DRM/KMS
+          # path that exists for Wayland compositors is off.
+          options nvidia-drm modeset={{ 1 if gpu_nvidia_drm_modeset else 0 }}
+        mode: "0644"
+        backup: true
+      notify: Update the initramfs
+
+    - name: Create the Xorg drop-in directory
+      ansible.builtin.file:
+        path: /etc/X11/xorg.conf.d
+        state: directory
+        mode: "0755"
+
+    # picom composites, but on NVIDIA that is not enough on its own: without a
+    # forced composition pipeline a fullscreen video tears regardless of
+    # picom's vsync setting.
+    - name: Force a full composition pipeline
+      ansible.builtin.copy:
+        dest: /etc/X11/xorg.conf.d/20-nvidia.conf
+        content: |
+          # Managed by Ansible (roles/gpu).
+          Section "Device"
+              Identifier "nvidia"
+              Driver     "nvidia"
+              Option     "ForceFullCompositionPipeline" "{{ gpu_force_composition_pipeline | ternary('On', 'Off') }}"
+              Option     "TripleBuffer" "on"
+          EndSection
+        mode: "0644"
+        backup: true

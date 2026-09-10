@@ -1,0 +1,39 @@
+---
+# The bar's now-playing readout takes Spotify's MPRIS interface as its primary
+# source and falls back to the Web API, so music started on the phone still
+# shows up. That fallback is the only thing needing credentials — and they are
+# deliberately not in the repo, so this role creates the directory and then
+# stops and tells you.
+#
+# Without the manual step the widget logs one line and carries on as a plain
+# MPRIS readout: a fresh box is degraded, never broken.
+- name: Create the credentials directory
+  ansible.builtin.file:
+    path: "{{ spotify_now_playing_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Check whether this host has been authorised already
+  ansible.builtin.stat:
+    path: "{{ spotify_now_playing_dir }}/token.json"
+  register: spotify_now_playing_token
+
+# The refresh token does not expire, so this really is once per host.
+- name: Authorise the Spotify Web API fallback
+  ansible.builtin.pause:
+    prompt: |
+
+      Spotify Web API fallback is not set up on this host. Four steps, once:
+
+        1. Register an app at https://developer.spotify.com/dashboard
+           Redirect URI: http://127.0.0.1:8888/callback
+           (the loopback IP — Spotify rejects "localhost")
+        2. Write {{ spotify_now_playing_dir }}/credentials.json, mode 0600:
+             {"client_id": "...", "client_secret": "..."}
+        3. Run: python3 ~/.config/qtile/spotify_auth.py
+           and approve in the browser it opens.
+        4. Press ENTER here to continue (or skip — the widget degrades to
+           MPRIS-only and nothing else breaks).
+  when:
+    - not spotify_now_playing_token.stat.exists
+    - not ansible_check_mode

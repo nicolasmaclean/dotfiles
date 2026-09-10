@@ -1,0 +1,98 @@
+---
+# No `mode:` on purpose, and this is not an oversight the linter should talk
+# you out of. These directories usually already exist: ~/.config is 0700 on
+# this laptop, and setting an explicit 0755 here would widen it on every
+# adopted machine — a real permissions regression traded for a cosmetic
+# consistency. Omitting mode leaves an existing directory alone and creates a
+# missing one under the user's umask.
+- name: Create the parent directories the links need  # noqa: risky-file-permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ ansible_env.HOME }}/.config"
+    - "{{ ansible_env.HOME }}/.config/alacritty"
+    - "{{ ansible_env.HOME }}/.local/bin"
+
+# The guard that makes adoption safe. A dest that is already a symlink, or
+# absent, is ours to write; a dest that is a real file or directory is somebody
+# else's config and gets left alone with a warning. install-session.sh used the
+# same rule for dunst, flameshot and gsimplecal.
+- name: Inspect the link targets
+  ansible.builtin.stat:
+    path: "{{ item.dest }}"
+    follow: false
+  loop: "{{ dotfiles_links }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: dotfiles_state
+
+- name: Link the config into the checkout
+  ansible.builtin.file:
+    src: "{{ dotfiles_dir }}/{{ item.item.src }}"
+    dest: "{{ item.item.dest }}"
+    state: link
+    force: true
+  loop: "{{ dotfiles_state.results }}"
+  loop_control:
+    label: "{{ item.item.dest }}"
+  when: not item.stat.exists or item.stat.islnk
+
+- name: Report the paths left alone
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.item.dest }} is a real {{ 'directory' if item.stat.isdir else 'file' }},
+      not a symlink — left untouched. Move it aside and re-run to pick up the
+      repo's copy.
+  loop: "{{ dotfiles_state.results }}"
+  loop_control:
+    label: "{{ item.item.dest }}"
+  when:
+    - item.stat.exists
+    - not item.stat.islnk
+
+# ~/.bashrc is the exception: a real file, not a link, with one sourcing line
+# appended. Converting it to a symlink would throw away Ubuntu's stock bashrc,
+# which sets up the prompt, history and completion this repo's .bashrc assumes.
+- name: Source the repo bashrc from the stock one
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: "source ~/dotfiles/.bashrc"
+    state: present
+    create: false
+    backup: true
+
+# ~/.alacritty.toml is shadowed by ~/.config/alacritty/alacritty.toml and can
+# only confuse; on this laptop it is a second symlink to the same file.
+- name: Remove the shadowed alacritty config
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.alacritty.toml"
+    state: absent
+
+# ini_file, not template: the file is symlinked into the repo *and* rewritten
+# by flameshot itself whenever a setting is changed from its UI, so a template
+# would clobber the app's own writes and drop the comments. This sets the one
+# key and leaves everything else alone.
+#
+# Note this writes *into the repo* — the one place the plan otherwise avoids
+# writing, unavoidable because the repo file is the live config. It shows as a
+# dirty working tree on any host whose username is not nick.
+- name: Set flameshot's save path
+  community.general.ini_file:
+    path: "{{ dotfiles_dir }}/flameshot/flameshot.ini"
+    section: General
+    option: savePath
+    value: "{{ dotfiles_flameshot_savepath }}"
+    # Qt's QSettings writes `key=value` with no padding, and flameshot rewrites
+    # this file itself whenever a setting is changed from its UI. Without this
+    # the task reformats the line to `savePath = ...` on every single run —
+    # never idempotent, and a permanently dirty working tree.
+    no_extra_spaces: true
+    mode: "0644"
+    backup: true
+
+- name: Create the screenshot directory flameshot saves into
+  ansible.builtin.file:
+    path: "{{ dotfiles_flameshot_savepath }}"
+    state: directory
+    mode: "0755"

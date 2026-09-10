@@ -26,3 +26,24 @@ pyxdg_version: "0.28"
 
 # Built with cargo, not apt: the Ubuntu archive has only 0.13.2.
 alacritty_version: "0.16.1"
+
+# --- system ---------------------------------------------------------------
+system_timezone: "America/Chicago"
+# gsimplecal/config sets force_lang = en_US.utf8 to get Sunday-first weeks, and
+# that must name a locale `locale -a` actually lists.
+system_locale: "en_US.UTF-8"
+
+# --- third-party version pins ---------------------------------------------
+# Bump these deliberately; each was the current release on 2026-09-09 and each
+# URL was checked to resolve.
+nerd_font_name: "0xProto"          # theme.py's Fonts.normal and alacritty.toml
+nerd_font_version: "3.5.1"
+lua_ls_version: "3.19.1"           # not in the Ubuntu archive at all
+discord_version: "1.0.157"
+slack_version: "4.52.155"
+protonvpn_release_version: "1.0.8"
+
+# LSP servers for nvim/after/plugin/lsp.lua. Neither has an apt candidate on
+# noble; both are uv tools here.
+ruff_version: "0.16.5"
+pyright_version: "1.1.411"

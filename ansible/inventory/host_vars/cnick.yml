@@ -12,3 +12,4 @@ gpu: nvidia
 
 install_steam: true
 install_vpn: true
+display_manager_purge_gdm: true       # fresh Ubuntu desktop installs arrive with GDM

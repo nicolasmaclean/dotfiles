@@ -1,0 +1,88 @@
+---
+# Not /tmp: a predictable path in a world-writable directory is a symlink
+# target waiting to happen, and these are packages that get installed as root.
+# The downloads are removed again once dpkg has them.
+apps_deb_cache: "{{ ansible_env.HOME }}/.cache/dotfiles/debs"
+
+# Each entry becomes a deb822 source plus its key. Every URL here was checked
+# to resolve on 2026-09-09.
+apps_repos:
+  - name: mozilla
+    key_url: https://packages.mozilla.org/apt/repo-signing-key.gpg
+    uris: https://packages.mozilla.org/apt
+    suites: mozilla
+    components: main
+  - name: google-chrome
+    key_url: https://dl.google.com/linux/linux_signing_key.pub
+    uris: https://dl.google.com/linux/chrome/deb/
+    suites: stable
+    components: main
+  - name: vscode
+    key_url: https://packages.microsoft.com/keys/microsoft.asc
+    uris: https://packages.microsoft.com/repos/code
+    suites: stable
+    components: main
+  - name: 1password
+    key_url: https://downloads.1password.com/linux/keys/1password.asc
+    uris: https://downloads.1password.com/linux/debian/amd64
+    suites: stable
+    components: main
+  - name: signal
+    key_url: https://updates.signal.org/desktop/apt/keys.asc
+    uris: https://updates.signal.org/desktop/apt
+    suites: xenial
+    components: main
+  - name: spotify
+    key_url: https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg
+    uris: https://repository.spotify.com
+    suites: stable
+    components: non-free
+
+# Split by where the package comes from, because check mode cannot see past a
+# repository it has not actually added: in a dry run the deb822 sources above
+# are only *reported*, so apt still has no candidate for anything below and the
+# task fails with "No package matching ...". Only the archive list can be
+# meaningfully checked, so only it runs unconditionally.
+apps_archive_packages:
+  - vlc
+
+apps_repo_packages:
+  - firefox
+  - google-chrome-stable
+  - code
+  - 1password
+  - signal-desktop
+  # Also a bar dependency, not just an app: the now-playing widget takes
+  # Spotify's MPRIS interface as its primary source.
+  - spotify-client
+
+# No apt repo exists for either, so both are pinned .deb downloads.
+apps_debs:
+  - name: discord
+    url: "https://stable.dl2.discordapp.net/apps/linux/{{ discord_version }}/discord-{{ discord_version }}.deb"
+  - name: slack-desktop
+    url: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-desktop-{{ slack_version }}-amd64.deb"
+
+# Kept as snaps: neither has a maintained apt repo worth the trouble.
+apps_snaps:
+  - name: onlyoffice-desktopeditors
+    classic: false
+  - name: gitkraken
+    classic: true
+
+# Sources this role replaces with a deb822 equivalent. unick carries a
+# hand-added spotify.list from before; leaving it would give apt the same
+# repository twice, from two files, signed by two different key paths.
+apps_legacy_sources:
+  - spotify.list
+
+apps_ppas:
+  - ppa:obsproject/obs-studio
+
+apps_ppa_packages:
+  - obs-studio
+
+# JetBrains Toolbox is deliberately out of scope for this pass — it
+# self-manages its IDEs and its licences are manual either way, so nothing
+# here can make a fresh box usefully closer to done. Rider is likewise left as
+# whatever the machine already has. Both are a later decision, not a gap.

@@ -1,0 +1,8 @@
+---
+# Autologin skips the greeter entirely. Replaces both set-default-session.sh
+# (deleted) and install-session.sh's --autologin GDM sed.
+display_manager_autologin: false
+# Purging the running display manager mid-play is the one genuinely destructive
+# thing in this playbook, so it is off by default and turned on per host —
+# cnick sets it, because a fresh Ubuntu desktop install arrives with GDM.
+display_manager_purge_gdm: false

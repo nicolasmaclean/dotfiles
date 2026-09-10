@@ -1,0 +1,28 @@
+---
+- name: Install the desktop packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ desktop_apps_packages }}"
+    state: present
+
+# gsettings rather than community.general.dconf: these schemas are relocatable
+# and their dconf paths are not the schema id with slashes, so writing dconf
+# directly would put the values where ibus never looks. Read-then-write keeps
+# it idempotent and check-mode honest.
+- name: Read the current ibus settings
+  ansible.builtin.command:
+    cmd: "gsettings get {{ item.key }}"
+  loop: "{{ desktop_apps_gsettings }}"
+  register: desktop_apps_current
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Apply the ibus settings
+  ansible.builtin.command:
+    cmd: "gsettings set {{ item.item.key }} \"{{ item.item.value }}\""
+  loop: "{{ desktop_apps_current.results }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  when: item.stdout | default('') | trim != item.item.value
+  changed_when: true

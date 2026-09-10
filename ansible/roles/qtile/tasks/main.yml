@@ -1,0 +1,91 @@
+---
+# Replaces qtile/install-session.sh entirely.
+
+# ═══ the venv ═════════════════════════════════════════════════════════════
+- name: Read the installed qtile version
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/qtile --version"
+  register: qtile_installed
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+# One `uv tool install` with four --with packages, all pinned. apt cannot do
+# this job: qtile-extras is not in the Ubuntu archive at all.
+- name: Install the qtile tool venv
+  ansible.builtin.command:
+    cmd: >-
+      {{ ansible_env.HOME }}/.local/bin/uv tool install --force
+      qtile=={{ qtile_version }}
+      {% for pkg in qtile_packages[1:] %}--with {{ pkg }} {% endfor %}
+  changed_when: true
+  when: qtile_version not in (qtile_installed.stdout | default(''))
+
+# ═══ the launcher and the session entry ═══════════════════════════════════
+# The launcher is what publishes DISPLAY to systemd --user and dbus; without it
+# every unit below would start with no display to draw on.
+- name: Install the session launcher
+  ansible.builtin.copy:
+    src: "{{ dotfiles_dir }}/qtile/session/qtile-session"
+    dest: "{{ qtile_session_bin }}"
+    remote_src: true
+    mode: "0755"
+
+# A .desktop entry cannot expand $HOME and this one is installed as root, so
+# the launcher path is substituted in. install-session.sh sed'd the same
+# placeholder; this is the same rendering by the intended route.
+- name: Install the greeter's session entry
+  become: true
+  ansible.builtin.template:
+    src: "{{ dotfiles_dir }}/qtile/qtile.desktop.j2"
+    dest: /usr/share/xsessions/qtile.desktop
+    mode: "0644"
+
+# ═══ the session's user units ═════════════════════════════════════════════
+- name: Create the user unit directory
+  ansible.builtin.file:
+    path: "{{ qtile_units_dir }}"
+    state: directory
+    mode: "0755"
+
+# Copied rather than symlinked into the repo: systemd resolves unit symlinks
+# to their target path and would then treat the repo copy as the canonical
+# unit, which breaks `systemctl --user edit` and confuses enablement.
+- name: Install the session units
+  ansible.builtin.copy:
+    src: "{{ dotfiles_dir }}/qtile/session/{{ item }}"
+    dest: "{{ qtile_units_dir }}/{{ item }}"
+    remote_src: true
+    mode: "0644"
+  loop: "{{ qtile_units }}"
+  notify: Reload the user manager
+
+- name: Reload the user manager before enabling anything
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the session services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    scope: user
+  loop: "{{ qtile_services + (['protonvpn.service'] if install_vpn | bool else []) }}"
+
+# network.py draws the network indicator itself now, so the applet would dock a
+# second icon saying the same thing. Only fires on a box still carrying the
+# unit from before that change.
+- name: Remove the leftover nm-applet unit
+  ansible.builtin.systemd_service:
+    name: nm-applet.service
+    enabled: false
+    state: stopped
+    scope: user
+  register: qtile_nm_applet
+  failed_when: false
+  changed_when: qtile_nm_applet.changed | default(false)
+  when: not ansible_check_mode
+
+- name: Delete the leftover nm-applet unit file
+  ansible.builtin.file:
+    path: "{{ qtile_units_dir }}/nm-applet.service"
+    state: absent
+  notify: Reload the user manager

@@ -1,11 +1,10 @@
 ---
 # Redundant on Ubuntu 24.04 as bootstrap.sh installs it: the apt `ansible`
-# package (9.2.0) already bundles community.general 8.3.0 and ansible.posix
-# 1.5.4. Kept because it records the floor these roles are written against, and
+# package (9.2.0) already bundles every collection below. Kept because it records the floor these roles are written against, and
 # because it becomes load-bearing the moment ansible arrives as `ansible-core`
 # or from pip instead.
 collections:
   - name: community.general      # snap:, ini_file:
     version: ">=8.3.0"
-  - name: ansible.posix          # sysctl:, authorized_key:
-    version: ">=1.5.4"
+  - name: community.crypto       # openssh_keypair: (roles/identity)
+    version: ">=2.17.1"

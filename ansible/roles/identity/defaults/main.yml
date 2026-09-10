@@ -1,0 +1,18 @@
+---
+# Set key by key rather than templated as a whole file. ~/.gitconfig is not
+# ours alone: this laptop's carries a [filter "lfs"] section written by
+# `git lfs install`, and a template would have silently deleted it — git-lfs
+# then stops working in every repo, with a backup file as the only clue. Same
+# argument as flameshot.ini in the dotfiles role: the file has other authors.
+identity_git_config:
+  - {name: user.name, value: "{{ git_user_name }}"}
+  - {name: user.email, value: "{{ git_user_email }}"}
+  - {name: init.defaultBranch, value: main}
+  - {name: pull.ff, value: "only"}
+  - {name: core.editor, value: nvim}
+
+identity_ssh_dir: "{{ ansible_env.HOME }}/.ssh"
+identity_ssh_key: "{{ identity_ssh_dir }}/id_ed25519"
+# ed25519 rather than RSA: shorter, faster, and what GitHub recommends.
+identity_ssh_type: ed25519
+identity_repo_ssh: "git@github.com:nicolasmaclean/dotfiles.git"

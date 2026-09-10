@@ -1,0 +1,8 @@
+---
+# Whether to force a full composition pipeline in the Xorg device section. This
+# is what stops tearing on NVIDIA under picom; it costs a frame of latency, so
+# it is a var rather than a constant.
+gpu_force_composition_pipeline: true
+# qtile runs `-b x11`, so nothing here wants the DRM/KMS path that exists to
+# serve Wayland compositors.
+gpu_nvidia_drm_modeset: false

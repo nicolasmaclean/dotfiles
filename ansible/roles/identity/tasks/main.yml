@@ -1,0 +1,79 @@
+---
+- name: Write the git identity
+  community.general.git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop: "{{ identity_git_config }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Create the ssh directory
+  ansible.builtin.file:
+    path: "{{ identity_ssh_dir }}"
+    state: directory
+    mode: "0700"
+
+# No key material is committed, and none is fetched. A fresh per-host key is
+# generated here and added to GitHub by hand — which is also what lets the
+# first clone be HTTPS and the remote be flipped to SSH afterwards.
+- name: Look for an existing ssh key
+  ansible.builtin.stat:
+    path: "{{ identity_ssh_key }}"
+  register: identity_existing_key
+
+# Guarded on absence, not left to the module's idempotence. unick already has
+# an ed25519 key registered with GitHub, and it carries no comment — so an
+# unguarded openssh_keypair reports *changed* purely to write the comment in.
+# That is a live private key with a copy on a server: the only safe amount of
+# churn is none, and this role exists to give a fresh box a key, not to manage
+# one that already works.
+- name: Generate a per-host ssh key
+  community.crypto.openssh_keypair:
+    path: "{{ identity_ssh_key }}"
+    type: "{{ identity_ssh_type }}"
+    comment: "{{ git_user_email }} ({{ inventory_hostname }})"
+    mode: "0600"
+  register: identity_key
+  when: not identity_existing_key.stat.exists
+
+- name: Read the public key
+  ansible.builtin.slurp:
+    src: "{{ identity_ssh_key }}.pub"
+  register: identity_pubkey
+  when: not ansible_check_mode
+  failed_when: false
+
+# noqa: command-instead-of-module — ansible.builtin.git clones and checks
+# out; it has no remote-management capability at all, so reading and
+# rewriting origin's URL can only be the git binary.
+- name: Check whether the remote is already SSH  # noqa: command-instead-of-module
+  ansible.builtin.command:
+    cmd: git -C "{{ dotfiles_dir }}" remote get-url origin
+  register: identity_remote
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Add this host's key to GitHub
+  ansible.builtin.pause:
+    prompt: |
+
+      This host's public key:
+
+        {{ identity_pubkey.content | b64decode | trim }}
+
+      Add it at https://github.com/settings/keys, then press ENTER.
+      The dotfiles remote will be switched from HTTPS to SSH after this.
+  when:
+    - not ansible_check_mode
+    - identity_remote.stdout is defined
+    - not identity_remote.stdout.startswith('git@')
+
+- name: Switch the dotfiles remote to SSH  # noqa: command-instead-of-module
+  ansible.builtin.command:
+    cmd: git -C "{{ dotfiles_dir }}" remote set-url origin {{ identity_repo_ssh }}
+  changed_when: true
+  when:
+    - identity_remote.stdout is defined
+    - not identity_remote.stdout.startswith('git@')

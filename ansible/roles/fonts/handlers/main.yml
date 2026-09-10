@@ -1,0 +1,8 @@
+---
+# fontconfig will not see a new file until its cache is rebuilt, and qtile
+# resolves font names once at bar construction — so a missed fc-cache shows up
+# as a bar full of boxes that a restart mysteriously fixes.
+- name: Rebuild the font cache
+  ansible.builtin.command:
+    cmd: fc-cache -f "{{ fonts_dir }}"
+  changed_when: true

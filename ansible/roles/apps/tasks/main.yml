@@ -1,0 +1,198 @@
+---
+- name: Create the keyring directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Fetch the repository signing keys
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ item.key_url }}"
+    dest: "/etc/apt/keyrings/{{ item.name }}.asc"
+    mode: "0644"
+  loop: "{{ apps_repos }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Add the third-party repositories
+  become: true
+  ansible.builtin.deb822_repository:
+    name: "{{ item.name }}"
+    types: deb
+    uris: "{{ item.uris }}"
+    suites: "{{ item.suites }}"
+    components: "{{ item.components }}"
+    architectures: amd64
+    signed_by: "/etc/apt/keyrings/{{ item.name }}.asc"
+    state: present
+    enabled: true
+  loop: "{{ apps_repos }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Update the apt cache for apps
+
+# Without this pin apt prefers Ubuntu's `firefox` — which is a transitional
+# package that installs the snap, exactly what the Mozilla repo is here to
+# avoid. Verified: the archive candidate is 1:1snap1-0ubuntu5.
+- name: Prefer Mozilla's firefox over Ubuntu's snap shim
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/mozilla
+    content: |
+      # Managed by Ansible (roles/apps).
+      Package: firefox*
+      Pin: origin packages.mozilla.org
+      Pin-Priority: 1000
+    mode: "0644"
+  notify: Update the apt cache for apps
+
+- name: Remove the legacy sources the deb822 ones replace
+  become: true
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d/{{ item }}"
+    state: absent
+  loop: "{{ apps_legacy_sources }}"
+  notify: Update the apt cache for apps
+
+- name: Add the PPAs
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+  loop: "{{ apps_ppas }}"
+
+- name: Refresh the cache before installing
+  ansible.builtin.meta: flush_handlers
+
+- name: Install the apps the Ubuntu archive carries
+  become: true
+  ansible.builtin.apt:
+    name: "{{ apps_archive_packages }}"
+    state: present
+
+# Skipped in check mode: the repositories these come from were only reported as
+# added, so apt genuinely has no candidate and the task fails rather than
+# reports. See the note in defaults/main.yml.
+- name: Install the apps from the third-party repositories
+  become: true
+  ansible.builtin.apt:
+    name: "{{ apps_repo_packages + apps_ppa_packages }}"
+    state: present
+  when: not ansible_check_mode
+
+# Unconditional, and not an adoption chore: `ubuntu-desktop-minimal` Recommends
+# `firefox`, and the archive's firefox is `1:1snap1` — a transitional package
+# whose whole job is installing the snap. So every clean Ubuntu Desktop install
+# arrives with the Firefox snap running before Ansible touches it, and the
+# Mozilla deb above replaces the transitional package without displacing the
+# snap it already installed. The apt pin stops the shim reasserting itself; it
+# has no reach over a snap that is already there.
+#
+# Ordered after the deb install on purpose, so there is never a moment with no
+# browser on the box. `snap remove` without --purge snapshots the profile first
+# (retained 31 days), so this is recoverable if it turns out to be wrong.
+- name: Remove the Firefox snap the Mozilla deb supersedes
+  become: true
+  community.general.snap:
+    name: firefox
+    state: absent
+
+- name: Install Steam
+  become: true
+  ansible.builtin.apt:
+    name: steam-installer
+    state: present
+  when: install_steam | bool
+
+# Unity's own repo, added here rather than in apps_repos because it ships a
+# binary keyring rather than an ASCII one.
+- name: Add the Unity Hub repository
+  become: true
+  block:
+    - name: Fetch the Unity signing key
+      ansible.builtin.get_url:
+        url: https://hub.unity3d.com/linux/keys/public
+        dest: /etc/apt/keyrings/unityhub.asc
+        mode: "0644"
+
+    - name: Add the Unity Hub source
+      ansible.builtin.deb822_repository:
+        name: unityhub
+        types: deb
+        uris: https://hub.unity3d.com/linux/repos/deb
+        suites: stable
+        components: main
+        signed_by: /etc/apt/keyrings/unityhub.asc
+        state: present
+      register: apps_unity_repo
+
+    - name: Install Unity Hub
+      ansible.builtin.apt:
+        name: unityhub
+        state: present
+        update_cache: "{{ apps_unity_repo is changed }}"
+
+# Discord and Slack have no apt repository at all, so both are pinned .deb
+# downloads. The whole block is skipped in check mode: `get_url` there reports
+# what it *would* fetch without writing the file, so the install below fails on
+# a missing path — and a dry run would otherwise pull ~97MB (Slack alone is 95)
+# to no purpose. The dpkg-query guard is what keeps a real re-run idempotent.
+- name: Pinned .deb downloads
+  when: not ansible_check_mode
+  block:
+    - name: Check which pinned debs are already installed
+      ansible.builtin.command:
+        cmd: "dpkg-query -W -f=${Version} {{ item.name }}"
+      loop: "{{ apps_debs }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: apps_deb_state
+      changed_when: false
+      check_mode: false
+      failed_when: false
+
+    - name: Create the download cache
+      ansible.builtin.file:
+        path: "{{ apps_deb_cache }}"
+        state: directory
+        mode: "0700"
+
+    - name: Download the pinned debs
+      ansible.builtin.get_url:
+        url: "{{ item.item.url }}"
+        dest: "{{ apps_deb_cache }}/{{ item.item.name }}.deb"
+        mode: "0644"
+      loop: "{{ apps_deb_state.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: item.rc != 0
+      register: apps_deb_files
+
+    - name: Install the pinned debs
+      become: true
+      ansible.builtin.apt:
+        deb: "{{ apps_deb_cache }}/{{ item.item.item.name }}.deb"
+        state: present
+      loop: "{{ apps_deb_files.results }}"
+      loop_control:
+        label: "{{ item.item.item.name }}"
+      when: not (item.skipped | default(false))
+
+    # Nothing reads these again — dpkg owns the packages now — and Slack's is
+    # 95MB.
+    - name: Drop the downloaded debs
+      ansible.builtin.file:
+        path: "{{ apps_deb_cache }}"
+        state: absent
+
+- name: Install the snaps that have no apt route
+  become: true
+  community.general.snap:
+    name: "{{ item.name }}"
+    classic: "{{ item.classic }}"
+    state: present
+  loop: "{{ apps_snaps }}"
+  loop_control:
+    label: "{{ item.name }}"

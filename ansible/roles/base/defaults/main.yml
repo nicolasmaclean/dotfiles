@@ -1,0 +1,14 @@
+---
+# `upgrade: dist` is slow and is the one task in this role that can change
+# hundreds of packages. Left on because a provisioning run should leave a
+# current machine, but easy to turn off for a quick targeted re-run:
+#     ansible-playbook site.yml --limit "$(hostname)" -e base_dist_upgrade=false
+base_dist_upgrade: true
+
+base_packages:
+  - build-essential
+  - curl
+  - git
+  - make
+  - unzip          # the fonts role unpacks a release zip
+  - ca-certificates

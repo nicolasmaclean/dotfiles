@@ -1,0 +1,33 @@
+---
+qtile_tool_dir: "{{ ansible_env.HOME }}/.local/share/uv/tools/qtile"
+qtile_session_bin: "{{ ansible_env.HOME }}/.local/bin/qtile-session"
+qtile_units_dir: "{{ ansible_env.HOME }}/.config/systemd/user"
+
+# The --with list is a contract, not a convenience. spotify_web.py is
+# stdlib-only (urllib) precisely so the now-playing widget adds nothing to it,
+# and uv-receipt.toml records exactly these five. Anything that "tidies"
+# spotify_web.py to requests breaks the venv.
+qtile_packages:
+  - "qtile=={{ qtile_version }}"
+  - "qtile-extras=={{ qtile_extras_version }}"
+  - "psutil=={{ psutil_version }}"
+  - "dbus-fast=={{ dbus_fast_version }}"
+  - "pyxdg=={{ pyxdg_version }}"
+
+# Every unit is WantedBy=qtile-session.target, which config.py's startup_once
+# hook starts and its shutdown hook stops — so they come and go with qtile.
+qtile_units:
+  - qtile-session.target
+  - picom.service
+  - polkit-agent.service
+  - dunst.service
+  - flameshot.service
+  - protonvpn.service
+
+# The target is not a service and has nothing to enable; protonvpn is added
+# only when the vpn role runs.
+qtile_services:
+  - picom.service
+  - polkit-agent.service
+  - dunst.service
+  - flameshot.service

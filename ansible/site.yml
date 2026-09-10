@@ -54,19 +54,22 @@
           dotfiles={{ dotfiles_dir }}
       tags: always
 
-  # Phase 5. Ordered as they must run; every one of them is still unwritten.
-  roles: []
-    # - base
-    # - fonts
-    # - toolchains
-    # - xorg
-    # - gpu
-    # - display-manager
-    # - qtile
-    # - spotify-now-playing
-    # - desktop-apps
-    # - dotfiles
-    # - neovim
-    # - apps
-    # - { role: vpn, when: install_vpn }
-    # - identity
+  # Ordered as they must run. Only two orderings are load-bearing: toolchains
+  # installs uv, which the qtile role then uses, and apps adds the Spotify repo
+  # that spotify_now_playing's widget depends on being installed from. Every
+  # role is independently runnable with --tags.
+  roles:
+    - {role: base, tags: [base]}
+    - {role: fonts, tags: [fonts]}
+    - {role: toolchains, tags: [toolchains]}
+    - {role: xorg, tags: [xorg]}
+    - {role: gpu, tags: [gpu]}
+    - {role: display_manager, tags: [display-manager, dm]}
+    - {role: qtile, tags: [qtile]}
+    - {role: desktop_apps, tags: [desktop-apps]}
+    - {role: dotfiles, tags: [dotfiles]}
+    - {role: neovim, tags: [neovim]}
+    - {role: apps, tags: [apps]}
+    - {role: vpn, tags: [vpn], when: install_vpn | bool}
+    - {role: spotify_now_playing, tags: [spotify]}
+    - {role: identity, tags: [identity]}

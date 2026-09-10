@@ -1,0 +1,19 @@
+---
+xorg_packages:
+  - xserver-xorg
+  # dbus-bin, NOT dbus-x11: `dpkg -S` says dbus-bin is what owns
+  # /usr/bin/dbus-update-activation-environment, which qtile-session calls to
+  # publish DISPLAY to the user bus. dbus-x11 is not installed on this laptop
+  # and is not needed.
+  - dbus-bin
+  # bin/qtile-nested runs the config in a nested X server; it is the only way
+  # to test a config change without betting the session on it.
+  - xserver-xephyr
+  # polkit-agent.service execs this package's agent. Without it polkit can only
+  # answer "Authorization requires interaction" and GUI apps report that as
+  # their own vague failure.
+  - policykit-1-gnome
+  # qtile-session exports QT_QPA_PLATFORMTHEME=gtk3; these are the plugins that
+  # makes true for Qt5 and Qt6 apps respectively.
+  - qt5-gtk2-platformtheme
+  - qt6-gtk-platformtheme
