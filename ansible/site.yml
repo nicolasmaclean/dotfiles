@@ -1,0 +1,72 @@
+---
+# The single playbook. Roles arrive in phase 5, each gated on the host_vars
+# below and each independently runnable with --tags; until then this is the
+# plumbing on its own, which is deliberately runnable and check-runnable so the
+# wiring can be proved before there is a role to blame.
+#
+#     ansible-playbook site.yml --limit "$(hostname)" --ask-become-pass
+#
+# --limit is required — see inventory/hosts.yml for why. bootstrap.sh passes it.
+
+- name: Provision workstation
+  hosts: workstations
+  gather_facts: true
+
+  pre_tasks:
+    # This also proves the var layout resolves, which is worth a task on its
+    # own: form_factor comes from inventory/host_vars/ (inventory-adjacent)
+    # while qtile_version comes from group_vars/ next to this playbook
+    # (playbook-adjacent). The two are found by different mechanisms, so a run
+    # that finds one is no evidence it found the other.
+    - name: Host must declare the branching vars the roles gate on
+      ansible.builtin.assert:
+        that:
+          - form_factor in ['laptop', 'desktop']
+          - gpu in ['intel', 'nvidia']
+          - install_steam is boolean
+          - install_vpn is boolean
+          - qtile_version is defined
+        fail_msg: >-
+          inventory/host_vars/{{ inventory_hostname }}.yml is missing or
+          malformed, or group_vars/all.yml was not picked up.
+        quiet: true
+      tags: always
+
+    - name: Only Ubuntu 24.04 is supported
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == 'Ubuntu'
+          - ansible_distribution_version == '24.04'
+        fail_msg: >-
+          Found {{ ansible_distribution }} {{ ansible_distribution_version }}.
+          The roles are structured so a second distro could be added, but none
+          is tested and the apt tasks would run regardless.
+        quiet: true
+      tags: always
+
+    - name: Report what this run resolved
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} ({{ ansible_distribution }}
+          {{ ansible_distribution_version }}): form_factor={{ form_factor }}
+          gpu={{ gpu }} steam={{ install_steam }} vpn={{ install_vpn }}
+          user={{ ansible_user_id }} home={{ ansible_env.HOME }}
+          dotfiles={{ dotfiles_dir }}
+      tags: always
+
+  # Phase 5. Ordered as they must run; every one of them is still unwritten.
+  roles: []
+    # - base
+    # - fonts
+    # - toolchains
+    # - xorg
+    # - gpu
+    # - display-manager
+    # - qtile
+    # - spotify-now-playing
+    # - desktop-apps
+    # - dotfiles
+    # - neovim
+    # - apps
+    # - { role: vpn, when: install_vpn }
+    # - identity

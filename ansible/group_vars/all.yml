@@ -1,0 +1,28 @@
+---
+# Shared by both hosts. Every pin below was read off the laptop's live install
+# on 2026-09-09, not chosen — the point is that a fresh box gets what this one
+# is actually running.
+
+# --- identity -------------------------------------------------------------
+# Consumed by the `identity` role's ~/.gitconfig template.
+git_user_name: "Nick Maclean"
+git_user_email: "nick@imaclean.me"
+
+# --- paths ----------------------------------------------------------------
+# bootstrap.sh clones here, and qtile/pyrightconfig.json's relative venvPath
+# ("../../.local/share/uv/tools") assumes it.
+dotfiles_dir: "{{ ansible_env.HOME }}/dotfiles"
+
+# --- version pins ---------------------------------------------------------
+# The qtile venv is a single `uv tool install` with four --with packages. That
+# list is a contract, not a convenience: spotify_web.py is stdlib-only so the
+# now-playing widget adds nothing to it, and these five names are exactly what
+# ~/.local/share/uv/tools/qtile/uv-receipt.toml records.
+qtile_version: "0.37.0"
+qtile_extras_version: "0.37.0"
+psutil_version: "7.2.2"
+dbus_fast_version: "5.0.22"
+pyxdg_version: "0.28"
+
+# Built with cargo, not apt: the Ubuntu archive has only 0.13.2.
+alacritty_version: "0.16.1"

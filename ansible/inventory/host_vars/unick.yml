@@ -1,0 +1,18 @@
+---
+# Laptop.
+#
+# No hardware values belong in this file. Battery, backlight, thermal sensor,
+# wallpaper and the number of screens are detected at runtime by
+# qtile/hardware.py, which is what lets one config serve both machines and
+# survive a hotplug. Only *software* branching lives here.
+
+form_factor: laptop
+
+# Which GPU drives X, not which GPUs are present. This box is hybrid — Intel
+# UHD 630 plus a GTX 1650 Mobile on PRIME on-demand, so X runs on i915 and the
+# nvidia branch of the `gpu` role (nouveau blacklist, ForceFullCompositionPipeline)
+# must not fire here.
+gpu: intel
+
+install_steam: false
+install_vpn: true      # proton-vpn-gnome-desktop 0.10.1 is installed today

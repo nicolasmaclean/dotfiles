@@ -1,0 +1,14 @@
+---
+# Desktop. Does not exist yet — this file is the target being built toward, and
+# `cnick` is the hostname to type at the Ubuntu installer.
+#
+# As with the laptop: no hardware values. qtile/hardware.py answers None for
+# battery and backlight on this box, drops the two widgets, and builds one bar
+# per output from generate_screens().
+
+form_factor: desktop
+
+gpu: nvidia
+
+install_steam: true
+install_vpn: true
