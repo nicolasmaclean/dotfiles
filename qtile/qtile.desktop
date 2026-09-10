@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Qtile
-Comment=Qtile tiling window manager (X11)
-Exec=/home/nick/.local/bin/qtile-session
-TryExec=/home/nick/.local/bin/qtile-session
-Type=Application
-DesktopNames=qtile
-Keywords=tiling;wm;windowmanager;window;manager;

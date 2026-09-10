@@ -13,4 +13,4 @@ if command -v dbus-update-activation-environment >/dev/null 2>&1; then
     dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME
 fi
 
-exec /home/nick/.local/bin/qtile start -b x11
+exec "$HOME/.local/bin/qtile" start -b x11

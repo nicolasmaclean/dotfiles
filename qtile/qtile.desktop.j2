@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Qtile
+Comment=Qtile tiling window manager (X11)
+# A .desktop file cannot expand $HOME, and this one is installed into
+# /usr/share/xsessions/ as root, so the path has to be written in. Rendered by
+# Ansible's qtile role, and by install-session.sh until that lands - both
+# substitute the same placeholder.
+Exec={{ qtile_session_bin }}
+TryExec={{ qtile_session_bin }}
+Type=Application
+DesktopNames=qtile
+Keywords=tiling;wm;windowmanager;window;manager;

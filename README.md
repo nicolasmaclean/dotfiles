@@ -12,18 +12,66 @@ there shadows the home-directory one completely rather than merging with it.
 
 `ln -s ~/dotfiles/qtile ~/.config/qtile`
 
-The session expects two packages: `sudo apt install policykit-1-gnome dunst`.
+Three more the install script does not link, because nothing in the session
+starts them from here — the compositor unit, the launcher and the power menu
+find them at the XDG paths:
+
+```
+ln -s ~/dotfiles/picom ~/.config/picom
+ln -s ~/dotfiles/rofi  ~/.config/rofi
+ln -s ~/dotfiles/bin/qtile-nested     ~/.local/bin/qtile-nested
+ln -s ~/dotfiles/bin/rofi-power-menu  ~/.local/bin/rofi-power-menu
+```
+
+The session expects four packages — `install-session.sh`'s own header lists
+them, and the Print key and the bar clock are dead without the last two:
+`sudo apt install policykit-1-gnome dunst flameshot gsimplecal`.
 
 Then, as yourself — *not* with sudo, it calls sudo for the two steps that need it:
 
 `~/.config/qtile/install-session.sh`
 
-That installs the launcher (`~/.local/bin/qtile-session`), the GDM session entry,
-the `systemd --user` units the session is made of (`qtile-session.target`,
-`picom.service`, `protonvpn.service`, `polkit-agent.service`, `dunst.service`),
-the `~/.config/dunst` symlink that points dunst at this repo's `dunstrc`, and the
-ibus input sources the bar's keyboard widget cycles through. Pass `--autologin` to skip the greeter; run `set-default-session.sh` to
-make autologin land in qtile rather than GNOME.
+That installs the launcher (`~/.local/bin/qtile-session`), the greeter's session
+entry (rendered from `qtile/qtile.desktop.j2` — a `.desktop` file cannot expand
+`$HOME`, so the launcher path is substituted in), the `systemd --user` units the
+session is made of (`qtile-session.target`, `picom.service`, `protonvpn.service`,
+`polkit-agent.service`, `dunst.service`, `flameshot.service`), the `~/.config`
+symlinks for dunst, flameshot and gsimplecal, and the ibus input sources the
+bar's keyboard widget cycles through. Pass `--autologin` to skip the greeter.
+
+For `startx`/`xinit` rather than a greeter: `ln -s ~/dotfiles/xinitrc ~/.xinitrc`.
+
+The one path still written in absolute is `flameshot/flameshot.ini`'s `savePath`.
+Flameshot expands neither `$HOME` nor `~` in it — verified: with either, a
+capture saves nothing at all — so it stays absolute and Ansible sets it per host.
+
+## What this box has
+
+`qtile/hardware.py` works out at runtime what `config.py` used to hardcode:
+which battery, which backlight, which temperature sensor, which wallpaper, and
+how many screens. That is what lets one config serve a laptop and a desktop.
+
+    python3 ~/.config/qtile/hardware.py    # print what it detected
+
+Nothing in it can raise — every probe is wrapped in `@safe(fallback)`, because a
+config exception drops qtile into its own `default_config` (mod4 bindings, no
+bar, no groups), which is a dead session on a machine you may have no other way
+into.
+
+Each fact can be overridden, highest precedence first: `QTILE_<NAME>` in the
+environment, then `~/.config/qtile-host.json` (optional, normally absent), then
+detection. An **empty** environment value is a real answer meaning "this box has
+none", which is what makes the desktop testable from the laptop:
+
+    QTILE_BATTERY= QTILE_THERMAL= qtile-nested   # the batteryless desktop path
+    QTILE_FAKE_OUTPUTS=3 qtile-nested            # three screens on one panel
+
+Missing hardware removes widgets rather than showing broken ones: no battery
+means no battery widget *and* no orphaned separator beside it, and no usable CPU
+sensor means no thermometer glyph either. Screens come from `generate_screens`,
+so a monitor plugged in mid-session grows a bar onto it; the Screen objects are
+cached by index and re-handed, because rebuilding them silently drops the
+systray and leaks a bar window on every replug.
 
 ## Notifications
 

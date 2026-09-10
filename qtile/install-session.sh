@@ -38,7 +38,15 @@ UNITS="$HOME/.config/systemd/user"
 install -Dm755 "$HERE/session/qtile-session" "$HOME/.local/bin/qtile-session"
 echo "installed ~/.local/bin/qtile-session"
 
-sudo install -Dm644 "$HERE/qtile.desktop" /usr/share/xsessions/qtile.desktop
+# qtile.desktop.j2 rather than a plain file: a .desktop entry cannot expand
+# $HOME and this one is installed as root, so the launcher path has to be
+# written in. Ansible's qtile role renders the same template with the same
+# placeholder; this is the pre-Ansible path.
+RENDERED="$(mktemp)"
+trap 'rm -f "$RENDERED"' EXIT
+sed "s|{{ qtile_session_bin }}|$HOME/.local/bin/qtile-session|g" \
+    "$HERE/qtile.desktop.j2" > "$RENDERED"
+sudo install -Dm644 "$RENDERED" /usr/share/xsessions/qtile.desktop
 echo "installed /usr/share/xsessions/qtile.desktop"
 
 # ═══ the session's user units ════════════════════════════════════════════
@@ -130,16 +138,21 @@ gsettings set org.freedesktop.ibus.panel show-icon-on-systray false
 echo "configured ibus: preload-engines + hidden tray icon"
 
 # ═══ optional: skip the greeter ══════════════════════════════════════════
+# Whoever is running this, not a name baked into the script. The whole block is
+# on its way out: the Ansible display-manager role installs LightDM and
+# templates autologin into /etc/lightdm/lightdm.conf.d/50-qtile.conf, which
+# also makes the old AccountsService hack (set-default-session.sh, deleted)
+# unnecessary. Until that lands this is still the way to skip the GDM greeter.
 if [ "${1:-}" = "--autologin" ]; then
+    ME="$(id -un)"
     sudo cp -n /etc/gdm3/custom.conf /etc/gdm3/custom.conf.bak || true
     sudo sed -i \
       -e 's/^#\s*AutomaticLoginEnable\s*=.*/AutomaticLoginEnable = true/' \
-      -e 's/^#\s*AutomaticLogin\s*=.*/AutomaticLogin = nick/' \
+      -e "s/^#\\s*AutomaticLogin\\s*=.*/AutomaticLogin = $ME/" \
       /etc/gdm3/custom.conf
-    echo "enabled GDM autologin for nick (backup: /etc/gdm3/custom.conf.bak)"
+    echo "enabled GDM autologin for $ME (backup: /etc/gdm3/custom.conf.bak)"
     grep -E '^Automatic' /etc/gdm3/custom.conf
 fi
 
 echo
-echo "done. log out and pick Qtile in GDM, or run set-default-session.sh to"
-echo "make it the session autologin lands in."
+echo "done. log out and pick Qtile in the greeter."
