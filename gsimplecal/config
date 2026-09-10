@@ -35,6 +35,16 @@ force_lang = en_US.utf8
 # the bar you happen to click. 46 = the bar's bottom edge (B.gutter 6 + height
 # 34 = 40) plus another gutter, so the popup sits under the bar by the same
 # margin the bar floats by.
+#
+# Those numbers are theme.py's TopBar.gutter and TopBar.height, and this file
+# cannot read them - the coupling is by hand, so change either there and this
+# has to move with it. dunst/dunstrc's `offset = 15x49` is the other consumer
+# of the same two values, and the two break together.
+#
+# Because GTK clamps into the monitor the pointer is on, all of this is already
+# per-monitor: clicking the clock on a second screen opens the calendar under
+# *that* clock with no extra configuration. Only a secondary bar given a
+# different height from the primary would break it.
 mainwindow_position = mouse
 mainwindow_xoffset = -2
 mainwindow_yoffset = 46

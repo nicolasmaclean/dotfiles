@@ -14,10 +14,17 @@
 [global]
 
     # ═══ display ═════════════════════════════════════════════════════════
-    monitor = 0
-    # none, so a notification always lands on monitor 0 rather than chasing
-    # the pointer or the focused window.
-    follow = none
+    # Put the notification on the monitor the pointer is on. There is no
+    # `monitor` setting alongside this, deliberately: the two are alternatives
+    # rather than complements - monitor is only consulted when follow = none -
+    # so with follow set it would be dead configuration.
+    #
+    # mouse rather than keyboard because keyboard follows _NET_ACTIVE_WINDOW,
+    # which qtile does set but which goes stale when the focused group is
+    # empty; a notification would then stick to wherever focus last was.
+    # config.py sets follow_mouse_focus = True, so on this desktop the pointer
+    # already *is* the focus.
+    follow = mouse
 
     # ═══ geometry ════════════════════════════════════════════════════════
     width = 300
@@ -28,6 +35,13 @@
     origin = top-right
     # 1.9.2 wants WxH here, not `(15, 49)`. 49px of top offset clears the
     # bar - 34px of body plus its 6px gutter - with 9px of air under it.
+    #
+    # Those two numbers are theme.py's TopBar.height and TopBar.gutter, and
+    # this file cannot read them, so the coupling is by hand: change either
+    # there and this has to move with it. gsimplecal/config carries the same
+    # coupling as mainwindow_yoffset. origin resolves per-monitor, so the
+    # offset needs no change for a second screen - it only breaks if secondary
+    # bars are ever given a different height from the primary.
     offset = 15x49
     # 0 auto-detects from Xft.dpi.
     scale = 0
