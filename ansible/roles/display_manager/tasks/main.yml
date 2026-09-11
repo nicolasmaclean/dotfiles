@@ -67,3 +67,44 @@
   when:
     - not (display_manager_purge_conflicting | bool)
     - not ansible_check_mode
+
+# gnome-keyring's PAM auto-unlock (session pam_gnome_keyring.so auto_start,
+# shipped by the lightdm package itself, not this role) has been observed
+# flaky on this CachyOS+LightDM stack: on a fresh boot the daemon can end up
+# claiming a `login` collection exists - it shows up in ReadAlias and the
+# Collections property - without ever actually exporting that object on the
+# session bus. Any app that then touches the default keyring (ProtonVPN's
+# sign-in did) hangs forever with no error, no prompt, and nothing in its own
+# log to point at gnome-keyring at all.
+#
+# A collection that is merely *locked* is normal - nothing has asked to
+# unlock it yet - and is not this bug. The tell is the object not existing,
+# which is what this checks: `Locked` fails with "does not exist" only in the
+# broken phantom-collection state, never for an ordinary locked-but-real one.
+- name: Check whether the login keyring collection is actually exported
+  ansible.builtin.command:
+    cmd: >-
+      busctl --user get-property org.freedesktop.secrets
+      /org/freedesktop/secrets/collection/login
+      org.freedesktop.Secret.Collection Locked
+  register: display_manager_login_keyring
+  failed_when: false
+  changed_when: false
+
+- name: Warn if the login keyring is stuck in the broken phantom-collection state
+  ansible.builtin.debug:
+    msg: >-
+      gnome-keyring's `login` collection is not actually exported on the
+      session bus, even though the daemon claims it exists. Apps that touch
+      the default keyring (ProtonVPN's sign-in, browsers saving passwords,
+      etc.) will hang indefinitely with no error. Recover with:
+        rm -f ~/.local/share/keyrings/login.keyring
+      then log out and back in through LightDM so PAM recreates it from your
+      actual login password - do not retype the password by hand in a
+      terminal for this, a mismatch there is unrecoverable except by
+      repeating this same deletion. If it recurs every boot, the
+      LightDM/pam_gnome_keyring auto-unlock handoff is broken on this box and
+      needs a real fix rather than repeating this workaround.
+  when: >-
+    display_manager_login_keyring.rc != 0 and
+    'does not exist' in (display_manager_login_keyring.stderr | default(''))

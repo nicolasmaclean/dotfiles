@@ -135,41 +135,29 @@ The month header sits in the same band as a `TabbedColumns` tab strip, and a
 tab strip is an Internal window, so it paints over the popup. `config.py`'s
 `_raise_calendar_popup` hook raises the popup once it is managed.
 
-## Now playing
+## Now playing (Spotify)
 
-The bar's track readout reads Spotify's MPRIS interface over dbus, which only
-ever knows about players running on this machine. Playing from the phone left
-it blank, so it falls back to Spotify's Web API — that answers for the
-*account*, and so covers every device signed into it. MPRIS stays the primary
-source wherever it has an answer: it is pushed and instant, where the API is
-polled every ten seconds.
+The currently playing song on Spotify. This queries any local running Spotify apps, but there is also the web auth flow below that allows this widget to query Spotify's API for your other devices' now playing.
 
-Whichever source is actually *playing* wins, rather than local-always. The
-desktop client stays on the bus when you start playing from the phone — paused,
-still holding the last track it played — so preferring it there would leave the
-bar naming a song that stopped an hour ago.
-
-The fallback needs credentials, which are deliberately not in this repo. Without
-them the widget logs one line and carries on as a plain MPRIS readout.
+You can just completely skip the spotify authentication step from ansible or below without any disruption to the local Spotify connection.
 
 1. At <https://developer.spotify.com/dashboard>, **Create app**. Any name; tick
    **Web API**; set the redirect URI to `http://127.0.0.1:8888/callback` and
-   click **Add**. It has to be the loopback IP — Spotify rejects `localhost` as
-   a hostname. Leave the app in development mode: that caps it at 25 authorised
-   users and you are already one of them as the owner.
-2. Put the client ID and secret in `~/.config/qtile-spotify/credentials.json`
-   (mode 0600, alongside the `redirect_uri` above).
+   click **Add**. It has to be the loopback IP.
+2. Put the client ID and secret into `~/.config/qtile-spotify/credentials.json`:
+
+```json
+{
+    "client_id": "YOUR_ID",
+    "client_secret": "YOUR_SECRET",
+    "redirect_uri": "http://127.0.0.1:8888/callback"
+}
+```
+
 3. Run the login once. It opens a browser, takes the approval, and writes a
    refresh token to `~/.config/qtile-spotify/token.json`:
 
-        python3 ~/.config/qtile/spotify_auth.py
+```python
+python3 ~/.config/qtile/spotify_auth.py
+```
 
-The refresh token does not expire, so step 3 is a one-off — the widget trades it
-for an hour-long access token as it goes and rewrites the file atomically, a
-torn write there being the one thing that would send you back to the browser.
-Re-run it if you ever revoke the app's access or change the account password.
-
-The poll is well inside Spotify's rate limit, which is a rolling 30-second
-window. A failed request means *unknown*, not *stopped*, so the last known track
-is held for three polls before the bar clears — otherwise a flaky link would
-flicker it every ten seconds.
