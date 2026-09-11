@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 
+import libqtile.core.manager
 from libqtile.config import Screen
 from libqtile.log_utils import logger
 
@@ -420,6 +421,15 @@ def screen_generator(build):
     window and drawer if it is ever handed back, and the one Screen that must
     not be rebuilt - index 0, which carries the trays - is never finalized
     while any output at all is present.
+
+    `outputs` arrives already in desk order - see _order_outputs_for_desk
+    below, which patches the one spot upstream that both this function and
+    _process_screens' own geometry pairing read from. Reordering again in
+    here would be pointless: _process_screens pairs config_screens[i] with
+    its *own* re-fetched output_info[i], not with whatever `outputs` this
+    function was handed, so a local reorder here would only shuffle which
+    cached bar style lands on which monitor while the geometry stayed keyed
+    to the unordered list underneath it.
     """
     cache = {}
 
@@ -436,6 +446,76 @@ def screen_generator(build):
             return [Screen() for _ in outputs] or [Screen()]
 
     return generate
+
+
+# _process_screens (libqtile/core/manager.py) calls self.get_output_info()
+# *twice knowing it's the same list* - once to hand to generate_screens above,
+# once again to zip against whatever generate_screens returned:
+#
+#   output_info = self.get_output_info()
+#   config_screens = self.get_screens_from_config(output_info)   # -> our generate()
+#   for i, info in enumerate(output_info):
+#       scr = config_screens[i]
+#       scr.output = info                                        # <- geometry
+#       scr._configure(self, i, info.rect.x, info.rect.y, ...)
+#
+# scr.output, and therefore every pixel _configure paints, comes from
+# output_info[i] - the RAW, RandR-connector-order list - regardless of what
+# order generate_screens' return value is in. Sorting inside generate() (see
+# the docstring above) only permutes which cached Screen object sits at
+# config_screens[i]; _process_screens still glues output_info[i]'s unsorted
+# geometry onto it. The two would drift out of step - the tray-carrying
+# Screen built for logical index 0 landing on whatever monitor the connector
+# order happens to put first, not the physically leftmost one.
+#
+# The only lever that keeps both reads of output_info consistent is patching
+# get_output_info() itself, once, so every caller - ours and
+# _process_screens' own second call - sees the same reordered list.
+# Qtile.get_output_info is a plain method, not part of any documented
+# extension point, which is why this is a monkeypatch rather than a config
+# option: there is no generate_screens-shaped hook upstream of the ordering
+# _process_screens needs to not undo.
+
+# cnick's desk, screen 0/1/2 left-to-right, matching physical position:
+# HDMI-1 (portrait, left), DP-1 (middle), HDMI-0 (right) - confirmed by
+# blanking each output live and watching which physical panel went dark;
+# the connector names don't sort the way their desk position does. An
+# output whose port is not listed here - the laptop's single eDP-*, or a
+# monitor plugged in later - sorts after everything named, by (x, y), so it
+# never raises and never hijacks a slot a named output is entitled to.
+_DESK_ORDER = ("HDMI-1", "DP-1", "HDMI-0")
+
+
+def _order_outputs_for_desk(get_output_info):
+    """Wrap Qtile.get_output_info so its result matches _DESK_ORDER.
+
+    Idempotent against repeat wrapping: a config reload re-execs this module
+    (see confreader._reload_config_submodules) and would otherwise nest a new
+    ordering wrapper around the previous reload's wrapper on every
+    mod+ctrl+r. Reordering an already-ordered list is harmless, but the
+    closures would still pile up one per reload for the life of the session.
+    """
+    if getattr(get_output_info, "_ordered_for_desk", False):
+        return get_output_info
+
+    def _key(output):
+        try:
+            rank = _DESK_ORDER.index(output.port)
+        except ValueError:
+            rank = len(_DESK_ORDER)
+        return (rank, output.rect.x, output.rect.y)
+
+    @functools.wraps(get_output_info)
+    def wrapped(self):
+        return sorted(get_output_info(self), key=_key)
+
+    wrapped._ordered_for_desk = True
+    return wrapped
+
+
+libqtile.core.manager.Qtile.get_output_info = _order_outputs_for_desk(
+    libqtile.core.manager.Qtile.get_output_info
+)
 
 
 # ═══ the answers ══════════════════════════════════════════════════════════

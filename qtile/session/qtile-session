@@ -25,4 +25,43 @@ if command -v dbus-update-activation-environment >/dev/null 2>&1; then
     dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_IM_MODULE QT_IM_MODULE XMODIFIERS
 fi
 
+# cnick's three-monitor desk: HDMI-0 in the middle (primary, landscape),
+# HDMI-1 on the left mounted in portrait, DP-1 on the right (landscape).
+# Applied here rather than left to whatever X/the driver autodetects, and
+# before qtile starts rather than from a qtile hook, so there is one xrandr
+# layout in effect for the whole session and qtile's own screen detection
+# never has to unwind a wrong initial guess.
+#
+# Guarded by output name rather than hostname: it is a no-op wherever these
+# three outputs are not all connected (unick's single panel, a nested test
+# session, a future change of cabling), rather than hardcoding "only on
+# cnick" and needing an edit here every time the desk changes.
+#
+# HDMI-1's rotated size is 1080x1920 (--rotate left turns the 1920x1080
+# mode on its side). Positions below are left-to-right and contiguous -
+# HDMI-1 at x=0..1080, DP-1 at 1080..3000, HDMI-0 at 3000..4920 - which is
+# what a --pos of 840/1920/3840 (DP-1 kept at its old, pre-rotation x)
+# actually resolves to: the driver normalizes the whole virtual screen so
+# its leftmost occupied pixel sits at x=0, trimming what would otherwise be
+# 840px of dead root-window space to the left of HDMI-1. Written as the
+# already-normalized values so this matches what `xrandr --query` reports
+# after it runs, instead of the pre-normalization numbers that were handed
+# to it.
+# Top-aligned (y=0) against DP-1's y=0: HDMI-1's taller portrait frame
+# extends 840px below the other two, rather than floating above them.
+#
+# DP-1, not HDMI-0, is the physical middle monitor and HDMI-0 is the
+# physical right one - confirmed by blanking each output live and watching
+# which physical panel went dark. The connector names don't sort the way
+# their desk position does; do not "simplify" this back to alphabetical.
+if command -v xrandr >/dev/null 2>&1 \
+    && xrandr --query | grep -q '^HDMI-0 connected' \
+    && xrandr --query | grep -q '^HDMI-1 connected' \
+    && xrandr --query | grep -q '^DP-1 connected'; then
+    xrandr \
+        --output HDMI-1 --pos 0x0 --rotate left \
+        --output DP-1 --primary --pos 1080x0 --rotate normal \
+        --output HDMI-0 --pos 3000x0 --rotate normal
+fi
+
 exec "$HOME/.local/bin/qtile" start -b x11

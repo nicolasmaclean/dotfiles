@@ -1,5 +1,7 @@
 # ═══ imports ═══════════════════════════════════════════════════════════════
 # qtile core
+import os
+
 from libqtile.config import Click, Drag, Key
 from libqtile.lazy import lazy
 
@@ -40,6 +42,26 @@ keys = [
     # --- launching ---
     Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
     Key([mod], "r", lazy.spawn(launcher), desc="Search and launch an app"),
+    # --ask-become-pass needs a real TTY for the sudo prompt, and $(hostname)
+    # needs a shell to expand it - lazy.spawn execs argv directly with no
+    # shell in between, so both go through `sh -c` inside a terminal rather
+    # than straight to ansible-playbook. The inner command sticks to
+    # single-word, no-quote-needed pieces (unquoted $(hostname), no quoted
+    # prompt string) so it fits in one un-escaped single-quoted argument to
+    # `-e sh -c` with no nested-quote escaping to get wrong.
+    Key(
+        [mod, "control"],
+        "a",
+        lazy.spawn(
+            "{terminal} --working-directory {ansible_dir} -e sh -c "
+            "'ansible-playbook site.yml --limit $(hostname) --ask-become-pass; "
+            "echo; echo Press enter to close...; read'".format(
+                terminal=terminal,
+                ansible_dir=os.path.expanduser("~/dotfiles/ansible"),
+            )
+        ),
+        desc="Re-run ansible-playbook to reprovision this box",
+    ),
     # --- layout / window management ---
     Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
     Key([mod], "w", lazy.window.kill(), desc="Kill focused window"),
