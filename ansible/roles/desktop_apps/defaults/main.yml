@@ -39,3 +39,11 @@ desktop_apps_gsettings:
   # ibus-ui-gtk3 keeps running, because it also draws the pinyin candidates.
   - key: org.freedesktop.ibus.panel show-icon-on-systray
     value: "false"
+  # org.gnome.desktop.interface, not a qtile/ibus namespace, but its schema
+  # ships in gsettings-desktop-schemas, which arrives here as a transitive
+  # dependency of gtk3 (roles/xorg) via at-spi2-core — no extra package
+  # needed. GTK3.24+/GTK4 read this key directly without a running portal, so
+  # Adwaita and any theme that ships a dark variant switch on its own; Firefox
+  # and other GTK apps follow suit.
+  - key: org.gnome.desktop.interface color-scheme
+    value: "'prefer-dark'"
