@@ -15,10 +15,67 @@ launcher = "rofi -show drun"
 mod = "mod1"  # Alt: keyboard modifier for every Key() binding
 mod_mouse = "mod4"  # Windows key: blender and other 3d software uses alt+mouse, so leave mod+mouse to windows key
 
+
+# --- cross-screen h/l ---
+# mod+h/l normally steps between columns (lazy.layout.left()/right()), which
+# wraps around forever on one screen - the leftmost column's mod+h lands back
+# on the rightmost column rather than going anywhere. On the desk's
+# three-monitor line, once there's no further column to step into, jump to
+# whichever screen actually sits in that direction instead of wrapping.
+#
+# "no further column" is asked of the layout itself (EvenColumns.at_left_edge/
+# at_right_edge in tabbed_column.py) rather than hardcoding screen indices:
+# hardware.py's _DESK_ORDER already notes that screen index order (DP-1,
+# HDMI-1, HDMI-0) does not match physical left-to-right order, so neighbours
+# are found by comparing real screen.x instead.
+#
+# On the portrait monitor, real left/right never varies with column state at
+# all (tabbed_column.py's portrait mode renders "columns" as full-width rows,
+# stacked only vertically) - so there is no "further column" to fall back on
+# in that direction, real-world left/right is *always* the edge there, unlike
+# on a landscape screen where at_left_edge/at_right_edge actually means
+# something.
+def _screen_neighbor(qtile, screen, dx):
+    """The screen whose rect sits immediately dx-ward (-1 left, +1 right), or None."""
+    candidates = [
+        s for s in qtile.screens if s is not screen and (s.x - screen.x) * dx > 0
+    ]
+    if not candidates:
+        return None
+    return min(candidates, key=lambda s: abs(s.x - screen.x))
+
+
+def _focus_across(qtile, dx):
+    screen = qtile.current_screen
+    layout = screen.group.layout
+    landscape = screen.width >= screen.height
+    at_edge = landscape and hasattr(layout, "at_left_edge") and (
+        layout.at_left_edge() if dx < 0 else layout.at_right_edge()
+    )
+    if at_edge or not landscape:
+        neighbor = _screen_neighbor(qtile, screen, dx)
+        if neighbor is not None:
+            qtile.focus_screen(neighbor.index)
+            return
+    move = getattr(layout, "left" if dx < 0 else "right", None)
+    if move is not None:
+        move()
+
+
 keys = [
     # --- window focus ---
-    Key([mod], "h", lazy.layout.left(), desc="Move focus left"),
-    Key([mod], "l", lazy.layout.right(), desc="Move focus right"),
+    Key(
+        [mod],
+        "h",
+        lazy.function(_focus_across, -1),
+        desc="Move focus left, or onto the screen to the left at the edge",
+    ),
+    Key(
+        [mod],
+        "l",
+        lazy.function(_focus_across, 1),
+        desc="Move focus right, or onto the screen to the right at the edge",
+    ),
     Key([mod], "j", lazy.layout.down(), desc="Move focus down"),
     Key([mod], "k", lazy.layout.up(), desc="Move focus up"),
     Key([mod], "space", lazy.layout.next(), desc="Move focus to next window"),

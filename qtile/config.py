@@ -37,6 +37,7 @@ from widgets import (
     ColorizedCPU,
     KeyboardLayout,
     NowPlaying,
+    ScreenGroupBox,
     StatusNotifier,
     VolumeIcon,
 )
@@ -421,7 +422,44 @@ def _bar_for(index):
       Centre  clock
       Right   the two trays, volume, network, input source
                 |  group numbers  |  battery, power
+
+    Screen 0 (DP-1, the middle monitor - see hardware.py's _DESK_ORDER) is the
+    only one that gets the full lineup. The side monitors are there to show
+    which group is on which screen at a glance, not to duplicate the clock,
+    trays and readouts three times over - so their bar is nothing but the
+    group numbers.
     """
+    # Fresh per screen, and it has to be - see the sharing note above.
+    #
+    # ScreenGroupBox (widgets.py), not the stock GroupBox: stock's
+    # highlight_method="text" cannot tell "shown on this bar's screen" from
+    # "shown on some other screen" - see the comment on the class for why.
+    # Colour reads directly off where a group is currently displayed:
+    #   blue   the group shown on *this* screen (this bar's own screen)
+    #   white  a group shown on some other screen
+    #   grey   a group not shown on any screen at all (active/inactive
+    #          below - see theme.py's fg_dim)
+    group_box = ScreenGroupBox(
+        margin_y=3,
+        margin_x=3,
+        padding=1,
+        borderwidth=0,
+        font=F.normal,
+        fontsize=F.icon_size,
+        active=C.fg_dim,
+        inactive=C.fg_dim,
+        foreground=C.fg_dim,
+        this_current_screen_border=C.fg_blue,
+        other_current_screen_border=C.fg_white,
+        highlight_method="text",
+        rounded=False,
+        urgent_alert_method="border",
+        urgent_border=C.fg_urgent,
+    )
+
+    if index != 0:
+        return [_pill_end(), group_box, _pill_end()]
+
     return [
         _pill_end(),
         *_THERMAL_WIDGETS,
@@ -435,38 +473,18 @@ def _bar_for(index):
         widget.Spacer(length=bar.STRETCH),
         _CLOCK,
         widget.Spacer(length=bar.STRETCH),
-        # Trays on screen 0 (DP-1, the middle monitor - see hardware.py's
-        # _DESK_ORDER) and nowhere else. Systray *cannot* be anywhere else -
-        # one XEmbed host per X display - and StatusNotifier is D-Bus and
-        # could be mirrored, but the same icons repeated on every monitor are
-        # noise. Keeping the pair on index 0 also pins them to the one Screen
-        # that is never finalized while any output at all is plugged in.
-        *(_tray_widgets() if index == 0 else []),
+        # Trays on screen 0 only. Systray *cannot* be anywhere else - one
+        # XEmbed host per X display - and StatusNotifier is D-Bus and could be
+        # mirrored, but the same icons repeated on every monitor are noise.
+        # Keeping the pair on index 0 also pins them to the one Screen that is
+        # never finalized while any output at all is plugged in.
+        *_tray_widgets(),
         _VOLUME,
         _NETWORK,
         _KEYBOARD,
         # Divides all of that from the group numbers.
         _sep(),
-        # Fresh per screen, and it has to be - see the sharing note above.
-        widget.GroupBox(
-            margin_y=3,
-            margin_x=3,
-            padding=1,
-            borderwidth=0,
-            font=F.normal,
-            fontsize=F.icon_size,
-            active=C.fg_dim,
-            inactive=C.fg_dim,
-            foreground=C.fg_dim,
-            this_current_screen_border=C.fg_white,
-            this_screen_border=C.fg_blue,
-            other_current_screen_border=C.fg_white,
-            highlight_color=C.fg_white,
-            highlight_method="text",
-            rounded=False,
-            urgent_alert_method="border",
-            urgent_border=C.fg_urgent,
-        ),
+        group_box,
         *_BATTERY_WIDGETS,
         # Fresh per screen so each bar has its own to anchor the power menu
         # under. They all register as "powerbutton" and qtile renames the

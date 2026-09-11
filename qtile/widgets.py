@@ -74,6 +74,52 @@ class ColorizedCPU(_Thresholded, widget.CPU):
         return self._colorize(load, text)
 
 
+# ═══ group box ════════════════════════════════════════════════════════════
+# Stock GroupBox's highlight_method="text" cannot tell "shown on this bar's
+# screen" from "shown on some other screen": in libqtile's own draw(), the
+# `if g.screen:` branch for text mode always resolves to
+# this_current_screen_border for *any* group that is displayed anywhere,
+# regardless of which screen - this_screen_border, other_current_screen_border
+# and other_screen_border are simply dead code under "text". Setting
+# this_screen_border blue and other_screen_border white therefore paints every
+# shown group blue on every bar, on every screen. Only "block" and "line" read
+# those four colours - and both draw a border/box around the label rather than
+# just colouring it, which is not what the bar wants here.
+class ScreenGroupBox(widget.GroupBox):
+    """A text-mode GroupBox that actually distinguishes this screen from others.
+
+    Reimplements draw() rather than patching around the parent's, since the
+    three-way choice (this bar's screen / another screen / no screen) has to
+    replace the two-way one baked into GroupBox.draw(), not layer on top of
+    it. Click handling, hooks and geometry are all still the parent's -
+    this only changes which colour each label is drawn in:
+      this_current_screen_border   the group shown on *this* bar's screen
+      other_current_screen_border  a group shown on a different screen
+      active / inactive            a group not shown on any screen
+    """
+
+    def draw(self):
+        self.drawer.clear(self.background or self.bar.background)
+        offset = self.margin_x
+        for g in self.groups:
+            if self.group_has_urgent(g) and self.urgent_alert_method == "text":
+                text_color = self.urgent_text
+            elif g.windows:
+                text_color = self.active
+            else:
+                text_color = self.inactive
+
+            if g.screen is self.bar.screen:
+                text_color = self.this_current_screen_border
+            elif g.screen is not None:
+                text_color = self.other_current_screen_border
+
+            bw = self.box_width([g])
+            self.drawbox(offset, g.label, None, text_color, width=bw)
+            offset += bw + self.spacing
+        self.draw_at_default_position()
+
+
 # ═══ volume ═══════════════════════════════════════════════════════════════
 # Just the speaker glyph. The level itself lives in the dunst notification
 # below, which is where you are actually looking when you reach for the volume

@@ -37,6 +37,7 @@ qtile_units:
   - flameshot.service
   - protonvpn.service
   - ibus.service
+  - 1password.service
 
 # The target is not a service and has nothing to enable; protonvpn is added
 # only when the vpn role runs.
@@ -46,3 +47,4 @@ qtile_services:
   - dunst.service
   - flameshot.service
   - ibus.service
+  - 1password.service

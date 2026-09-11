@@ -22,6 +22,25 @@ def _as_int(value, fallback=0):
     return fallback if value is None else int(value)
 
 
+# ═══ portrait screens get rows, not columns ═══════════════════════════════
+# A screen taller than it is wide (the vertical monitor) renders num_columns
+# as stacked rows instead of side-by-side columns. Columns (the qtile layout
+# this file builds on) only ever arranges along x/width, so the trick is to
+# hand it a screen_rect with x/y and width/height swapped - which makes its
+# "column" math run along the real y-axis instead - and then unswap every
+# client.place() call it makes so the result lands at real screen
+# coordinates. _transpose is its own inverse, so the same helper does both
+# halves of that round trip.
+def _is_portrait(screen_rect):
+    return screen_rect.height > screen_rect.width
+
+
+def _transpose(screen_rect):
+    return ScreenRect(
+        screen_rect.y, screen_rect.x, screen_rect.height, screen_rect.width
+    )
+
+
 # ═══ even gaps ═══════════════════════════════════════════════════════════
 # Columns hangs `margin` off all four sides of every window, so two neighbours
 # end up 2 * margin apart while a window and a screen edge are only margin
@@ -52,7 +71,35 @@ class EvenColumns(layout.Columns):
         )
 
     def configure(self, client, screen_rect):
-        super().configure(client, self._inset(screen_rect))
+        if not _is_portrait(screen_rect):
+            super().configure(client, self._inset(screen_rect))
+            return
+
+        # Portrait: run Columns' own arithmetic against a transposed rect (so
+        # "columns" fall top-to-bottom instead of side-by-side), then untranspose
+        # every place() call it makes on the way out. Columns.configure calls
+        # client.place(...) directly rather than returning coordinates, so the
+        # unswap has to happen by wrapping place() for the duration of this call.
+        real_place = client.place
+
+        def _unrotated_place(x, y, width, height, *args, **kwargs):
+            real_place(y, x, height, width, *args, **kwargs)
+
+        client.place = _unrotated_place
+        try:
+            super().configure(client, self._inset(_transpose(screen_rect)))
+        finally:
+            client.place = real_place
+
+    # --- screen-edge queries ---
+    # remap.py's mod+h/l fall through to the neighbouring screen once there is
+    # no further column to step into. These expose that without remap.py
+    # reaching into Columns' own internals (self.current, self.columns).
+    def at_left_edge(self):
+        return self.current == 0
+
+    def at_right_edge(self):
+        return self.current >= len(self.columns) - 1
 
 
 class _TabStrip:
@@ -248,23 +295,54 @@ class TabbedColumns(EvenColumns):
             self._hooked = True
 
         north, east, west = self._margins()
+        portrait = _is_portrait(screen_rect)
         for strip, col in zip(self._strips, self._tabbed):
-            x, width = self._column_x(col, screen_rect)
-            strip.place(
-                x + west,
-                screen_rect.y + north,
-                max(1, width - west - east),
-                tab_h,
-            )
+            if portrait:
+                # The strip's one varying coordinate is now which row it's in
+                # (_column_x run against a transposed rect reads that off the
+                # real y-axis); the strip still spans the row's full real
+                # width, and is still tab_h tall - a row's height fraction
+                # never enters into the strip's own size.
+                row_y, _ = self._column_x(col, _transpose(screen_rect))
+                strip.place(
+                    screen_rect.x + west,
+                    row_y + north,
+                    max(1, screen_rect.width - west - east),
+                    tab_h,
+                )
+            else:
+                x, width = self._column_x(col, screen_rect)
+                strip.place(
+                    x + west,
+                    screen_rect.y + north,
+                    max(1, width - west - east),
+                    tab_h,
+                )
             strip.draw(col)
 
     def configure(self, client, screen_rect):
         col = next((c for c in self.columns if client in c), None)
-        if col is not None and self._is_tabbed(col):
-            # vsplit only moves y and shrinks height, so the column widths
-            # Columns derives from screen_rect.x/width come out unchanged.
-            screen_rect = screen_rect.vsplit(_as_int(self.tab_height))[1]
-        super().configure(client, screen_rect)
+        tab_h = _as_int(self.tab_height) if col is not None and self._is_tabbed(col) else 0
+        if not tab_h:
+            super().configure(client, screen_rect)
+            return
+
+        # The tab strip is always a real, horizontal band at the top of
+        # whatever region it decorates - a column's or (in portrait mode) a
+        # row's - so the reservation belongs in real screen space. Wrapping
+        # place() here, before EvenColumns.configure's own portrait wrapping
+        # (see EvenColumns.configure), guarantees this runs on the final
+        # real coordinates regardless of column/row mode.
+        real_place = client.place
+
+        def _tab_shifted_place(x, y, width, height, *args, **kwargs):
+            real_place(x, y + tab_h, width, max(1, height - tab_h), *args, **kwargs)
+
+        client.place = _tab_shifted_place
+        try:
+            super().configure(client, screen_rect)
+        finally:
+            client.place = real_place
 
     # --- lifecycle ---
     def _on_name_change(self, *args):
