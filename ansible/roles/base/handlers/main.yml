@@ -4,7 +4,7 @@
 - name: Warn about the video group
   ansible.builtin.debug:
     msg: >-
-      Added {{ ansible_user_id }} to the video group. Group membership only
+      Added {{ ansible_facts['user_id'] }} to the video group. Group membership only
       takes effect on a new login, so the XF86MonBrightness keys will not work
       until you log out and back in.
 

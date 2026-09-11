@@ -10,9 +10,9 @@
     path: "{{ item }}"
     state: directory
   loop:
-    - "{{ ansible_env.HOME }}/.config"
-    - "{{ ansible_env.HOME }}/.config/alacritty"
-    - "{{ ansible_env.HOME }}/.local/bin"
+    - "{{ ansible_facts['env']['HOME'] }}/.config"
+    - "{{ ansible_facts['env']['HOME'] }}/.config/alacritty"
+    - "{{ ansible_facts['env']['HOME'] }}/.local/bin"
 
 # The guard that makes adoption safe. A dest that is already a symlink, or
 # absent, is ours to write; a dest that is a real file or directory is somebody
@@ -75,7 +75,7 @@
 - name: Seed the stock bashrc from /etc/skel
   ansible.builtin.copy:
     src: /etc/skel/.bashrc
-    dest: "{{ ansible_env.HOME }}/.bashrc"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.bashrc"
     remote_src: true
     force: false
     mode: "0644"
@@ -94,7 +94,7 @@
 # machine's ~/.bashrc. The seed task above sets 0644 on the one it creates.
 - name: Source the repo bashrc from the stock one  # noqa: risky-file-permissions
   ansible.builtin.lineinfile:
-    path: "{{ ansible_env.HOME }}/.bashrc"
+    path: "{{ ansible_facts['env']['HOME'] }}/.bashrc"
     line: "source ~/dotfiles/.bashrc"
     state: present
     create: true
@@ -104,7 +104,7 @@
 # only confuse; on this laptop it is a second symlink to the same file.
 - name: Remove the shadowed alacritty config
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.alacritty.toml"
+    path: "{{ ansible_facts['env']['HOME'] }}/.alacritty.toml"
     state: absent
 
 # ini_file, not template: the file is symlinked into the repo *and* rewritten

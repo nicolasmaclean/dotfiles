@@ -11,7 +11,7 @@ identity_git_config:
   - {name: pull.ff, value: "only"}
   - {name: core.editor, value: nvim}
 
-identity_ssh_dir: "{{ ansible_env.HOME }}/.ssh"
+identity_ssh_dir: "{{ ansible_facts['env']['HOME'] }}/.ssh"
 identity_ssh_key: "{{ identity_ssh_dir }}/id_ed25519"
 # ed25519 rather than RSA: shorter, faster, and what GitHub recommends.
 identity_ssh_type: ed25519

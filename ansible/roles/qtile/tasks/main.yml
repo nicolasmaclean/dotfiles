@@ -6,7 +6,7 @@
 # ═══ the venv ═════════════════════════════════════════════════════════════
 - name: Read the installed qtile version
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/qtile --version"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile --version"
   register: qtile_installed
   changed_when: false
   check_mode: false

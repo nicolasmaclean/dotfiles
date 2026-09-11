@@ -16,7 +16,7 @@ git_user_email: "nick@imaclean.me"
 # --- paths ----------------------------------------------------------------
 # bootstrap.sh clones here, and qtile/pyrightconfig.json's relative venvPath
 # ("../../.local/share/uv/tools") assumes it.
-dotfiles_dir: "{{ ansible_env.HOME }}/dotfiles"
+dotfiles_dir: "{{ ansible_facts['env']['HOME'] }}/dotfiles"
 
 # extra/uv installs to /usr/bin, not ~/.local/bin as the install script did.
 # Read by roles/toolchains (which installs it) and roles/qtile (which uses it);

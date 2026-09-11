@@ -5,6 +5,6 @@
 [Seat:*]
 user-session=qtile
 {% if display_manager_autologin %}
-autologin-user={{ ansible_user_id }}
+autologin-user={{ ansible_facts['user_id'] }}
 autologin-user-timeout=0
 {% endif %}

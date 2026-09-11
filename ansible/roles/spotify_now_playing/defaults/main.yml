@@ -1,2 +1,2 @@
 ---
-spotify_now_playing_dir: "{{ ansible_env.HOME }}/.config/qtile-spotify"
+spotify_now_playing_dir: "{{ ansible_facts['env']['HOME'] }}/.config/qtile-spotify"

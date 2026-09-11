@@ -3,37 +3,37 @@
 # the whole point of the live-edit loop qtile's mod+ctrl+r reload depends on.
 dotfiles_links:
   - src: qtile
-    dest: "{{ ansible_env.HOME }}/.config/qtile"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/qtile"
   - src: nvim
-    dest: "{{ ansible_env.HOME }}/.config/nvim"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
   # dunst, flameshot and gsimplecal all have to sit at their XDG default path:
   # each is started by dbus activation or by a bare exec with no way to pass a
   # config flag, so a config anywhere else is read by nothing.
   - src: dunst
-    dest: "{{ ansible_env.HOME }}/.config/dunst"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/dunst"
   - src: flameshot
-    dest: "{{ ansible_env.HOME }}/.config/flameshot"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/flameshot"
   - src: gsimplecal
-    dest: "{{ ansible_env.HOME }}/.config/gsimplecal"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/gsimplecal"
   - src: picom
-    dest: "{{ ansible_env.HOME }}/.config/picom"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/picom"
   - src: rofi
-    dest: "{{ ansible_env.HOME }}/.config/rofi"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/rofi"
   # A file inside a directory, not a directory link — and it must be this path.
   # Alacritty checks ~/.config/alacritty/alacritty.toml before ~/.alacritty.toml
   # and stops at the first hit, so the two shadow rather than merge.
   - src: alacritty.toml
-    dest: "{{ ansible_env.HOME }}/.config/alacritty/alacritty.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/alacritty/alacritty.toml"
   - src: .ideavimrc
-    dest: "{{ ansible_env.HOME }}/.ideavimrc"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.ideavimrc"
   - src: xinitrc
-    dest: "{{ ansible_env.HOME }}/.xinitrc"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.xinitrc"
   - src: bin/qtile-nested
-    dest: "{{ ansible_env.HOME }}/.local/bin/qtile-nested"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-nested"
   - src: bin/rofi-power-menu
-    dest: "{{ ansible_env.HOME }}/.local/bin/rofi-power-menu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/rofi-power-menu"
 
 # Flameshot expands neither $HOME nor ~ — verified twice: with either form
 # `flameshot full --clipboard` blocks until timeout and saves nothing at all.
 # So this has to be a literal absolute path, which is why Ansible owns it.
-dotfiles_flameshot_savepath: "{{ ansible_env.HOME }}/Pictures"
+dotfiles_flameshot_savepath: "{{ ansible_facts['env']['HOME'] }}/Pictures"

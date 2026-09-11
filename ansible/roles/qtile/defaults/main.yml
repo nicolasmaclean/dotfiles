@@ -1,7 +1,7 @@
 ---
-qtile_tool_dir: "{{ ansible_env.HOME }}/.local/share/uv/tools/qtile"
-qtile_session_bin: "{{ ansible_env.HOME }}/.local/bin/qtile-session"
-qtile_units_dir: "{{ ansible_env.HOME }}/.config/systemd/user"
+qtile_tool_dir: "{{ ansible_facts['env']['HOME'] }}/.local/share/uv/tools/qtile"
+qtile_session_bin: "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-session"
+qtile_units_dir: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
 
 # The --with list is a contract, not a convenience. spotify_web.py is
 # stdlib-only (urllib) precisely so the now-playing widget adds nothing to it,

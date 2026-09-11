@@ -22,4 +22,4 @@ neovim_lsp_packages:
   - ruff
   - pyright
 
-neovim_packer_dir: "{{ ansible_env.HOME }}/.local/share/nvim/site/pack/packer/start/packer.nvim"
+neovim_packer_dir: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/site/pack/packer/start/packer.nvim"

@@ -37,15 +37,15 @@
     # — reports distribution 'Archlinux'. The string 'CachyOS' appears nowhere
     # in that file.
     #
-    # There is deliberately no version clause. ansible_distribution_version
+    # There is deliberately no version clause. ansible_facts['distribution_version']
     # comes from the `distro` library, which on rolling Arch has nothing to
     # report and answers 'NA'. Asserting on it would fail every run.
     - name: Only Arch-family systems are supported
       ansible.builtin.assert:
         that:
-          - ansible_os_family == 'Archlinux'
+          - ansible_facts['os_family'] == 'Archlinux'
         fail_msg: >-
-          Found {{ ansible_distribution }} ({{ ansible_os_family }}). Every
+          Found {{ ansible_facts['distribution'] }} ({{ ansible_facts['os_family'] }}). Every
           role here installs with community.general.pacman; there is no apt
           path left to fall back to — it was deleted rather than branched when
           this playbook was retargeted at CachyOS.
@@ -55,10 +55,10 @@
     - name: Report what this run resolved
       ansible.builtin.debug:
         msg: >-
-          {{ inventory_hostname }} ({{ ansible_distribution }}
-          {{ ansible_distribution_version }}): form_factor={{ form_factor }}
+          {{ inventory_hostname }} ({{ ansible_facts['distribution'] }}
+          {{ ansible_facts['distribution_version'] }}): form_factor={{ form_factor }}
           gpu={{ gpu }} steam={{ install_steam }} vpn={{ install_vpn }}
-          user={{ ansible_user_id }} home={{ ansible_env.HOME }}
+          user={{ ansible_facts['user_id'] }} home={{ ansible_facts['env']['HOME'] }}
           dotfiles={{ dotfiles_dir }}
       tags: always
 
