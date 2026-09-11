@@ -476,14 +476,16 @@ def screen_generator(build):
 # option: there is no generate_screens-shaped hook upstream of the ordering
 # _process_screens needs to not undo.
 
-# cnick's desk, screen 0/1/2 left-to-right, matching physical position:
-# HDMI-1 (portrait, left), DP-1 (middle), HDMI-0 (right) - confirmed by
-# blanking each output live and watching which physical panel went dark;
-# the connector names don't sort the way their desk position does. An
-# output whose port is not listed here - the laptop's single eDP-*, or a
-# monitor plugged in later - sorts after everything named, by (x, y), so it
-# never raises and never hijacks a slot a named output is entitled to.
-_DESK_ORDER = ("HDMI-1", "DP-1", "HDMI-0")
+# cnick's desk, screen 0 is DP-1 (middle) so the tray lands there - see
+# _bar_for's index == 0 check in config.py, and screen_generator's docstring
+# on why index 0 is the only safe place for it. HDMI-1 (portrait, left) and
+# HDMI-0 (right) fill 1 and 2; physical position was confirmed by blanking
+# each output live and watching which physical panel went dark, since the
+# connector names don't sort the way their desk position does. An output
+# whose port is not listed here - the laptop's single eDP-*, or a monitor
+# plugged in later - sorts after everything named, by (x, y), so it never
+# raises and never hijacks a slot a named output is entitled to.
+_DESK_ORDER = ("DP-1", "HDMI-1", "HDMI-0")
 
 
 def _order_outputs_for_desk(get_output_info):

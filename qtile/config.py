@@ -435,8 +435,9 @@ def _bar_for(index):
         widget.Spacer(length=bar.STRETCH),
         _CLOCK,
         widget.Spacer(length=bar.STRETCH),
-        # Trays on screen 0 and nowhere else. Systray *cannot* be anywhere else
-        # - one XEmbed host per X display - and StatusNotifier is D-Bus and
+        # Trays on screen 0 (DP-1, the middle monitor - see hardware.py's
+        # _DESK_ORDER) and nowhere else. Systray *cannot* be anywhere else -
+        # one XEmbed host per X display - and StatusNotifier is D-Bus and
         # could be mirrored, but the same icons repeated on every monitor are
         # noise. Keeping the pair on index 0 also pins them to the one Screen
         # that is never finalized while any output at all is plugged in.
