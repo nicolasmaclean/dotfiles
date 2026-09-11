@@ -13,11 +13,6 @@ from popups import POPUP_KEYMAP, bar_widget, popup_alive
 from theme import C, F, G
 
 # ═══ network ══════════════════════════════════════════════════════════════
-# Replaces nm-applet. That applet has no configuration surface at all - no
-# flags, no settings, and a menu that only follows the ambient GTK theme - so
-# the only way to make the network indicator match the rest of the bar is to
-# stop docking a foreign widget in the tray and draw it here instead.
-#
 # Everything goes through nmcli rather than NetworkManager's D-Bus API: the
 # readings are a handful of short-lived subprocesses on a 5s poll, which is
 # far less machinery than a D-Bus client for the same three facts, and the

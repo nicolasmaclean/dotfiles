@@ -110,10 +110,11 @@ extension_defaults = widget_defaults.copy()
 # ═══ taskbar ═════════════════════════════════════════════════════════════════
 # One flat bar, one background. Everything sits straight on the body and the
 # grouping is done with rules alone —
-#   Left    thermal, CPU  |  now playing
-#   Centre  clock
-#   Right   the two trays, volume, network, input source
-#             |  group numbers  |  battery, power
+#   Left monitor (HDMI-1)    thermal, CPU  |  group numbers
+#   Middle monitor (DP-1)    now playing  |  clock  |  the two trays, volume,
+#                             network, input source  |  group numbers
+#                             |  battery, power
+#   Right monitor (HDMI-0)   group numbers
 #
 # The bar is a pill: bar.Bar's own margin insets the *window* by B.gutter on
 # three sides, so the gutter is simply not part of the bar and the wallpaper
@@ -418,16 +419,18 @@ def _bar_for(index):
     more than one screen and each needs its own GroupBox, its own PowerButton
     to anchor the power menu under, and the trays on exactly one of them. The
     order is the one the header describes:
-      Left    thermal, CPU  |  now playing
-      Centre  clock
-      Right   the two trays, volume, network, input source
-                |  group numbers  |  battery, power
+      Left monitor (HDMI-1)    thermal, CPU  |  group numbers
+      Middle monitor (DP-1)    now playing  |  clock  |  the two trays,
+                                volume, network, input source  |  group
+                                numbers  |  battery, power
+      Right monitor (HDMI-0)   group numbers
 
-    Screen 0 (DP-1, the middle monitor - see hardware.py's _DESK_ORDER) is the
-    only one that gets the full lineup. The side monitors are there to show
-    which group is on which screen at a glance, not to duplicate the clock,
-    trays and readouts three times over - so their bar is nothing but the
-    group numbers.
+    Screen 0 (DP-1, the middle monitor - see hardware.py's _DESK_ORDER) gets
+    the full lineup - clock, trays, volume, network, keyboard, battery and
+    power all live there. Screen 1 (HDMI-1, left) additionally carries the
+    thermal/CPU readouts. Screen 2 (HDMI-0, right) is there only to show which
+    group is on which screen at a glance - its bar is nothing but the group
+    numbers.
     """
     # Fresh per screen, and it has to be - see the sharing note above.
     #
@@ -457,21 +460,25 @@ def _bar_for(index):
         urgent_border=C.fg_urgent,
     )
 
+    if index == 1:
+        return [
+            _pill_end(),
+            *_THERMAL_WIDGETS,
+            _bar_icon(G.cpu, C.fg_yellow),
+            _CPU,
+            widget.Spacer(length=bar.STRETCH),
+            _CLOCK,
+            widget.Spacer(length=bar.STRETCH),
+            group_box,
+            _pill_end(),
+        ]
+
     if index != 0:
         return [_pill_end(), group_box, _pill_end()]
 
     return [
         _pill_end(),
-        *_THERMAL_WIDGETS,
-        _bar_icon(G.cpu, C.fg_yellow),
-        _CPU,
-        # Plain space rather than a _sep(): the widget after it draws nothing at
-        # all when Spotify is closed or stopped, and a rule left hanging beside
-        # an empty stretch of bar reads worse than no rule.
-        widget.Spacer(length=10),
         _NOW_PLAYING,
-        widget.Spacer(length=bar.STRETCH),
-        _CLOCK,
         widget.Spacer(length=bar.STRETCH),
         # Trays on screen 0 only. Systray *cannot* be anywhere else - one
         # XEmbed host per X display - and StatusNotifier is D-Bus and could be

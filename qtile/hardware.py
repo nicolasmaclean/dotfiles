@@ -9,15 +9,9 @@ from libqtile.config import Screen
 from libqtile.log_utils import logger
 
 # ═══ what this box is ═════════════════════════════════════════════════════
-# Every fact about the *hardware* that config.py would otherwise hardcode:
-# which battery, which backlight, which temperature sensor, which wallpaper,
-# and how many screens there are. Resolved here at runtime rather than written
-# in by a provisioning run, so one config.py serves the laptop and the desktop
-# and stays plain hand-editable Python you can reload with mod+ctrl+r.
-#
-# A flat sibling of config.py, like theme.py and widgets.py, and it imports
-# nothing from any of them - so there is no cycle, and Config's
-# _reload_config_submodules picks it up on a reload along with the rest.
+# collect runtime facts about hardware, is there a battery, brightness control,
+# etc. We can adjust qtile on the fly here so there is single qtile codebase
+# as opposed to 2 different versions decided by ansible.
 #
 # NOTHING IN HERE MAY RAISE. A config exception does not leave you at a black
 # screen, it leaves you in qtile's own default_config: mod4 bindings, no bar,
@@ -312,12 +306,12 @@ def _wallpaper_dirs():
 
 @safe(None)
 def wallpaper():
-    """A path to paint, or None.
+    """
+    Get path to wallpaper. Gets all possible wallpapers from _wallpaper_dirs()
+    and ranks them, picking the highest priority.
 
-    None is passed straight through to Screen(wallpaper=...), which paints
-    nothing and logs nothing. Handing it a path that does not exist is the bad
-    case: Painter.paint catches the OSError and logs a full traceback per
-    screen on every reconfigure.
+    TODO: if I want different wallpapers on different screens this logic needs
+          to change.
     """
     listings = []
     for directory in _wallpaper_dirs():
@@ -520,9 +514,8 @@ libqtile.core.manager.Qtile.get_output_info = _order_outputs_for_desk(
 )
 
 
-# ═══ the answers ══════════════════════════════════════════════════════════
-# Resolved once at import. brightness.py reads BACKLIGHT at import time too,
-# so these have to be values rather than calls made later.
+# ═══ resolved facts ══════════════════════════════════════════════════════════
+# resolved once here and cached
 BATTERY = _fact("BATTERY", battery_name)
 BACKLIGHT = _fact("BACKLIGHT", backlight_name)
 THERMAL = _fact("THERMAL", cpu_temp_sensor)
@@ -540,7 +533,7 @@ def facts():
     }
 
 
+# manually inspect results by running this file `python hardware.py
 if __name__ == "__main__":
-    # `python hardware.py` - a sanity check with no qtile involved.
     for key, value in facts().items():
         print(f"{key:<13} {value!r}")

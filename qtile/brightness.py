@@ -32,21 +32,9 @@ STEP = 5  # percent of the curve per press
 MIN_PERCENT = 10
 
 
-# Which panel, decided in hardware.py alongside the battery and the thermal
-# sensor - the split is detection versus control. A backlight device name is a
-# fact about the box; the curve, the step, the floor and the notification below
-# are behaviour, and they stay here.
-#
-# This is read at import time, so it has to be a value that cannot raise -
-# which is exactly what hardware's @safe wrapper guarantees. It is also where
-# the QTILE_BACKLIGHT override and the brightnessctl-on-PATH check live, so
-# neither is written twice.
-#
 # None is the normal answer on a desktop: monitors dim over DDC/CI and register
 # nothing in /sys/class/backlight. _change() logs one line per keypress.
 _DEVICE = hardware.BACKLIGHT
-# brightnessctl writes /sys/class/backlight unprivileged here thanks to the
-# brightness-udev rule plus video-group membership, so none of this needs root.
 _BRIGHTNESS_FILE = os.path.join(hardware.BACKLIGHT_DIR, _DEVICE or "", "brightness")
 _MAX_FILE = os.path.join(hardware.BACKLIGHT_DIR, _DEVICE or "", "max_brightness")
 
