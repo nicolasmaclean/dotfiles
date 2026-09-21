@@ -4,3 +4,47 @@
   community.general.pacman:
     name: "{{ xorg_packages }}"
     state: present
+
+# Laptop-only: cnick has no touchpad, and xf86-input-libinput's own
+# MatchIsTouchpad clause simply never fires on a box without one. Untested on
+# real hardware for the same reason as the backlight TODO in roles/base — no
+# laptop runs this playbook yet.
+- name: Configure the touchpad
+  when: form_factor == 'laptop'
+  become: true
+  block:
+    - name: Create the Xorg drop-in directory
+      ansible.builtin.file:
+        path: /etc/X11/xorg.conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Write the touchpad InputClass
+      ansible.builtin.copy:
+        dest: /etc/X11/xorg.conf.d/90-touchpad.conf
+        content: |
+          # Managed by Ansible (roles/xorg). Numbered above 40 so it is read
+          # after /usr/share/X11/xorg.conf.d/40-libinput.conf's own "libinput
+          # touchpad catchall" — xorg.conf.d applies every matching InputClass
+          # in file order, and a later file's Option overrides an earlier
+          # file's for the same device, not the other way round. A number
+          # below 40 here would be silently overridden by the vendor default
+          # instead of overriding it.
+          #
+          # ClickMethod is deliberately not set. libinput picks "buttonareas"
+          # (bottom-edge click zones) or "clickfinger" (click anywhere, finger
+          # count decides which button) per device, and forcing the wrong one
+          # on a clickpad with no physical buttons can break clicking outright.
+          # Confirm which this ThinkPad's pad already defaults to before
+          # adding one — `libinput debug-events` while clicking will show it.
+          Section "InputClass"
+              Identifier "touchpad"
+              MatchIsTouchpad "on"
+              Driver "libinput"
+              Option "Tapping" "{{ xorg_touchpad_tapping | ternary('on', 'off') }}"
+              Option "NaturalScrolling" "{{ xorg_touchpad_natural_scroll | ternary('on', 'off') }}"
+              Option "DisableWhileTyping" "on"
+              Option "ScrollMethod" "twofinger"
+          EndSection
+        mode: "0644"
+        backup: true

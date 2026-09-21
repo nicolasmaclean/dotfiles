@@ -24,3 +24,11 @@ xorg_packages:
   # multi-monitor verification steps and any later autorandr profile both want
   # xrandr on the box.
   - xorg-xrandr
+
+# Whether the laptop's touchpad registers a tap as a click, and whether
+# two-finger scrolling moves the content like a trackpad rather than like a
+# mouse wheel. Vars rather than hardcoded, so a preference change is one line
+# here instead of a diff in tasks/main.yml. cnick never reads either — the
+# touchpad task below is form_factor == 'laptop' only.
+xorg_touchpad_tapping: true
+xorg_touchpad_natural_scroll: true
