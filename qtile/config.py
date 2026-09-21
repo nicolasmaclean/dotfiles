@@ -467,18 +467,24 @@ def _bar_for(index):
             _bar_icon(G.cpu, C.fg_yellow),
             _CPU,
             widget.Spacer(length=bar.STRETCH),
-            _CLOCK,
-            widget.Spacer(length=bar.STRETCH),
             group_box,
             _pill_end(),
         ]
 
     if index != 0:
-        return [_pill_end(), group_box, _pill_end()]
+        return [
+            _pill_end(),
+            group_box,
+            widget.Spacer(length=bar.STRETCH),
+            _NOW_PLAYING,
+            widget.Spacer(length=bar.STRETCH),
+            _pill_end(),
+        ]
 
     return [
         _pill_end(),
-        _NOW_PLAYING,
+        widget.Spacer(length=bar.STRETCH),
+        _CLOCK,
         widget.Spacer(length=bar.STRETCH),
         # Trays on screen 0 only. Systray *cannot* be anywhere else - one
         # XEmbed host per X display - and StatusNotifier is D-Bus and could be
