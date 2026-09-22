@@ -3,11 +3,12 @@ import asyncio
 import string
 import subprocess
 import xml.etree.ElementTree as ET
+from functools import partial
 from typing import ClassVar
 
 from dbus_fast import InterfaceNotFoundError, InvalidObjectPathError, Variant
 from dbus_fast.errors import DBusError
-from libqtile import pangocffi, widget
+from libqtile import pangocffi, qtile, widget
 from libqtile.command.base import expose_command
 from libqtile.utils import create_task
 from libqtile.widget import base
@@ -16,10 +17,12 @@ from libqtile.widget.helpers.status_notifier.statusnotifier import (
     STATUS_NOTIFIER_ITEM_SPEC,
 )
 from libqtile.widget.mpris2widget import Mpris2Formatter
+from qtile_extras.popup.toolkit import PopupAbsoluteLayout, PopupText
 
 from notify import VOLUME_ID, notify_value
+from popups import POPUP_KEYMAP, bar_widget, popup_alive
 from spotify_web import SpotifyWeb
-from theme import C, G
+from theme import C, F, G
 
 # ═══ custom widgets ══════════════════════════════════════════════════════
 # Stock qtile has no threshold colouring on CPU, no glyph-based layout
@@ -653,6 +656,36 @@ StatusNotifierItem._get_local_icon = _get_local_icon
 DBUSMENU_INTERFACE = "com.canonical.dbusmenu"
 WINDOW_ENTRY_LABELS = frozenset({"show", "hide", "open", "restore", "show window"})
 
+# Discord's own /com/canonical/dbusmenu answers GetLayout and Event just
+# fine, but its Introspectable.Introspect comes back as a bare <node/> - no
+# interfaces declared at all - which is exactly the qtile-extras/dbus-fast bug
+# already worked around above for StatusNotifierItem itself (see
+# _restore_accessors): dbus-fast builds get_interface()'s proxy from that XML,
+# so an item that introspects empty raises InterfaceNotFoundError even though
+# the calls it's missing work fine. Handing get_proxy_object a spec of our own
+# skips the (broken) live introspection entirely, for every item and not just
+# Discord's - a real, correctly-introspecting menu answers the same two calls
+# identically, so this is never a worse path to take.
+DBUSMENU_SPEC = """
+<node>
+  <interface name="com.canonical.dbusmenu">
+    <method name="GetLayout">
+      <arg type="i" name="parentId" direction="in"/>
+      <arg type="i" name="recursionDepth" direction="in"/>
+      <arg type="as" name="propertyNames" direction="in"/>
+      <arg type="u" name="revision" direction="out"/>
+      <arg type="(ia{sv}av)" name="layout" direction="out"/>
+    </method>
+    <method name="Event">
+      <arg type="i" name="id" direction="in"/>
+      <arg type="s" name="eventId" direction="in"/>
+      <arg type="v" name="data" direction="in"/>
+      <arg type="u" name="timestamp" direction="in"/>
+    </method>
+  </interface>
+</node>
+"""
+
 
 def _prop(properties, name, default):
     """One dbusmenu property, unwrapped, with the spec's default if unset."""
@@ -660,28 +693,43 @@ def _prop(properties, name, default):
     return default if variant is None else variant.value
 
 
-async def _click_window_entry(item):
-    """Click the menu entry that raises the app's window; True if there is one."""
+async def _menu_children(item):
+    """The item's dbusmenu interface and its top-level entries, or (None, [])."""
     try:
         path = await item.item.get_menu()
         if not path:
-            return False
-        introspection = await item.bus.introspect(item.service, path)
-        obj = item.bus.get_proxy_object(item.service, path, introspection)
+            return None, []
+        obj = item.bus.get_proxy_object(item.service, path, DBUSMENU_SPEC)
         menu = obj.get_interface(DBUSMENU_INTERFACE)
         # (0, -1): the whole tree from the root. Only the top level is read
         # below, but an item is free to answer with the depth it likes.
         _revision, (_id, _properties, children) = await menu.call_get_layout(0, -1, [])
     except _ITEM_ERRORS:
+        return None, []
+    return menu, [child.value for child in children]
+
+
+def _clickable(properties):
+    """A dbusmenu entry a click can actually land on: no separators, nothing
+    disabled or hidden. Shared by the window-raising hack below and by the
+    general right-click menu these items get in the tray context menu
+    section further down.
+    """
+    return (
+        _prop(properties, "type", "standard") == "standard"
+        and _prop(properties, "enabled", True)
+        and _prop(properties, "visible", True)
+    )
+
+
+async def _click_window_entry(item):
+    """Click the menu entry that raises the app's window; True if there is one."""
+    menu, children = await _menu_children(item)
+    if menu is None:
         return False
 
-    for child in children:
-        entry, properties, _grandchildren = child.value
-        if _prop(properties, "type", "standard") != "standard":
-            continue
-        if not (
-            _prop(properties, "enabled", True) and _prop(properties, "visible", True)
-        ):
+    for entry, properties, _grandchildren in children:
+        if not _clickable(properties):
             continue
         if _prop(properties, "label", "").strip().lower() not in WINDOW_ENTRY_LABELS:
             continue
@@ -722,6 +770,7 @@ class StatusNotifier(widget.StatusNotifier):
     def __init__(self, **config):
         widget.StatusNotifier.__init__(self, **config)
         self.add_defaults(StatusNotifier.defaults)
+        self.add_callbacks({"Button3": self.context_menu})
 
     async def _config_async(self):
         await widget.StatusNotifier._config_async(self)
@@ -773,3 +822,141 @@ class StatusNotifier(widget.StatusNotifier):
         if await _item_is_menu(item) and await _click_window_entry(item):
             return
         item.activate()
+
+    def context_menu(self):
+        """Button3 on an icon: show its own dbusmenu, if it has one."""
+        if self.selected_item:
+            create_task(self._show_context_menu(self.selected_item))
+
+    async def _show_context_menu(self, item):
+        entries = await _menu_entries(item)
+        if entries:
+            _open_tray_menu(entries)
+
+
+# ═══ tray context menu ════════════════════════════════════════════════════
+# Discord (and everything else currently in this tray) turns out to speak
+# StatusNotifierItem, not XEmbed - confirmed by reading qtile's own SNI host
+# state live (host.items included a discord_status_icon_*, and busctl showed
+# its bus name registered with org.kde.StatusNotifierWatcher). An earlier
+# version of this file went looking for it on the XEmbed side instead
+# (widget.Systray) on the strength of a stale comment and an incomplete
+# busctl read, and unsurprisingly never saw a single right click: nothing
+# there was Discord's icon to begin with.
+#
+# The stock widget only wires Button1 to activate() and has no concept of a
+# menu at all ("Context menus are not currently supported by the official
+# widget" - its own docstring). Button3 below is new, and reads the item's
+# *own* dbusmenu the same way _click_window_entry above does, except it takes
+# every clickable top-level entry rather than hunting for one - Discord's own
+# menu turned out to already have exactly the entries you'd want ("Open
+# Discord", "Check for Updates...", "Quit Discord", ...), so there is nothing
+# to hardcode. An item with no menu at all (Menu path unset, or empty) simply
+# gets no popup, same as before this existed.
+
+TRAY_MENU_W = 190
+TRAY_MENU_PAD = 6
+TRAY_MENU_ROW_H = 30
+
+_tray_menu_popup = None
+
+
+def _close_tray_menu():
+    global _tray_menu_popup
+    if popup_alive(_tray_menu_popup):
+        _tray_menu_popup.kill()  # kill() has no re-entry guard, hence the check
+    _tray_menu_popup = None
+
+
+async def _menu_entries(item):
+    """[(label, click), ...] for item's own dbusmenu, empty if it has none.
+
+    `click` is a plain callable, ready to hand straight to a popup row: the
+    dbusmenu Event call is async, so it fires under create_task rather than
+    being awaited from the row's own (synchronous) mouse callback.
+    """
+    menu, children = await _menu_children(item)
+    if menu is None:
+        return []
+
+    entries = []
+    for entry, properties, _grandchildren in children:
+        if not _clickable(properties):
+            continue
+        # dbusmenu labels use a single underscore for the mnemonic letter
+        # (as in GTK), doubled ("__") to escape a literal one. Only Discord's
+        # menu has been seen through this so far and uses neither, but the
+        # common case is cheap enough to handle.
+        label = _prop(properties, "label", "").replace("__", "\0").replace("_", "")
+        label = label.replace("\0", "_")
+        if label:
+            entries.append((label, partial(_activate_menu_entry, menu, entry)))
+    return entries
+
+
+def _activate_menu_entry(menu, entry):
+    create_task(_click_menu_entry(menu, entry))
+
+
+async def _click_menu_entry(menu, entry):
+    try:
+        # The data variant and the timestamp are both required by the
+        # signature and read by neither of the menus this fires at.
+        await menu.call_event(entry, "clicked", Variant("s", ""), 0)
+    except _ITEM_ERRORS:
+        pass
+
+
+def _tray_menu_row(index, label, callback):
+    def _run():
+        _close_tray_menu()
+        callback()
+
+    return PopupText(
+        text=label,
+        pos_x=TRAY_MENU_PAD,
+        pos_y=TRAY_MENU_PAD + index * TRAY_MENU_ROW_H,
+        width=TRAY_MENU_W - 2 * TRAY_MENU_PAD,
+        height=TRAY_MENU_ROW_H,
+        font=F.normal,
+        fontsize=14,
+        foreground=C.fg_normal,
+        highlight=C.bg_highlight,
+        foreground_highlighted=C.fg_white,
+        highlight_method="block",
+        h_align="left",
+        mouse_callbacks={"Button1": _run},
+    )
+
+
+def _open_tray_menu(actions):
+    """actions: [(label, callback), ...], already resolved for one item."""
+    global _tray_menu_popup
+    _close_tray_menu()
+
+    # Centred under the tray, clamped to the screen edge - see power.py's
+    # _show_power_popup for why this goes through popups.bar_widget rather
+    # than qtile.widgets_map.
+    btn = bar_widget("statusnotifier")
+    x = btn.offsetx + btn.length // 2 - TRAY_MENU_W // 2 if btn is not None else 0
+    x = max(0, min(x, qtile.current_screen.width - TRAY_MENU_W))
+
+    _tray_menu_popup = PopupAbsoluteLayout(
+        qtile,
+        width=TRAY_MENU_W,
+        height=TRAY_MENU_PAD * 2 + len(actions) * TRAY_MENU_ROW_H,
+        background=C.bg_topbar,
+        border=C.bg_topbar_selected,
+        border_width=2,
+        initial_focus=0,
+        keymap=POPUP_KEYMAP,
+        close_on_click=False,
+        # opened by a right click up in the bar, so the pointer is never
+        # inside the popup when it opens - mouse-leave would kill it instantly
+        hide_on_mouse_leave=False,
+        controls=[
+            _tray_menu_row(i, label, callback)
+            for i, (label, callback) in enumerate(actions)
+        ],
+    )
+    _tray_menu_popup.show(x=x, y=4, relative_to=1, relative_to_bar=True)

@@ -233,13 +233,16 @@ def _tray_widgets():
         # speaks StatusNotifierItem/AppIndicator. Apps pick one or the other, so
         # dropping either loses its icons. StatusNotifier needs dbus-fast, and
         # pyxdg for items that publish an icon name instead of a pixmap.
-        widget.Systray(**_bar_text(padding=4)),  # Discord etc. dock here
+        widget.Systray(**_bar_text(padding=4)),
         # widgets.StatusNotifier, not the stock one: Proton VPN introspects its
         # item without any properties, which the stock widget cannot read an icon
-        # from. See the tray section of widgets.py.
+        # from - and Discord (despite docking as "Discord" in the taskbar) is
+        # actually a StatusNotifierItem too, confirmed live via busctl - so this
+        # is also where a right click gets Discord's own tray menu (Quit
+        # included) from. See the tray context menu section of widgets.py.
         StatusNotifier(
             **_bar_text(padding=4),
-            icon_size=20,  # Proton VPN etc.
+            icon_size=20,  # Proton VPN, Discord, etc.
             # Spotify's indicator is redundant now that the bar has a now-playing
             # widget of its own, and its only other trick - click to raise the
             # window - is what the taskbar entry is for. Matched on the item's own
