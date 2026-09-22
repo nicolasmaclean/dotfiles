@@ -23,3 +23,6 @@ neovim_lsp_packages:
   - pyright
 
 neovim_packer_dir: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/site/pack/packer/start/packer.nvim"
+
+# Checksum of the packer.lua that last synced cleanly; see tasks/main.yml.
+neovim_sync_stamp: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/packer-spec.sha1"

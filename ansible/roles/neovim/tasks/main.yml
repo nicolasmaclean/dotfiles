@@ -33,10 +33,40 @@
     update: false
   register: neovim_packer
 
+# ~/.config/nvim is a symlink into the repo, so editing packer.lua never shows
+# up as a changed task. Instead the checksum of the last spec that synced
+# cleanly is kept in a stamp file, and a spec that no longer matches it gets a
+# PackerSync. The stamp is written after the sync, not via a handler, so a
+# failed sync leaves the old checksum in place and the next run retries.
+- name: Checksum the plugin spec
+  ansible.builtin.stat:
+    path: "{{ dotfiles_dir }}/nvim/lua/nick/packer.lua"
+    checksum_algorithm: sha1
+  register: neovim_plugin_spec
+
+- name: Read the checksum from the last sync
+  ansible.builtin.slurp:
+    src: "{{ neovim_sync_stamp }}"
+  register: neovim_sync_last
+  failed_when: false
+
+# Sync, not Install: an exact-tag change like blink.cmp's only lands via the
+# update path. That also moves every unpinned plugin to its latest commit —
+# the same as running :PackerSync by hand. The timeout is for a plugin error
+# that stops PackerComplete from ever firing in the headless nvim.
 - name: Sync the plugins
   ansible.builtin.command:
     cmd: nvim --headless -c "autocmd User PackerComplete quitall" -c PackerSync
+  timeout: 600
   changed_when: true
   when:
-    - neovim_packer is changed
     - not ansible_check_mode
+    - neovim_packer is changed
+      or (neovim_sync_last.content | default('') | b64decode | trim)
+         != neovim_plugin_spec.stat.checksum
+
+- name: Record the synced checksum
+  ansible.builtin.copy:
+    content: "{{ neovim_plugin_spec.stat.checksum }}\n"
+    dest: "{{ neovim_sync_stamp }}"
+    mode: "0644"

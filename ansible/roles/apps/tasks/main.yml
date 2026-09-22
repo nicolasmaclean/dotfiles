@@ -32,3 +32,52 @@
     name: steam
     state: present
   when: install_steam | bool
+
+# Same multilib dependency as Steam above. wine-mono/wine-gecko are
+# deliberately not listed here — Lutris fetches those into the prefix itself
+# when it builds one, and pinning them repo-side has a habit of drifting from
+# what Lutris actually wants.
+- name: Install Lutris and Wine
+  become: true
+  community.general.pacman:
+    name:
+      - lutris
+      - wine
+      - winetricks
+      - cabextract      # winetricks dependency for several verbs
+      - p7zip
+      - gamemode
+      - lib32-gamemode
+      - umu-launcher    # lets Lutris run Battle.net/Overwatch under Proton instead of plain wine
+    state: present
+  when: install_battlenet | bool
+
+# Battle.net's own installer needs an interactive login (and 2FA) and then
+# pulls tens of GB for Overwatch 2 itself — nothing Ansible should be driving.
+# Same boundary as JetBrains Toolbox in defaults/main.yml: get the platform
+# installed, leave the platform-specific part to the human.
+#
+# The Lutris launch has to come first and separately, not folded into the same
+# breath as the battlenet install: Lutris fetches DXVK/VKD3D/etc into
+# ~/.local/share/lutris/runtime on first launch, and that sync only runs
+# inside its GTK event loop — there's no headless/CLI trigger for it. Running
+# the installer before that sync finishes is exactly the
+# MissingRuntimeComponentError this step exists to avoid.
+- name: Battle.net still needs installing by hand
+  when:
+    - install_battlenet | bool
+    - not ansible_check_mode
+  ansible.builtin.pause:
+    prompt: |
+
+      Lutris is installed but still needs its runtime components. Open it
+      (just `lutris`) and wait for the first-run DXVK/VKD3D download to
+      finish — check Preferences > Updates if you're not sure it's done.
+
+      Then, in a terminal:
+
+        lutris lutris:battlenet
+
+      runs Lutris's maintained Battle.net installer script. Log in, then
+      install Overwatch 2 from within Battle.net. Nothing else in this play
+      depends on it — press ENTER when done, or skip it.

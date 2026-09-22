@@ -23,6 +23,7 @@
           - gpu in ['intel', 'nvidia']
           - install_steam is boolean
           - install_vpn is boolean
+          - install_battlenet is boolean
           - qtile_version is defined
         fail_msg: >-
           inventory/host_vars/{{ inventory_hostname }}.yml is missing or

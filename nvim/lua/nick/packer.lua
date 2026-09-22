@@ -14,12 +14,12 @@ return require('packer').startup(function(use)
 
   use {
     'saghen/blink.cmp',
-    requires = { 'saghen/blink.lib', 'rafamadriz/friendly-snippets' },
-    tag = 'v1.*',
-    run = function() require('blink.cmp').build():pwait() end,
+    requires = { 'rafamadriz/friendly-snippets' },
+    tag = 'v1.9.1',
     config = function()
         require('blink.cmp').setup({
             keymap = { preset = 'default' },
+            fuzzy = { prebuilt_binaries = { force_version = 'v1.9.1' } },
             sources = {
                 default = { 'lsp', 'path', 'buffer', 'snippets'},
             }

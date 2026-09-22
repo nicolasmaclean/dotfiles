@@ -12,6 +12,7 @@ gpu: nvidia
 
 install_steam: true
 install_vpn: true
+install_battlenet: true
 
 # Which NVIDIA package set, named here rather than detected. `chwd` is this
 # distro's `ubuntu-drivers` and has the same defect: it is not idempotent and
