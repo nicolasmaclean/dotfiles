@@ -53,8 +53,10 @@ def _focus_across(qtile, dx):
     screen = qtile.current_screen
     layout = screen.group.layout
     landscape = screen.width >= screen.height
-    at_edge = landscape and hasattr(layout, "at_left_edge") and (
-        layout.at_left_edge() if dx < 0 else layout.at_right_edge()
+    at_edge = (
+        landscape
+        and hasattr(layout, "at_left_edge")
+        and (layout.at_left_edge() if dx < 0 else layout.at_right_edge())
     )
     if at_edge or not landscape:
         neighbor = _screen_neighbor(qtile, screen, dx)
@@ -188,7 +190,7 @@ keys = [
     Key(
         [],
         "Print",
-        lazy.spawn("flameshot gui --clipboard"),
+        lazy.spawn("flameshot gui"),
         desc="Screenshot a region, with annotation",
     ),
     Key(
