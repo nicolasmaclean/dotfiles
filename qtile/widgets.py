@@ -19,6 +19,7 @@ from libqtile.widget.helpers.status_notifier.statusnotifier import (
 from libqtile.widget.mpris2widget import Mpris2Formatter
 from qtile_extras.popup.toolkit import PopupAbsoluteLayout, PopupText
 
+from audio import audio_menu
 from notify import VOLUME_ID, notify_value
 from popups import POPUP_KEYMAP, bar_widget, popup_alive
 from spotify_web import SpotifyWeb
@@ -147,11 +148,20 @@ class VolumeIcon(widget.Volume):
     0.2s - posts the reading it actually got back. Holding a key down then
     coalesces to one notification per poll rather than one per repeat, which
     keeps a held key from spawning dunstify thirty times a second.
+
+    Button3 is also repointed here, from the stock run_app (there is no mixer
+    installed for volume_app to open) to audio.py's output-device menu -
+    reassigned rather than passed in as mouse_callbacks, because Volume.__init__
+    already claims Button3 via add_callbacks, and add_callbacks lets whatever
+    self.mouse_callbacks held *before* that call win over its own defaults - so
+    a callback passed in through config would already have lost to run_app by
+    the time this method could do anything about it.
     """
 
     def __init__(self, **config):
         self._announce = False
         widget.Volume.__init__(self, **config)
+        self.mouse_callbacks["Button3"] = audio_menu
 
     def _volume_icon(self, volume, muted):
         """The glyph _update_drawer picks, on the same thresholds."""

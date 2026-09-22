@@ -378,8 +378,8 @@ _VOLUME = VolumeIcon(
     mute_command="wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
     step=5,
     # Mouse handling is left to the widget itself: Button1 mutes and scroll
-    # nudges the volume. Button3 runs volume_app, which is unset - there is no
-    # mixer installed for it to open anyway.
+    # nudges the volume. Button3 opens the output-device menu - see
+    # VolumeIcon's docstring in widgets.py.
 )
 
 _NETWORK = NetworkButton(
