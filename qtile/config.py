@@ -515,6 +515,15 @@ def _bar_for(index):
     ]
 
 
+# ═══ active-screen indicator colours ═════════════════════════════════════════
+# Alpha 0, not a dark solid: the strip should disappear into the wallpaper
+# when off rather than read as a bezel. Bar already renders on an ARGB visual
+# (see the top bar's background note above), so this composites cleanly under
+# picom.
+_SCREEN_INDICATOR_ON = C.border_focus  # same purple as a focused window's border
+_SCREEN_INDICATOR_OFF = C.bg_topbar  # transparent broke the taskbar's own visual
+
+
 # ═══ desktop ══════════════════════════════════════════════════════════════
 # No `screens` list at all any more. generate_screens replaces it: qtile calls
 # it with the real output list at startup *and* on every hotplug, so the
@@ -545,6 +554,21 @@ def _screen_for(index, rect=None):
             B.height,
             background=C.bg_topbar,
             margin=[B.gutter, B.gutter, 0, B.gutter],
+            # The active-screen indicator: a permanent 4px top border on the
+            # taskbar pill itself, so it reads as a stripe above the bar.
+            # border_width never changes - _sync_active_screen_indicator only
+            # ever repaints border_color, between purple and the taskbar's own
+            # background (transparent broke the taskbar's rendering), so it
+            # can never nudge window geometry.
+            #
+            # border_color must always be a 4-element list, [N, E, S, W] to
+            # match border_width - Bar.__init__ normalizes a bare string into
+            # one, but a runtime `bar.border_color = "#..."` (as the hook
+            # below does) skips that normalization, and _actual_draw's
+            # zip(border_width, border_color, rects) then iterates the string
+            # character-by-character and crashes on set_source_rgb.
+            border_width=[2, 0, 0, 0],
+            border_color=[_SCREEN_INDICATOR_OFF] * 4,
         ),
         x=x,
         y=y,
@@ -574,6 +598,37 @@ else:
     generate_screens = hardware.screen_generator(
         lambda index, output: _screen_for(index)
     )
+
+
+# ═══ active-screen indicator ═════════════════════════════════════════════════
+# The top bar's border_width (see _screen_for) is always [4, 0, 0, 0] - only
+# border_color moves. border_width is what reserves the space, and qtile adds
+# it to the bar's own size at _configure time; leaving it fixed and only
+# repainting border_color means toggling can never shove windows around.
+def _sync_active_screen_indicator():
+    current = getattr(libqtile.qtile, "current_screen", None)
+    for scr in getattr(libqtile.qtile, "screens", ()):
+        top = scr.top
+        if not isinstance(top, bar.Bar):
+            continue
+        # Always a 4-list - see the border_color note in _screen_for.
+        colour = _SCREEN_INDICATOR_ON if scr is current else _SCREEN_INDICATOR_OFF
+        top.border_color = [colour] * 4
+        # No .window yet on the very first pass - _configure hasn't run, and
+        # it'll paint with the border colour above once it does.
+        if getattr(top, "window", None) is not None:
+            top.draw()
+
+
+@hook.subscribe.current_screen_change
+def _active_screen_changed():
+    _sync_active_screen_indicator()
+
+
+@hook.subscribe.startup
+def _init_active_screen_indicator():
+    _sync_active_screen_indicator()
+
 
 # ═══ global settings ═════════════════════════════════════════════════════════════════
 dgroups_key_binder = None
