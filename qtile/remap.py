@@ -10,6 +10,10 @@ import brightness
 # ═══ misc ═══════════════════════════════════════════════════════════════
 terminal = "alacritty"  # only terminal installed on this box
 launcher = "rofi -show drun"
+# same launcher, but with each app's extra Desktop Actions (e.g. Firefox's
+# "New Private Window") shown as their own rows - off by default on the plain
+# launcher above since most apps' action lists are just clutter.
+launcher_actions = "rofi -show drun -drun-show-actions"
 
 # ═══ keybindings ═══════════════════════════════════════════════════════════════
 mod = "mod1"  # Alt: keyboard modifier for every Key() binding
@@ -99,6 +103,12 @@ keys = [
     # --- launching ---
     Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
     Key([mod], "r", lazy.spawn(launcher), desc="Search and launch an app"),
+    Key(
+        [mod, "shift"],
+        "r",
+        lazy.spawn(launcher_actions),
+        desc="Search and launch an app, showing each app's extra actions (e.g. Firefox private window)",
+    ),
     # --ask-become-pass needs a real TTY for the sudo prompt, and $(hostname)
     # needs a shell to expand it - lazy.spawn execs argv directly with no
     # shell in between, so both go through `sh -c` inside a terminal rather
