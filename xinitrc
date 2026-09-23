@@ -3,6 +3,7 @@
 # runs /usr/share/xsessions/qtile.desktop instead, which is rendered from
 # qtile/qtile.desktop.j2 and points at the same launcher.
 #
-# Symlinked to ~/.xinitrc. $HOME rather than a written-in path: unlike a
-# .desktop entry, a shell script can expand it.
-exec "$HOME/.local/bin/qtile-session"
+# Symlinked to ~/.xinitrc. The launcher lives in /usr/local/bin rather than
+# ~/.local/bin so the greeter (running as lightdm) can stat it through a home
+# directory at mode 700 - see qtile/qtile.desktop.j2.
+exec /usr/local/bin/qtile-session

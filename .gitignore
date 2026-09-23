@@ -7,3 +7,7 @@ __pycache__/
 
 # nvim
 nvim/plugin/packer_compiled.lua
+
+# quickshell rewrites this per machine
+quickshell/.qmlls.ini
+hypr/qs/.qmlls.ini

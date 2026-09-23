@@ -91,6 +91,16 @@ local lsps = {
             root_markers = { 'composer.json', '.git' },
         }
     },
+    {
+        -- quickshell writes the import paths into .qmlls.ini next to shell.qml
+        "qmlls",
+        {
+            -- arch only puts it on PATH under the qt6 suffix
+            cmd = { 'qmlls6' },
+            filetypes = { 'qml', 'qmljs' },
+            root_markers = { '.qmlls.ini', 'shell.qml', '.git' },
+        }
+    },
 }
 
 for _, lsp in pairs(lsps) do

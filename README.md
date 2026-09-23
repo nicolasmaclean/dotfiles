@@ -54,9 +54,10 @@ Then, as yourself — *not* with sudo, it calls sudo for the two steps that need
 
 `~/.config/qtile/install-session.sh`
 
-That installs the launcher (`~/.local/bin/qtile-session`), the greeter's session
-entry (rendered from `qtile/qtile.desktop.j2` — a `.desktop` file cannot expand
-`$HOME`, so the launcher path is substituted in), the `systemd --user` units the
+That installs the launcher (`/usr/local/bin/qtile-session` — outside `$HOME` so
+the greeter, running as `lightdm`, can see it with home at mode 700), the
+greeter's session entry (rendered from `qtile/qtile.desktop.j2` with that path
+substituted in), the `systemd --user` units the
 session is made of (`qtile-session.target`, `picom.service`, `protonvpn.service`,
 `polkit-agent.service`, `dunst.service`, `flameshot.service`), the `~/.config`
 symlinks for dunst, flameshot and gsimplecal, and the ibus input sources the

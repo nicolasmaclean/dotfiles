@@ -2,6 +2,8 @@
 hyprland_packages:
   - hyprland
   - xdg-desktop-portal-hyprland
+  - quickshell
+  - hyprpaper
 
 hyprland_nvidia_packages:
   - libva-nvidia-driver

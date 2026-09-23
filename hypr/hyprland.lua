@@ -22,7 +22,6 @@ hl.monitor({
     scale    = "auto",
 })
 
-
 ---------------------
 ---- MY PROGRAMS ----
 ---------------------
@@ -43,9 +42,9 @@ local menu        = "rofi -show drun"
 -- Or execute your favorite apps at launch like this:
 --
 hl.on("hyprland.start", function () 
---   hl.exec_cmd(terminal)
---   hl.exec_cmd("nm-applet")
---   hl.exec_cmd("waybar & hyprpaper & firefox")
+  hl.exec_cmd("qs --path ~/dotfiles/hypr/qs") -- quickshell (taskbar, widgets, etc.)
+
+  -- TODO: startup apps
 end)
 
 
@@ -209,12 +208,13 @@ hl.config({
 ----  MISC  ----
 ----------------
 
-hl.config({
-    misc = {
-        force_default_wallpaper = -1,    -- Set to 0 or 1 to disable the anime mascot wallpapers
-        disable_hyprland_logo   = false, -- If true disables the random hyprland logo / anime girl background. :(
-    },
-})
+--hl.config({
+--     misc = {
+--         force_default_wallpaper = 0,    -- Set to 0 or 1 to disable the anime mascot wallpapers
+--         disable_hyprland_logo   = true, -- If true disables the random hyprland logo / anime girl background. :(
+--         disable_splash_rendering = true, -- Hide the splash tip text at the bottom of the default wallpaper
+--     },
+-- })
 
 
 ---------------
@@ -256,29 +256,37 @@ hl.device({
 ---------------------
 ---- KEYBINDINGS ----
 ---------------------
--- Example binds, see https://wiki.hypr.land/Configuring/Basics/Binds/ for more
 
 local mainMod = "ALT"
-local ipc = "noctalia msg "
 
 -- Open apps
 hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu)) -- search for app to open
 
 -- Manipulate current window
 local closeWindowBind = hl.bind(mainMod .. " + W", hl.dsp.window.close())
 hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
 
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
-hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
-hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
+-- Hide current screen's windows
+hl.bind(mainMod .. " + D", hl.dsp.focus({ workspace = "emptym" }))
 
 -- Move focus
 hl.bind(mainMod .. " + h",  hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + l", hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. " + k",    hl.dsp.focus({ direction = "up" }))
 hl.bind(mainMod .. " + j",  hl.dsp.focus({ direction = "down" }))
+
+-- Window stacking
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.group.toggle())
+
+hl.bind(mainMod .. " + SPACE",         hl.dsp.group.next())
+-- hl.bind(mainMod .. " + SHIFT + TAB", hl.dsp.group.prev())
+
+hl.bind(mainMod .. " + SHIFT + H", hl.dsp.window.move({ into_group = "l" }))
+hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.move({ into_group = "d" }))
+hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.move({ into_group = "u" }))
+hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ into_group = "r" }))
+hl.bind(mainMod .. " + SHIFT + O", hl.dsp.window.move({ out_of_group = true }))
 
 -- Handle workspaces
 for i = 1, 5 do
@@ -288,8 +296,8 @@ for i = 1, 5 do
 end
 
 -- Example special workspace (scratchpad)
-hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+-- hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
+-- hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
@@ -315,6 +323,9 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
 
+-- Development
+local qsPath = "~/dotfiles/hypr/qs"
+hl.bind(mainMod .. " + CONTROL + R", hl.dsp.exec_cmd("qs kill -p " .. qsPath .. "; qs -p " .. qsPath))
 
 --------------------------------
 ---- WINDOWS AND WORKSPACES ----

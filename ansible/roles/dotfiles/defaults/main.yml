@@ -19,6 +19,8 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/picom"
   - src: rofi
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/rofi"
+  - src: quickshell
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/quickshell"
   # A file inside a directory, not a directory link — and it must be this path.
   # Alacritty checks ~/.config/alacritty/alacritty.toml before ~/.alacritty.toml
   # and stops at the first hit, so the two shadow rather than merge.

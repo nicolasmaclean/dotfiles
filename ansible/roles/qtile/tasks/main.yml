@@ -29,25 +29,29 @@
   when: qtile_version not in (qtile_installed.stdout | default(''))
 
 # ═══ the launcher and the session entry ═══════════════════════════════════
-# `uv tool install` above creates ~/.local/bin as a side effect, so on a real
-# run this task is redundant. It exists for --check: command: does not execute
-# in check mode, so the directory is never created and the copy below fails on
-# a box that has not been provisioned yet — which is every box the dry run is
-# actually useful on. Making the dependency explicit costs one idempotent task.
-- name: Create the user bin directory
-  ansible.builtin.file:
-    path: "{{ qtile_session_bin | dirname }}"
-    state: directory
-    mode: "0755"
-
 # The launcher is what publishes DISPLAY to systemd --user and dbus; without it
 # every unit below would start with no display to draw on.
+#
+# Root-owned in /usr/local/bin (see qtile_session_bin in defaults/main.yml for
+# why it cannot live under $HOME). No directory task in front of it any more:
+# the old one only existed so --check could copy into a not-yet-created
+# ~/.local/bin, and /usr/local/bin ships with the filesystem package.
 - name: Install the session launcher
+  become: true
   ansible.builtin.copy:
     src: "{{ dotfiles_dir }}/qtile/session/qtile-session"
     dest: "{{ qtile_session_bin }}"
     remote_src: true
+    owner: root
+    group: root
     mode: "0755"
+
+# Where the launcher used to be installed. Nothing references it now, and a
+# stale copy there would only look like the live one and drift from the repo.
+- name: Remove the old per-user launcher
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-session"
+    state: absent
 
 # The path is the same on Arch as it was on Ubuntu, but the directory is not:
 # Ubuntu's lightdm package ships /usr/share/xsessions, Arch's does not
@@ -63,8 +67,8 @@
     state: directory
     mode: "0755"
 
-# A .desktop entry cannot expand $HOME and this one is installed as root, so
-# the launcher path is substituted in. install-session.sh sed'd the same
+# A .desktop entry cannot expand variables, so the launcher path is
+# substituted in. install-session.sh sed'd the same
 # placeholder; this is the same rendering by the intended route.
 - name: Install the greeter's session entry
   become: true

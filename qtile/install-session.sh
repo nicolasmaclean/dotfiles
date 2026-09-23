@@ -1,7 +1,7 @@
 #!/bin/bash
 # Installs the whole Qtile session, so a fresh box needs nothing but this repo:
-#   ~/.local/bin/qtile-session        the launcher GDM execs
-#   /usr/share/xsessions/qtile.desktop the entry GDM lists
+#   /usr/local/bin/qtile-session       the launcher the greeter execs
+#   /usr/share/xsessions/qtile.desktop the entry the greeter lists
 #   ~/.config/systemd/user/*           the units the session is made of
 #   ~/.config/dunst                    symlink to this repo's dunstrc
 #   ~/.config/flameshot                symlink to this repo's flameshot.ini
@@ -17,7 +17,7 @@
 # Run as yourself, NOT with sudo. The user units and the gsettings values below
 # belong to your own session - run as root they would land in root's systemd
 # manager and root's dconf, where nothing of yours would ever read them. The
-# two steps that genuinely need root call sudo themselves, so expect one
+# steps that genuinely need root call sudo themselves, so expect one
 # password prompt.
 #
 #   ~/.config/qtile/install-session.sh [--autologin]
@@ -35,16 +35,30 @@ UNITS="$HOME/.config/systemd/user"
 # ═══ the session entry, and the launcher it points at ════════════════════
 # The launcher is what publishes DISPLAY to systemd --user and dbus; without
 # it the units below would start with no display to draw on.
-install -Dm755 "$HERE/session/qtile-session" "$HOME/.local/bin/qtile-session"
-echo "installed ~/.local/bin/qtile-session"
+#
+# /usr/local/bin, not ~/.local/bin, because the greeter runs as the lightdm
+# user and has to stat TryExec= before it will list the session at all. With
+# $HOME at mode 700 that stat fails, and lightdm-gtk-greeter silently drops
+# the entry - Qtile just vanishes from the list, no error anywhere. Keeping the
+# launcher outside $HOME lets home stay 700. It still execs ~/.local/bin/qtile,
+# but by then it is running as you, so that path is readable.
+sudo install -Dm755 "$HERE/session/qtile-session" /usr/local/bin/qtile-session
+echo "installed /usr/local/bin/qtile-session"
 
-# qtile.desktop.j2 rather than a plain file: a .desktop entry cannot expand
-# $HOME and this one is installed as root, so the launcher path has to be
-# written in. Ansible's qtile role renders the same template with the same
-# placeholder; this is the pre-Ansible path.
+# The copy earlier versions of this script put in ~/.local/bin. Nothing reads
+# it any more, and leaving it would make it look like the live launcher.
+if [ -e "$HOME/.local/bin/qtile-session" ]; then
+    rm -f "$HOME/.local/bin/qtile-session"
+    echo "removed the stale ~/.local/bin/qtile-session"
+fi
+
+# qtile.desktop.j2 rather than a plain file: the launcher path is written in,
+# and Ansible's qtile role renders the same template with the same
+# placeholder (qtile_session_bin, /usr/local/bin/qtile-session there too);
+# this is the pre-Ansible path.
 RENDERED="$(mktemp)"
 trap 'rm -f "$RENDERED"' EXIT
-sed "s|{{ qtile_session_bin }}|$HOME/.local/bin/qtile-session|g" \
+sed "s|{{ qtile_session_bin }}|/usr/local/bin/qtile-session|g" \
     "$HERE/qtile.desktop.j2" > "$RENDERED"
 sudo install -Dm644 "$RENDERED" /usr/share/xsessions/qtile.desktop
 echo "installed /usr/share/xsessions/qtile.desktop"
