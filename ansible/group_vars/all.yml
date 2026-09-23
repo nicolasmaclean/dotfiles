@@ -1,12 +1,5 @@
 ---
 # Shared by both hosts.
-#
-# Almost every version pin that used to live here is gone. They existed because
-# the Ubuntu archive was behind and the packages had to come from tarballs,
-# vendor repos and pinned .debs; on a rolling distro every one of them names a
-# package pacman versions for us, and a pin against a rolling repo is a task
-# that fails on the day the repo moves. The qtile venv is the one exception,
-# and its reason is below.
 
 # --- identity -------------------------------------------------------------
 # Consumed by the `identity` role's git config tasks.
@@ -42,7 +35,5 @@ pyxdg_version: "0.28"
 
 # --- system ---------------------------------------------------------------
 system_timezone: "America/Chicago"
-# gsimplecal/config sets force_lang = en_US.utf8 to get Sunday-first weeks, and
-# that must name a locale `locale -a` actually lists. A minimal Arch install
-# generates none at all, so this is not the boilerplate it looks like.
 system_locale: "en_US.UTF-8"
+

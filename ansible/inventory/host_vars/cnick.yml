@@ -1,18 +1,18 @@
 ---
 # Desktop. CachyOS, minimal profile — no desktop environment, so the playbook
 # builds onto empty ground and there is nothing to purge.
-#
-# As with the laptop: no hardware values. qtile/hardware.py answers None for
-# battery and backlight on this box, drops the two widgets, and builds one bar
-# per output from generate_screens().
 
+# Hardware facts
 form_factor: desktop
-
 gpu: nvidia
 
+# Apps
 install_steam: true
 install_vpn: true
 install_battlenet: true
+
+# Desktop environment
+install_hyprland: true
 
 # Which NVIDIA package set, named here rather than detected. `chwd` is this
 # distro's `ubuntu-drivers` and has the same defect: it is not idempotent and

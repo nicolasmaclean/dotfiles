@@ -1,0 +1,7 @@
+---
+- name: Install Hyprland
+  become: true
+  community.general.pacman:
+    name: "{{ hyprland_packages + (hyprland_nvidia_packages if gpu == 'nvidia' else []) }}"
+    state: present
+

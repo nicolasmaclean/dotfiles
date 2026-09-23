@@ -19,6 +19,7 @@ desktop_apps_packages:
   - ibus
   - ibus-libpinyin
   - dmenu                   # dunstrc references /usr/bin/dmenu by full path
+  - dolphin
 
 # Deliberately NOT lm-sensors: qtile reads temperatures through psutil, which
 # walks /sys/class/hwmon directly. It is absent on the laptop and the thermal

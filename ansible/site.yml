@@ -24,6 +24,7 @@
           - install_steam is boolean
           - install_vpn is boolean
           - install_battlenet is boolean
+          - install_hyprland is boolean
           - qtile_version is defined
         fail_msg: >-
           inventory/host_vars/{{ inventory_hostname }}.yml is missing or
@@ -61,6 +62,7 @@
           gpu={{ gpu }} steam={{ install_steam }} vpn={{ install_vpn }}
           user={{ ansible_facts['user_id'] }} home={{ ansible_facts['env']['HOME'] }}
           dotfiles={{ dotfiles_dir }}
+          hyprland={{install_hyprland }}
       tags: always
 
   # Ordered as they must run. Only two orderings are load-bearing: toolchains
@@ -83,6 +85,7 @@
     - {role: gpu, tags: [gpu]}
     - {role: display_manager, tags: [display-manager, dm]}
     - {role: qtile, tags: [qtile]}
+    - {role: hyprland, tags: [hyprland], when: install_hyprland | bool}
     - {role: desktop_apps, tags: [desktop-apps]}
     - {role: dotfiles, tags: [dotfiles]}
     - {role: neovim, tags: [neovim]}

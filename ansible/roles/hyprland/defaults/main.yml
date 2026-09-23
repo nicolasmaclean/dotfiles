@@ -1,0 +1,7 @@
+---
+hyprland_packages:
+  - hyprland
+  - xdg-desktop-portal-hyprland
+
+hyprland_nvidia_packages:
+  - libva-nvidia-driver
