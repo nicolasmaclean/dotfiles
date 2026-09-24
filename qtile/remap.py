@@ -161,7 +161,7 @@ keys = [
         desc="Toggle mic mute",
     ),
     # Nothing in the bar tracks the backlight, so these call brightness.py,
-    # which owns the step, the -e curve and the floor and posts the dunst
+    # which owns the step, the -e curve and the floor and posts the
     # notification that replaced the meter.
     Key(
         [],

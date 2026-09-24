@@ -99,6 +99,12 @@ local lsps = {
             cmd = { 'qmlls6' },
             filetypes = { 'qml', 'qmljs' },
             root_markers = { '.qmlls.ini', 'shell.qml', '.git' },
+            on_attach = function(client, _)
+                -- qmlls sends malformed semantic tokens while the file doesn't
+                -- parse (e.g. unbalanced braces), which crashes nvim's decoder.
+                -- treesitter handles highlighting anyway
+                client.server_capabilities.semanticTokensProvider = nil
+            end,
         }
     },
 }

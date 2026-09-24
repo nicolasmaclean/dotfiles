@@ -17,7 +17,7 @@
 # The guard that makes adoption safe. A dest that is already a symlink, or
 # absent, is ours to write; a dest that is a real file or directory is somebody
 # else's config and gets left alone with a warning. install-session.sh used the
-# same rule for dunst, flameshot and gsimplecal.
+# same rule for flameshot and gsimplecal.
 - name: Inspect the link targets
   ansible.builtin.stat:
     path: "{{ item.dest }}"

@@ -15,6 +15,34 @@
 ------------------
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
+
+-- cnick's desk, ported from qtile/session/qtile-session's xrandr call.
+-- Matched by desc: rather than connector, since Wayland's names (HDMI-A-n)
+-- don't match X's (HDMI-n) and neither sorts by desk position.
+-- Left: Dell, portrait (transform 1 = 90°, xrandr's --rotate left)
+hl.monitor({
+    output    = "desc:Dell Inc. DELL S2415H 5J1MP7141R3L",
+    mode      = "preferred",
+    position  = "0x0",
+    scale     = 1,
+    transform = 1,
+})
+-- Middle: primary
+hl.monitor({
+    output   = "desc:Acer Technologies CB242Y 0x92203389",
+    mode     = "preferred",
+    position = "1080x0",
+    scale    = 1,
+})
+-- Right
+hl.monitor({
+    output   = "desc:Acer Technologies CB242Y 0x0190179D",
+    mode     = "preferred",
+    position = "3000x0",
+    scale    = 1,
+})
+
+-- Fallback for any other monitor
 hl.monitor({
     output   = "",
     mode     = "preferred",
@@ -43,6 +71,7 @@ local menu        = "rofi -show drun"
 --
 hl.on("hyprland.start", function () 
   hl.exec_cmd("qs --path ~/dotfiles/hypr/qs") -- quickshell (taskbar, widgets, etc.)
+  hl.exec_cmd("hyprpaper") -- wallpaper service
 
   -- TODO: startup apps
 end)
@@ -277,7 +306,7 @@ hl.bind(mainMod .. " + k",    hl.dsp.focus({ direction = "up" }))
 hl.bind(mainMod .. " + j",  hl.dsp.focus({ direction = "down" }))
 
 -- Window stacking
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.group.toggle())
+hl.bind(mainMod .. " + S", hl.dsp.group.toggle())
 
 hl.bind(mainMod .. " + SPACE",         hl.dsp.group.next())
 -- hl.bind(mainMod .. " + SHIFT + TAB", hl.dsp.group.prev())

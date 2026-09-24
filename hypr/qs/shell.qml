@@ -6,6 +6,8 @@ import QtQuick
 import qs.widgets
 
 Scope {
+  NotificationArea { }
+
   Variants {
     model: Quickshell.screens;
 

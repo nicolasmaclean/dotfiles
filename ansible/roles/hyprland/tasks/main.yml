@@ -5,3 +5,49 @@
     name: "{{ hyprland_packages + (hyprland_nvidia_packages if gpu == 'nvidia' else []) }}"
     state: present
 
+# A .desktop entry cannot expand variables, so the config path is rendered in.
+# A separate file from the packaged hyprland.desktop, which pacman owns and
+# would overwrite on upgrade.
+- name: Install the greeter's session entry
+  become: true
+  ansible.builtin.template:
+    src: "{{ dotfiles_dir }}/hypr/hyprland.desktop.j2"
+    dest: /usr/share/wayland-sessions/hyprland-dotfiles.desktop
+    mode: "0644"
+
+# quickshell (hypr/qs/services/Notify.qml) is the notification daemon now.
+# dunst has to be uninstalled, not just left disabled: its package ships a dbus
+# activation file for org.freedesktop.Notifications, so any notify-send that
+# lands while quickshell is down or reloading would start dunst, and dunst
+# would then keep the name after quickshell came back.
+- name: Stop the old dunst unit
+  ansible.builtin.systemd_service:
+    name: dunst.service
+    enabled: false
+    state: stopped
+    scope: user
+  register: hyprland_dunst_unit
+  failed_when: false
+  changed_when: hyprland_dunst_unit.changed | default(false)
+  when: not ansible_check_mode
+
+- name: Remove dunst
+  become: true
+  community.general.pacman:
+    name: dunst
+    state: absent
+
+- name: Delete dunst's leftover unit and config link
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/dunst.service"
+    - "{{ ansible_facts['env']['HOME'] }}/.config/dunst"
+  register: hyprland_dunst_files
+
+- name: Reload the user manager after dropping dunst's unit
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    scope: user
+  when: hyprland_dunst_files.changed

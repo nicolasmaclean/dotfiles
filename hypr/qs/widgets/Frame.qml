@@ -1,6 +1,7 @@
-import Quickshell
 import QtQuick
 import QtQuick.Shapes
+import QtQuick.Effects
+import Quickshell
 import Quickshell.Wayland
 
 import qs
@@ -14,7 +15,7 @@ PanelWindow {
   }
 
   // sit under the taskbar and don't effect layout at all
-  exclusionMode: ExclusionMode.Normal
+  exclusionMode: ExclusionMode.Ignore
   exclusiveZone: 0
 
   // frame doesn't consume any mouse input
@@ -49,11 +50,21 @@ PanelWindow {
       // cut out the square (with rounded corners) from the frame
       PathRectangle {
         x: frame.thickness
-        y: 0
+        y: 40
         width: frame.width - frame.thickness * 2
-        height: frame.height - frame.thickness
+        height: frame.height - 40 - frame.thickness
         radius: frame.innerRadius
       }
+    }
+
+    // shadow under frame
+    layer.enabled: true
+    layer.effect: MultiEffect {
+      shadowEnabled: true
+      shadowColor: Qt.alpha("#000000", 1)
+      // shadowBlur: 0.5
+      blurMax: 40
+      shadowScale: 0.995
     }
   }
 }

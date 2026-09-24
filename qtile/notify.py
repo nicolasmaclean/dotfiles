@@ -8,21 +8,20 @@ from libqtile.log_utils import logger
 # Brightness and friends are worth a glance, not a log entry: one notification
 # that replaces itself on every press and times out in a second or two.
 #
-# These go through dunst rather than through the qtile-extras popup toolkit
-# (popups.py) because dunst is already the session's notification daemon and
-# already draws exactly this - ../dunst/dunstrc sets progress_bar = true, so
-# the int:value hint below renders as the bar under the text, in the same
-# frame, corner and font as every other notification on this desktop. Drawing
-# a lookalike in-process would mean keeping two copies of that styling in step.
+# These go through whatever owns org.freedesktop.Notifications rather than
+# through the qtile-extras popup toolkit (popups.py), so they share the frame,
+# corner and font of every other notification. The int:value hint below is the
+# de-facto progress-bar hint; nothing answers the bus in a bare qtile session
+# any more (dunst is gone, quickshell only runs under Hyprland), and without a
+# daemon notify-send simply fails and is logged.
 #
-# dunstify, not notify-send: -r (replace an existing notification by id) is a
-# dunstify extension, and it is what keeps a held-down key from stacking a
+# --replace-id (libnotify >= 0.8) is what keeps a held-down key from stacking a
 # column of notifications down the right-hand edge.
-_DUNSTIFY = shutil.which("dunstify")
+_NOTIFY_SEND = shutil.which("notify-send")
 
-# One fixed id per kind of readout, allocated high: dunst hands out its own ids
-# from 1 upward, so staying well clear of that range means a notification of
-# ours can never land on top of somebody else's.
+# One fixed id per kind of readout, allocated high: daemons hand out their own
+# ids from 1 upward, so staying well clear of that range means a notification
+# of ours can never land on top of somebody else's.
 BRIGHTNESS_ID = 9001
 VOLUME_ID = 9002
 
@@ -30,22 +29,22 @@ VOLUME_ID = 9002
 def notify_value(summary, percent, replace_id, urgency="low", timeout=1500):
     """Post a self-replacing notification with a progress bar at `percent`.
 
-    Blocking, but only just: dunstify without --block is a single D-Bus call
-    and returns as soon as dunst has taken the message.
+    Blocking, but only just: notify-send without --wait is a single D-Bus call
+    and returns as soon as the daemon has taken the message.
     """
-    if _DUNSTIFY is None:
+    if _NOTIFY_SEND is None:
         return
     try:
         subprocess.run(
             [
-                _DUNSTIFY,
-                "--appname=qtile",
+                _NOTIFY_SEND,
+                "--app-name=qtile",
                 f"--urgency={urgency}",
-                f"--replace={replace_id}",
-                f"--timeout={timeout}",
-                # dunst draws a progress bar for any notification carrying this
-                # hint, and clamps it to 0-100 itself.
-                f"--hints=int:value:{round(percent)}",
+                f"--replace-id={replace_id}",
+                f"--expire-time={timeout}",
+                # The daemon draws a progress bar for any notification carrying
+                # this hint.
+                f"--hint=int:value:{round(percent)}",
                 summary,
             ],
             stdout=subprocess.DEVNULL,
@@ -55,4 +54,4 @@ def notify_value(summary, percent, replace_id, urgency="low", timeout=1500):
         )
     except (OSError, subprocess.SubprocessError) as e:
         # A notification is never worth taking a keybinding down with it.
-        logger.warning("dunstify failed: %s", e)
+        logger.warning("notify-send failed: %s", e)

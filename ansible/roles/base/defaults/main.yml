@@ -14,7 +14,7 @@ base_packages:
   - unzip
   - ca-certificates
   # A minimal CachyOS install has almost no fonts. Without these, every
-  # non-glyph character in rofi, dunst and GTK dialogs falls back to nothing.
+  # non-glyph character in rofi, quickshell and GTK dialogs falls back to nothing.
   # The Nerd Font the bar needs is roles/fonts; these are the fallbacks under it.
   - ttf-dejavu
   - noto-fonts

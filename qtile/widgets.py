@@ -125,14 +125,14 @@ class ScreenGroupBox(widget.GroupBox):
 
 
 # ═══ volume ═══════════════════════════════════════════════════════════════
-# Just the speaker glyph. The level itself lives in the dunst notification
+# Just the speaker glyph. The level itself lives in the notification
 # below, which is where you are actually looking when you reach for the volume
 # keys - a block meter in a corner of a 34px strip was telling you the same
 # thing somewhere you were not.
 
 
 class VolumeIcon(widget.Volume):
-    """The stock speaker glyph, plus a dunst notification on every change.
+    """The stock speaker glyph, plus a notification on every change.
 
     With emoji=True and no theme_path the parent already draws exactly one
     thing - the glyph for the current level, or the muted one - so nothing here
@@ -147,7 +147,7 @@ class VolumeIcon(widget.Volume):
     So a press only arms a flag, and the next poll - within update_interval,
     0.2s - posts the reading it actually got back. Holding a key down then
     coalesces to one notification per poll rather than one per repeat, which
-    keeps a held key from spawning dunstify thirty times a second.
+    keeps a held key from spawning notify-send thirty times a second.
 
     Button3 is also repointed here, from the stock run_app (there is no mixer
     installed for volume_app to open) to audio.py's output-device menu -

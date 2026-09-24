@@ -654,7 +654,7 @@ wmname = "LG3D"
 # `systemd --user` manager with the session you started it from, so without
 # this guard testing the config in Xephyr would start the *real* session's
 # target on the way in and - much worse - stop it on the way out, killing the
-# picom, dunst, flameshot, polkit and VPN services out from under the desktop
+# picom, flameshot, polkit and VPN services out from under the desktop
 # you are sitting at. The nested instance simply does without them.
 _NESTED = bool(os.environ.get("QTILE_NESTED"))
 

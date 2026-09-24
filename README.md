@@ -46,9 +46,9 @@ ln -s ~/dotfiles/bin/qtile-nested     ~/.local/bin/qtile-nested
 ln -s ~/dotfiles/bin/rofi-power-menu  ~/.local/bin/rofi-power-menu
 ```
 
-The session expects four packages — `install-session.sh`'s own header lists
+The session expects three packages — `install-session.sh`'s own header lists
 them, and the Print key and the bar clock are dead without the last two:
-`sudo apt install policykit-1-gnome dunst flameshot gsimplecal`.
+`sudo apt install policykit-1-gnome flameshot gsimplecal`.
 
 Then, as yourself — *not* with sudo, it calls sudo for the two steps that need it:
 
@@ -59,8 +59,8 @@ the greeter, running as `lightdm`, can see it with home at mode 700), the
 greeter's session entry (rendered from `qtile/qtile.desktop.j2` with that path
 substituted in), the `systemd --user` units the
 session is made of (`qtile-session.target`, `picom.service`, `protonvpn.service`,
-`polkit-agent.service`, `dunst.service`, `flameshot.service`), the `~/.config`
-symlinks for dunst, flameshot and gsimplecal, and the ibus input sources the
+`polkit-agent.service`, `flameshot.service`), the `~/.config`
+symlinks for flameshot and gsimplecal, and the ibus input sources the
 bar's keyboard widget cycles through. Pass `--autologin` to skip the greeter.
 
 For `startx`/`xinit` rather than a greeter: `ln -s ~/dotfiles/xinitrc ~/.xinitrc`.
@@ -99,16 +99,15 @@ systray and leaks a bar window on every replug.
 
 ## Notifications
 
-`dunst/dunstrc`, symlinked to `~/.config/dunst` by `install-session.sh` and run
-by `dunst.service`. Nothing else in a bare qtile session answers
-`org.freedesktop.Notifications`, so without it every `notify-send` fails.
+Quickshell is the notification daemon, and only under Hyprland:
+`hypr/qs/services/Notify.qml` owns `org.freedesktop.Notifications` and
+`hypr/qs/widgets/NotificationArea.qml` draws the stack on the focused monitor.
+A bare qtile session has no daemon, so `notify-send` there fails.
 
-Ported from a dunstrc written for dunst 1.12; noble ships 1.9.2, and the six
-settings that only exist in the newer one are marked inline in the file.
-
-    notify-send "hello" "body text"          # test it
-    dunstctl set-paused toggle               # do-not-disturb, all-or-nothing on 1.9.2
-    dunstctl history-pop                      # bring the last one back
+    notify-send "hello" "body text"                     # test it
+    notify-send -h int:value:40 "Volume"                # progress bar
+    qs --path ~/dotfiles/hypr/qs ipc call notifications toggleDnd   # do-not-disturb
+    qs --path ~/dotfiles/hypr/qs ipc call notifications dismissAll
 
 ## Calendar
 

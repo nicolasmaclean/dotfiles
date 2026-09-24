@@ -12,7 +12,7 @@ from theme import G
 # ═══ screen brightness ════════════════════════════════════════════════════
 # This used to be a bar widget (BrightnessBar), and the XF86MonBrightness keys
 # drove it by name so the meter and the keys could not disagree. With the meter
-# gone - the dunst notification says everything it said, and says it where you
+# gone - the notification says everything it said, and says it where you
 # are actually looking - there is nothing left for a widget to draw, so the
 # control logic lives here instead and the keys call it directly.
 #

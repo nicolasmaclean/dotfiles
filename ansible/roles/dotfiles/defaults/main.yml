@@ -6,11 +6,9 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/qtile"
   - src: nvim
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
-  # dunst, flameshot and gsimplecal all have to sit at their XDG default path:
-  # each is started by dbus activation or by a bare exec with no way to pass a
+  # flameshot and gsimplecal both have to sit at their XDG default path: each
+  # is started by dbus activation or by a bare exec with no way to pass a
   # config flag, so a config anywhere else is read by nothing.
-  - src: dunst
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/dunst"
   - src: flameshot
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/flameshot"
   - src: gsimplecal
