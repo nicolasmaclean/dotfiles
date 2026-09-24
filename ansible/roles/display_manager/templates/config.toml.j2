@@ -1,0 +1,21 @@
+# {{ ansible_managed }}
+# Rendered by roles/display_manager. Replaces the packaged config.toml, which
+# runs agreety. See greetd(5).
+
+[terminal]
+vt = 1
+
+# tuigreet lists /usr/share/wayland-sessions and /usr/share/xsessions itself;
+# --cmd is only the fallback before a session has been remembered. greetd
+# splits this line like a shell does, hence the inner quotes.
+[default_session]
+command = "tuigreet --time --asterisks --remember --remember-user-session --cmd '{{ display_manager_session_command }}'"
+user = "greeter"
+{% if display_manager_autologin %}
+
+# Run once, on greetd's first start after boot. Logging out lands on
+# [default_session] above.
+[initial_session]
+command = "{{ display_manager_session_command }}"
+user = "{{ ansible_facts['user_id'] }}"
+{% endif %}

@@ -1,9 +1,9 @@
 ---
 qtile_tool_dir: "{{ ansible_facts['env']['HOME'] }}/.local/share/uv/tools/qtile"
-# Outside $HOME on purpose. The greeter runs as the lightdm user and has to
-# stat the entry's TryExec= before it lists the session; with $HOME at 700 that
-# stat fails and lightdm-gtk-greeter silently hides Qtile. The launcher still
-# execs ~/.local/bin/qtile, but by then it is running as the user.
+# Outside $HOME on purpose. The greeter runs as its own user (`greeter` under
+# greetd), so with $HOME at 700 it cannot stat anything in there - a greeter
+# that checks the entry's TryExec= would silently hide Qtile. The launcher
+# still execs ~/.local/bin/qtile, but by then it is running as the user.
 qtile_session_bin: /usr/local/bin/qtile-session
 qtile_units_dir: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
 

@@ -34,10 +34,10 @@ UNITS="$HOME/.config/systemd/user"
 # The launcher is what publishes DISPLAY to systemd --user and dbus; without
 # it the units below would start with no display to draw on.
 #
-# /usr/local/bin, not ~/.local/bin, because the greeter runs as the lightdm
-# user and has to stat TryExec= before it will list the session at all. With
-# $HOME at mode 700 that stat fails, and lightdm-gtk-greeter silently drops
-# the entry - Qtile just vanishes from the list, no error anywhere. Keeping the
+# /usr/local/bin, not ~/.local/bin, because the greeter runs as its own user
+# and may stat TryExec= before it will list the session at all. With $HOME at
+# mode 700 that stat fails, and the greeter silently drops the entry - Qtile
+# just vanishes from the list, no error anywhere. Keeping the
 # launcher outside $HOME lets home stay 700. It still execs ~/.local/bin/qtile,
 # but by then it is running as you, so that path is readable.
 sudo install -Dm755 "$HERE/session/qtile-session" /usr/local/bin/qtile-session
@@ -132,10 +132,10 @@ echo "configured ibus: preload-engines + hidden tray icon"
 
 # ═══ optional: skip the greeter ══════════════════════════════════════════
 # Whoever is running this, not a name baked into the script. The whole block is
-# on its way out: the Ansible display-manager role installs LightDM and
-# templates autologin into /etc/lightdm/lightdm.conf.d/50-qtile.conf, which
-# also makes the old AccountsService hack (set-default-session.sh, deleted)
-# unnecessary. Until that lands this is still the way to skip the GDM greeter.
+# on its way out: the Ansible display-manager role installs greetd and
+# templates autologin into /etc/greetd/config.toml, which also makes the old
+# AccountsService hack (set-default-session.sh, deleted) unnecessary. Until
+# that lands this is still the way to skip the GDM greeter.
 if [ "${1:-}" = "--autologin" ]; then
     ME="$(id -un)"
     sudo cp -n /etc/gdm3/custom.conf /etc/gdm3/custom.conf.bak || true

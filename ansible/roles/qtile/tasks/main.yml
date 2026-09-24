@@ -54,12 +54,11 @@
     state: absent
 
 # The path is the same on Arch as it was on Ubuntu, but the directory is not:
-# Ubuntu's lightdm package ships /usr/share/xsessions, Arch's does not
-# (`pacman -Ql lightdm | grep xsessions` is empty on a box with both lightdm
-# and lightdm-gtk-greeter installed). Nothing else in a minimal profile creates
-# it either, so on a fresh CachyOS box the template below has nowhere to land
-# and the run dies here. Same shape as the Xorg and LightDM drop-in
-# directories the gpu and display_manager roles already create by hand.
+# on Ubuntu the display manager package shipped /usr/share/xsessions, and on
+# Arch nothing in a minimal profile creates it (greetd is Wayland-agnostic and
+# does not either). On a fresh CachyOS box the template below would have
+# nowhere to land and the run would die here. Same shape as the Xorg drop-in
+# directory the xorg role creates by hand.
 - name: Create the xsessions directory
   become: true
   ansible.builtin.file:

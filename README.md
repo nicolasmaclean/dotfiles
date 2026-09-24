@@ -19,7 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/nicolasmaclean/dotfiles/main/ansibl
     - if you are overwriting your setup, consider a dry run `ansible/bootstrap.sh --check --diff`.
 3. The run pauses once: at the Spotify prompt, either follow the four
    steps it prints or press ENTER to skip — the widget degrades to MPRIS-only.
-4. Reboot. LightDM comes up; pick the **qtile** session.
+4. Reboot. tuigreet (on greetd) comes up; pick the **Hyprland (dotfiles, uwsm)** session.
 
 Re-runs are idempotent.
 
@@ -55,7 +55,7 @@ Then, as yourself — *not* with sudo, it calls sudo for the two steps that need
 `~/.config/qtile/install-session.sh`
 
 That installs the launcher (`/usr/local/bin/qtile-session` — outside `$HOME` so
-the greeter, running as `lightdm`, can see it with home at mode 700), the
+the greeter, running as its own user, can see it with home at mode 700), the
 greeter's session entry (rendered from `qtile/qtile.desktop.j2` with that path
 substituted in), the `systemd --user` units the
 session is made of (`qtile-session.target`, `picom.service`, `protonvpn.service`,

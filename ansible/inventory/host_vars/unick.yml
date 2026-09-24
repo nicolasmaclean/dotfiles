@@ -20,5 +20,5 @@ install_steam: false
 install_vpn: true
 install_battlenet: false
 
-# No nvidia_packages / display_manager_conflicting here: both have empty role
-# defaults, and the intel branch of roles/gpu reads neither.
+# No nvidia_packages here: it has an empty role default, and the intel branch
+# of roles/gpu does not read it.

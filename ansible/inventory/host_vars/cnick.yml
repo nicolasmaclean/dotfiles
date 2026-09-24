@@ -34,7 +34,3 @@ nvidia_packages:
   - linux-cachyos-nvidia-open
   - nvidia-utils
   - lib32-nvidia-utils        # Steam
-
-# Nothing to purge on a minimal install. This is the hook for an `sddm` if the
-# edition decision ever changes; see roles/display_manager.
-display_manager_conflicting: []

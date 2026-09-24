@@ -1,76 +1,69 @@
 ---
-# LightDM rather than GDM or SDDM: GDM drags in a large part of GNOME, defaults
-# to a Wayland seat qtile cannot use, and stores the per-user default session in
-# AccountsService — which is what set-default-session.sh existed to poke.
-# LightDM keeps all of that in one config file this role owns.
-- name: Install LightDM and its greeter
+# greetd rather than a DM with its own UI: it only authenticates and starts
+# the session, and the greeter is whatever command its config names. That
+# keeps tuigreet swappable for a Quickshell greeter later without touching
+# anything but config.toml.
+#
+# The package creates the `greeter` user (sysusers.d) and tuigreet's
+# /var/cache/tuigreet for --remember (tmpfiles.d), so neither needs a task.
+- name: Install greetd and tuigreet
   become: true
   community.general.pacman:
     name:
-      - lightdm
-      - lightdm-gtk-greeter
+      - greetd
+      - greetd-tuigreet
     state: present
 
-- name: Create the LightDM drop-in directory
-  become: true
-  ansible.builtin.file:
-    path: /etc/lightdm/lightdm.conf.d
-    state: directory
-    mode: "0755"
-
-- name: Configure the qtile seat
+# config.toml is in the package's backup=(), so pacman keeps this over the
+# packaged one on upgrade and leaves a .pacnew instead.
+- name: Configure greetd
   become: true
   ansible.builtin.template:
-    src: 50-qtile.conf.j2
-    dest: /etc/lightdm/lightdm.conf.d/50-qtile.conf
+    src: config.toml.j2
+    dest: /etc/greetd/config.toml
     mode: "0644"
     backup: true
 
-# There is no /etc/X11/default-display-manager task any more, and it was not
-# dropped by accident: that file is Debian's mechanism for choosing the
-# boot-time greeter and has no meaning on Arch. Here `systemctl enable lightdm`
-# creates the display-manager.service alias symlink, and that is the whole
-# story — so the enable below is the only thing needed.
+# The lightdm package shipped these lines in its own PAM file; greetd's does
+# not. Without them the login keyring is never unlocked with the login
+# password, and the first app to touch it prompts for it instead. Also a
+# backup=() file, so the edit survives upgrades.
+#
+# The leading `-` makes PAM skip the line quietly if gnome-keyring is ever
+# uninstalled, rather than logging a missing-module error on every login.
+- name: Unlock the login keyring at login
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/greetd
+    line: "{{ item.line }}"
+    insertafter: "{{ item.after }}"
+    backup: true
+  loop:
+    - line: "-auth       optional     pam_gnome_keyring.so"
+      after: '^auth\s+include\s+system-local-login'
+    - line: "-session    optional     pam_gnome_keyring.so auto_start"
+      after: '^session\s+include\s+system-local-login'
+
+# There is no /etc/X11/default-display-manager task, and it was not dropped by
+# accident: that file is Debian's mechanism for choosing the boot-time greeter
+# and has no meaning on Arch. Here `systemctl enable greetd` creates the
+# display-manager.service alias symlink, and that is the whole story.
+#
+# That alias is also why this fails if another display manager is still
+# enabled: systemd will not overwrite its symlink. Disable the old one first.
 #
 # Skipped in check mode on purpose. The install task above only *reports* that
-# it would install lightdm when checking, so the unit genuinely does not exist
-# yet and systemd answers "Could not find the requested service lightdm" — a
-# dry run would fail here on any box that does not already have LightDM.
-- name: Enable the LightDM service
+# it would install greetd when checking, so the unit genuinely does not exist
+# yet and systemd answers "Could not find the requested service greetd".
+- name: Enable the greetd service
   become: true
   ansible.builtin.systemd_service:
-    name: lightdm
+    name: greetd
     enabled: true
   when: not ansible_check_mode
 
-# Off unless the host asks. On a machine you are logged into, removing the
-# running display manager can end the session you are running this from. Empty
-# on cnick, which arrives with no greeter.
-- name: Remove the conflicting display managers
-  become: true
-  community.general.pacman:
-    name: "{{ display_manager_conflicting }}"
-    state: absent
-  when:
-    - display_manager_conflicting | length > 0
-    - display_manager_purge_conflicting | bool
-
-- name: Disable the conflicting display managers without removing them
-  become: true
-  ansible.builtin.systemd_service:
-    name: "{{ item }}"
-    enabled: false
-  loop: "{{ display_manager_conflicting }}"
-  register: display_manager_disable
-  failed_when: false
-  changed_when: display_manager_disable.changed | default(false)
-  when:
-    - not (display_manager_purge_conflicting | bool)
-    - not ansible_check_mode
-
-# gnome-keyring's PAM auto-unlock (session pam_gnome_keyring.so auto_start,
-# shipped by the lightdm package itself, not this role) has been observed
-# flaky on this CachyOS+LightDM stack: on a fresh boot the daemon can end up
+# gnome-keyring's PAM auto-unlock has been observed flaky on this CachyOS
+# stack (first seen under LightDM): on a fresh boot the daemon can end up
 # claiming a `login` collection exists - it shows up in ReadAlias and the
 # Collections property - without ever actually exporting that object on the
 # session bus. Any app that then touches the default keyring (ProtonVPN's
@@ -99,11 +92,11 @@
       the default keyring (ProtonVPN's sign-in, browsers saving passwords,
       etc.) will hang indefinitely with no error. Recover with:
         rm -f ~/.local/share/keyrings/login.keyring
-      then log out and back in through LightDM so PAM recreates it from your
+      then log out and back in through greetd so PAM recreates it from your
       actual login password - do not retype the password by hand in a
       terminal for this, a mismatch there is unrecoverable except by
       repeating this same deletion. If it recurs every boot, the
-      LightDM/pam_gnome_keyring auto-unlock handoff is broken on this box and
+      greetd/pam_gnome_keyring auto-unlock handoff is broken on this box and
       needs a real fix rather than repeating this workaround.
   when: >-
     display_manager_login_keyring.rc != 0 and
