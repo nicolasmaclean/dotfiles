@@ -26,8 +26,6 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/alacritty/alacritty.toml"
   - src: .ideavimrc
     dest: "{{ ansible_facts['env']['HOME'] }}/.ideavimrc"
-  - src: xinitrc
-    dest: "{{ ansible_facts['env']['HOME'] }}/.xinitrc"
   - src: bin/qtile-nested
     dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-nested"
   - src: bin/rofi-power-menu

@@ -53,29 +53,6 @@
     path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-session"
     state: absent
 
-# The path is the same on Arch as it was on Ubuntu, but the directory is not:
-# on Ubuntu the display manager package shipped /usr/share/xsessions, and on
-# Arch nothing in a minimal profile creates it (greetd is Wayland-agnostic and
-# does not either). On a fresh CachyOS box the template below would have
-# nowhere to land and the run would die here. Same shape as the Xorg drop-in
-# directory the xorg role creates by hand.
-- name: Create the xsessions directory
-  become: true
-  ansible.builtin.file:
-    path: /usr/share/xsessions
-    state: directory
-    mode: "0755"
-
-# A .desktop entry cannot expand variables, so the launcher path is
-# substituted in. install-session.sh sed'd the same
-# placeholder; this is the same rendering by the intended route.
-- name: Install the greeter's session entry
-  become: true
-  ansible.builtin.template:
-    src: "{{ dotfiles_dir }}/qtile/qtile.desktop.j2"
-    dest: /usr/share/xsessions/qtile.desktop
-    mode: "0644"
-
 # ═══ the session's user units ═════════════════════════════════════════════
 - name: Create the user unit directory
   ansible.builtin.file:
