@@ -13,8 +13,6 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/flameshot"
   - src: gsimplecal
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/gsimplecal"
-  - src: picom
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/picom"
   - src: rofi
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/rofi"
   - src: quickshell
