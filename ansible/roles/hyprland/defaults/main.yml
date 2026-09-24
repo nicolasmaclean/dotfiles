@@ -4,6 +4,7 @@ hyprland_packages:
   - xdg-desktop-portal-hyprland
   - uwsm
   - libnewt
+  - hyprpolkitagent
   - quickshell
   - hyprpaper
   - hyprlauncher
@@ -17,6 +18,7 @@ hyprland_packages:
   - slurp
 
 hyprland_daemons:
+  - hyprpolkitagent.service
   - hyprpaper.service
 
 hyprland_nvidia_packages:
