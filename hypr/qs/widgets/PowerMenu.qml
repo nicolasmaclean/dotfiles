@@ -31,6 +31,7 @@ Item {
           { label: "Shutdown", run: () => Quickshell.execDetached(["systemctl", "poweroff"]) },
           { label: "Reboot",   run: () => Quickshell.execDetached(["systemctl", "reboot"]) },
           { label: "Logout",   run: () => Quickshell.execDetached(["uwsm", "stop"]) },
+          { label: "Lock",   run: () => Quickshell.execDetached(["loginctl", "lock-session"]) },
         ]
 
         Rectangle {

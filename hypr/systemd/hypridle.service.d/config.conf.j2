@@ -1,0 +1,6 @@
+# Point hypridle at the config in the checkout rather than
+# ~/.config/hypr/hypridle.conf, the only place the packaged unit looks.
+# The empty ExecStart= clears the packaged one; without it systemd sees two.
+[Service]
+ExecStart=
+ExecStart=/usr/bin/hypridle -c {{ dotfiles_dir }}/hypr/hypridle.conf

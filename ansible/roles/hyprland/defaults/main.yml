@@ -5,6 +5,8 @@ hyprland_packages:
   - uwsm
   - libnewt
   - hyprpolkitagent
+  - hyprlock
+  - hypridle
   - quickshell
   - hyprpaper
   - hyprlauncher
@@ -20,6 +22,7 @@ hyprland_packages:
 hyprland_daemons:
   - hyprpolkitagent.service
   - hyprpaper.service
+  - hypridle.service
 
 hyprland_nvidia_packages:
   - libva-nvidia-driver

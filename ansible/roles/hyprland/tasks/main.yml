@@ -61,6 +61,23 @@
     - env
     - env-hyprland
 
+# The packaged hypridle unit runs a bare `hypridle`, which only reads
+# ~/.config/hypr/hypridle.conf. A drop-in swaps in a -c pointing at the
+# checkout. Rendered because ExecStart cannot expand variables, same as the
+# session entries. No mode on the directories, for the reason at the top of
+# roles/dotfiles.
+- name: Create the hypridle drop-in directory  # noqa: risky-file-permissions
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/hypridle.service.d"
+    state: directory
+
+- name: Point hypridle at the config in the checkout
+  ansible.builtin.template:
+    src: "{{ dotfiles_dir }}/hypr/systemd/hypridle.service.d/config.conf.j2"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/hypridle.service.d/config.conf"
+    mode: "0644"
+  register: hypridle_dropin
+
 # Enabled, not started: these are WantedBy=graphical-session.target, which uwsm
 # brings up at login, and hyprpaper's unit has ConditionEnvironment=WAYLAND_DISPLAY
 # so starting it from a play run outside a session would be skipped anyway.
@@ -71,5 +88,6 @@
     name: "{{ item }}"
     scope: user
     enabled: true
+    daemon_reload: "{{ hypridle_dropin is changed }}"
   loop: "{{ hyprland_daemons }}"
   when: not ansible_check_mode
