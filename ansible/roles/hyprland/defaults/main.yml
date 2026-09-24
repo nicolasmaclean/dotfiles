@@ -2,8 +2,33 @@
 hyprland_packages:
   - hyprland
   - xdg-desktop-portal-hyprland
+  - uwsm
+  - libnewt
   - quickshell
   - hyprpaper
+  - hyprlauncher
+  - hyprpwcenter
+  
+  # xdph's Screenshot portal shells out to grim, and only registers the
+  # interface if grim is on PATH when it starts. Without it flameshot's portal
+  # call fails with "Unknown method Screenshot" and flameshot reports only
+  # "unable to capture screen". slurp is xdph's region picker.
+  - grim
+  - slurp
+
+hyprland_daemons:
+  - hyprpaper.service
 
 hyprland_nvidia_packages:
   - libva-nvidia-driver
+
+# Where the plain (non-uwsm) session entry goes. Deliberately outside any
+# wayland-sessions directory so no greeter lists it; only uwsm, given this
+# path, ever reads it.
+hyprland_session_entry: /usr/local/share/hyprland-dotfiles/hyprland.desktop
+
+# Session entries the hyprland package ships, hidden from the greeter via
+# pacman's NoExtract so they are never installed.
+hyprland_packaged_sessions:
+  - /usr/share/wayland-sessions/hyprland.desktop
+  - /usr/share/wayland-sessions/hyprland-uwsm.desktop

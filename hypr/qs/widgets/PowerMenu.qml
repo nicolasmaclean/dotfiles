@@ -28,9 +28,9 @@ Item {
 
       Repeater {
         model: [
-          { label: "Shutdown", run: () => print("shutdown")},//Quickshell.execDetached(["systemctl", "poweroff"]) },
-          { label: "Reboot",   run: () => print("reboot")},//Quickshell.execDetached(["systemctl", "reboot"]) },
-          { label: "Logout",   run: () => print("logout")},//Hyprland.dispatch("exit") },
+          { label: "Shutdown", run: () => Quickshell.execDetached(["systemctl", "poweroff"]) },
+          { label: "Reboot",   run: () => Quickshell.execDetached(["systemctl", "reboot"]) },
+          { label: "Logout",   run: () => Quickshell.execDetached(["uwsm", "stop"]) },
         ]
 
         Rectangle {

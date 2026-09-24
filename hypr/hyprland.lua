@@ -54,10 +54,14 @@ hl.monitor({
 ---- MY PROGRAMS ----
 ---------------------
 
+local uwsm = "uwsm app -- "
+
 -- Set programs that you use
-local terminal    = "alacritty"
-local fileManager = "dolphin"
-local menu        = "rofi -show drun"
+-- Make sure to prefix with uwsm, these strings are used to open the apps and
+-- that needs to be done through uwsm
+local terminal    = uwsm .. "alacritty"
+local fileManager = uwsm .. "dolphin"
+local menu        = uwsm .. "hyprlauncher"
 
 
 -------------------
@@ -68,10 +72,11 @@ local menu        = "rofi -show drun"
 
 -- Autostart necessary processes (like notifications daemons, status bars, etc.)
 -- Or execute your favorite apps at launch like this:
---
+
 hl.on("hyprland.start", function () 
-  hl.exec_cmd("qs --path ~/dotfiles/hypr/qs") -- quickshell (taskbar, widgets, etc.)
-  hl.exec_cmd("hyprpaper") -- wallpaper service
+  -- most apps we run need to go through uwsm
+  hl.exec_cmd(uwsm .. "qs --path ~/dotfiles/hypr/qs") -- quickshell (taskbar, widgets, etc.)
+  hl.exec_cmd(uwsm .. "hyprlauncher -d")
 
   -- TODO: startup apps
 end)
@@ -81,16 +86,8 @@ end)
 ---- ENVIRONMENT VARIABLES ----
 -------------------------------
 
--- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Environment-variables/
-
-hl.env("XCURSOR_SIZE", "24")
-hl.env("HYPRCURSOR_SIZE", "24")
-
--- NVIDIA, see https://wiki.hypr.land/nvidia/
-hl.env("LIBVA_DRIVER_NAME", "nvidia")
-hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
-hl.env("NVD_BACKEND", "direct")
-hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
+-- Set by uwsm, not here: see hypr/uwsm/*.j2, rendered into ~/.config/uwsm/ by
+-- the hyprland ansible role. See https://wiki.hypr.land/useful-utilities/uwsm/
 
 
 -----------------------
@@ -108,7 +105,7 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 -- })
 
 -- hl.permission("/usr/(bin|local/bin)/grim", "screencopy", "allow")
--- hl.permission("/usr/(lib|libexec|lib64)/xdg-desktop-portal-hyprland", "screencopy", "allow")
+hl.permission("/usr/(lib|libexec|lib64)/xdg-desktop-portal-hyprland", "screencopy", "allow")
 -- hl.permission("/usr/(bin|local/bin)/hyprpm", "plugin", "allow")
 
 
@@ -295,6 +292,7 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu)) -- search for app to open
 -- Manipulate current window
 local closeWindowBind = hl.bind(mainMod .. " + W", hl.dsp.window.close())
 hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 
 -- Hide current screen's windows
 hl.bind(mainMod .. " + D", hl.dsp.focus({ workspace = "emptym" }))
@@ -335,6 +333,10 @@ hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 -- Move/resize windows
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+
+-- Screenshot
+-- hl.bind("Print", hl.dsp.exec_cmd("flameshot screen -e"))
+hl.bind("Print", hl.dsp.exec_cmd("flameshot screen -e -n $(hyprctl activeworkspace -j | jq -r .monitorID)"))
 
 -- Brightness controls
 hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true })
@@ -404,4 +406,16 @@ hl.window_rule({
 
     move  = "20 monitor_h-120",
     float = true,
+})
+
+-- Flameshot's capture overlay: float it so it never gets tiled (which shoves
+-- the other windows aside and animates them back when it closes), and skip
+-- its open/close animation. Matches both the X11 class and the Wayland app id.
+hl.window_rule({
+    name  = "flameshot-overlay",
+    match = { class = "^(flameshot|org\\.flameshot\\.Flameshot)$" },
+
+    float   = true,
+    pin     = true,
+    no_anim = true,
 })

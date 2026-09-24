@@ -29,7 +29,7 @@ PanelWindow {
 
     Repeater {
       model: ScriptModel {
-        values: [...Notify.notifications.values].reverse()
+        values: [...Notify.notifications.values]
       }
 
       Component {

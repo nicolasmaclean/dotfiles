@@ -1,53 +1,75 @@
 ---
+# The hyprland package ships hyprland.desktop and hyprland-uwsm.desktop, and the
+# greeter should list only ours. NoExtract has to be in place before the
+# install below so pacman never writes them, on first install or on upgrade.
+# hyprland-uwsm.desktop goes too: it launches hyprland.desktop by ID.
+- name: Stop pacman installing the packaged Hyprland session entries
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.conf
+    line: "NoExtract = {{ hyprland_packaged_sessions | map('regex_replace', '^/', '') | join(' ') }}"
+    insertafter: '^#?NoExtract'
+    backup: true
+
 - name: Install Hyprland
   become: true
   community.general.pacman:
     name: "{{ hyprland_packages + (hyprland_nvidia_packages if gpu == 'nvidia' else []) }}"
     state: present
 
-# A .desktop entry cannot expand variables, so the config path is rendered in.
-# A separate file from the packaged hyprland.desktop, which pacman owns and
-# would overwrite on upgrade.
-- name: Install the greeter's session entry
+# The greeter lists exactly one Hyprland session: the uwsm-managed one below.
+#
+# uwsm still needs a plain entry to launch, and it takes a path to one as well
+# as an ID. So the plain entry lives outside every wayland-sessions directory,
+# where uwsm can reach it by path but no greeter will list it. A .desktop entry
+# cannot expand variables, so the config path is rendered in.
+- name: Create the directory for the unlisted plain session entry
+  become: true
+  ansible.builtin.file:
+    path: "{{ hyprland_session_entry | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Install the plain session entry uwsm launches
   become: true
   ansible.builtin.template:
     src: "{{ dotfiles_dir }}/hypr/hyprland.desktop.j2"
-    dest: /usr/share/wayland-sessions/hyprland-dotfiles.desktop
+    dest: "{{ hyprland_session_entry }}"
     mode: "0644"
 
-# quickshell (hypr/qs/services/Notify.qml) is the notification daemon now.
-# dunst has to be uninstalled, not just left disabled: its package ships a dbus
-# activation file for org.freedesktop.Notifications, so any notify-send that
-# lands while quickshell is down or reloading would start dunst, and dunst
-# would then keep the name after quickshell came back.
-- name: Stop the old dunst unit
-  ansible.builtin.systemd_service:
-    name: dunst.service
-    enabled: false
-    state: stopped
-    scope: user
-  register: hyprland_dunst_unit
-  failed_when: false
-  changed_when: hyprland_dunst_unit.changed | default(false)
-  when: not ansible_check_mode
-
-- name: Remove dunst
+- name: Install the greeter's session entry
   become: true
-  community.general.pacman:
-    name: dunst
-    state: absent
+  ansible.builtin.template:
+    src: "{{ dotfiles_dir }}/hypr/hyprland-uwsm.desktop.j2"
+    dest: /usr/share/wayland-sessions/hyprland-dotfiles-uwsm.desktop
+    mode: "0644"
 
-- name: Delete dunst's leftover unit and config link
+# Rendered rather than linked so the NVIDIA variables follow `gpu`. uwsm reads
+# these only at session start, so a change needs a logout to take effect.
+# No mode on the directory, for the reason given at the top of roles/dotfiles.
+- name: Create the uwsm config directory  # noqa: risky-file-permissions
   ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/dunst.service"
-    - "{{ ansible_facts['env']['HOME'] }}/.config/dunst"
-  register: hyprland_dunst_files
+    path: "{{ ansible_facts['env']['HOME'] }}/.config/uwsm"
+    state: directory
 
-- name: Reload the user manager after dropping dunst's unit
+- name: Install the uwsm session environment
+  ansible.builtin.template:
+    src: "{{ dotfiles_dir }}/hypr/uwsm/{{ item }}.j2"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/uwsm/{{ item }}"
+    mode: "0644"
+  loop:
+    - env
+    - env-hyprland
+
+# Enabled, not started: these are WantedBy=graphical-session.target, which uwsm
+# brings up at login, and hyprpaper's unit has ConditionEnvironment=WAYLAND_DISPLAY
+# so starting it from a play run outside a session would be skipped anyway.
+# Skipped in check mode because the install above only pretends to run there,
+# so on a fresh box the units do not exist yet.
+- name: Setup autostart daemons
   ansible.builtin.systemd_service:
-    daemon_reload: true
+    name: "{{ item }}"
     scope: user
-  when: hyprland_dunst_files.changed
+    enabled: true
+  loop: "{{ hyprland_daemons }}"
+  when: not ansible_check_mode

@@ -30,7 +30,7 @@ Item {
 
   readonly property int timeoutMs: {
     // use expiration time from notification
-    if (modelData.expireTimeout > 0) return modelData.expireTimeout * 1000
+    if (modelData.expireTimeout > 0) return modelData.expireTimeout 
 
     // never expire 
     if (modelData.expireTimeout === 0 || critical) return 0
