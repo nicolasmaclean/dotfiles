@@ -1,9 +1,9 @@
 ---
 desktop_apps_packages:
-  - rofi
   - playerctl
   - brightnessctl           # brightness.py drives the panel through this
   - flameshot
+  - rofi
   - gsimplecal              # the calendar the bar clock opens
   - networkmanager          # not enabled by the package on Arch — see tasks/
   - network-manager-applet  # nmcli's backend; network.py polls it

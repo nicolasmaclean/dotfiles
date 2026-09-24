@@ -2,6 +2,7 @@
 hyprland_packages:
   - hyprland
   - xdg-desktop-portal-hyprland
+  - xdg-desktop-portal-gtk
   - uwsm
   - libnewt
   - hyprpolkitagent

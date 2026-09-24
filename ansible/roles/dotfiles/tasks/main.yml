@@ -52,18 +52,29 @@
     - not item.stat.islnk
 
 # Gitignored, so a fresh checkout lacks it — but quickshell only fills in the
-# qmlls import paths when the file already exists next to shell.qml. Preserving
-# both times keeps this a no-op once quickshell has written to it.
-- name: Create the qmlls config quickshell manages
-  ansible.builtin.file:
+# qmlls import paths when the file already exists next to shell.qml. Once it
+# has, the file is a symlink into quickshell's per-session vfs under
+# /run/user, which dangles after a reboot or restart; touching it would follow
+# the link and fail. So only create it when nothing — not even a broken link —
+# is there, and leave whatever quickshell made alone.
+- name: Look for the qmlls config quickshell manages
+  ansible.builtin.stat:
     path: "{{ dotfiles_dir }}/{{ item }}/.qmlls.ini"
-    state: touch
-    mode: "0644"
-    modification_time: preserve
-    access_time: preserve
+    follow: false
   loop:
     - quickshell
     - hypr/qs
+  register: dotfiles_qmlls
+
+- name: Create the qmlls config quickshell manages
+  ansible.builtin.file:
+    path: "{{ dotfiles_dir }}/{{ item.item }}/.qmlls.ini"
+    state: touch
+    mode: "0644"
+  loop: "{{ dotfiles_qmlls.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: not item.stat.exists
 
 # ~/.bashrc is the exception: a real file, not a link, with one sourcing line
 # appended. Converting it to a symlink would throw away the stock bashrc — from
