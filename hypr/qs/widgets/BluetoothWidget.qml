@@ -11,20 +11,17 @@ Item {
 
   Text {
     id: icon
-
-    anchors.fill: parent
-    text: Net.connectionGlyph
+    text: Bluetooth.connectivityGlyph
+    color: Bluetooth.anyConnectedDevices ? Theme.text : Theme.textDim
     font.pixelSize: 18
-    color: "#333333"
   }
-
   TapHandler {
     acceptedButtons: Qt.LeftButton
-    onTapped: nmtui.running = !nmtui.running
+    onTapped: bluetui.running = !bluetui.running
   }
 
   Process {
-    id: nmtui
-    command: Apps.wifitui
+    id: bluetui
+    command: Apps.bluetui
   }
 }

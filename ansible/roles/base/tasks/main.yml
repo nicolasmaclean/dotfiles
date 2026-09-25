@@ -33,6 +33,15 @@
     name: "{{ base_packages }}"
     state: present
 
+# bluez ships the unit but does not enable it. Safe on a box with no adapter:
+# the unit has ConditionPathIsDirectory=/sys/class/bluetooth, so it just skips.
+- name: Enable the bluetooth service
+  become: true
+  ansible.builtin.systemd_service:
+    name: bluetooth
+    enabled: true
+    state: started
+
 # See defaults: a minimal CachyOS install may hand the user fish, and
 # roles/dotfiles appends a source line to ~/.bashrc that fish never reads.
 # Settle which shell it actually is with `getent passwd $USER`.

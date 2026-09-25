@@ -221,7 +221,16 @@ hl.window_rule({
   float = true,
 
   size = "600 800",
-  move  = "(monitor_w-window_w) 60",
+  move  = "(monitor_w-650) 60",
+})
+
+hl.window_rule({
+  name = "bluetui-popup",
+  match = { class = "^bluetui$" },
+  float = true,
+
+  size = "600 800",
+  move  = "(monitor_w-650) 60",
 })
 
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
@@ -299,6 +308,7 @@ hl.device({
 ---------------------
 
 local mainMod = "ALT"
+local qsPath = "~/dotfiles/hypr/qs"
 
 -- Open apps
 hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd(terminal))
@@ -310,7 +320,7 @@ hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 
 -- Hide current screen's windows
-hl.bind(mainMod .. " + D", hl.dsp.focus({ workspace = "emptym" }))
+hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc -p " .. qsPath .. " call taskbar toggle"))
 
 -- Move focus
 hl.bind(mainMod .. " + h",  hl.dsp.focus({ direction = "left" }))
@@ -373,7 +383,6 @@ hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
 
 -- Development
-local qsPath = "~/dotfiles/hypr/qs"
 hl.bind(mainMod .. " + CONTROL + R", hl.dsp.exec_cmd("qs kill -p " .. qsPath .. "; qs -p " .. qsPath))
 
 --------------------------------

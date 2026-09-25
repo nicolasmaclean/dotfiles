@@ -18,6 +18,10 @@ base_packages:
   # The Nerd Font the bar needs is roles/fonts; these are the fallbacks under it.
   - ttf-dejavu
   - noto-fonts
+  # Pairing the mouse. bluetui pulls in bluez (the daemon) itself; bluez-utils
+  # is named for bluetoothctl as the fallback. The service is enabled in tasks.
+  - bluetui
+  - bluez-utils
 
 # The login shell. The CachyOS ISO ships fish 4.8.1 plus fish-autopair and
 # fish-pure-prompt — a distro does not package a prompt theme for a shell it
