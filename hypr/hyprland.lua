@@ -77,8 +77,7 @@ hl.on("hyprland.start", function ()
   -- most apps we run need to go through uwsm
   hl.exec_cmd(uwsm .. "qs --path ~/dotfiles/hypr/qs") -- quickshell (taskbar, widgets, etc.)
   hl.exec_cmd(uwsm .. "hyprlauncher -d")
-
-  -- TODO: startup apps
+  hl.exec_cmd(uwsm .. "wl-paste --watch cliphist store")
 end)
 
 
@@ -337,6 +336,9 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- Screenshot
 -- hl.bind("Print", hl.dsp.exec_cmd("flameshot screen -e"))
 hl.bind("Print", hl.dsp.exec_cmd("flameshot screen -e -n $(hyprctl activeworkspace -j | jq -r .monitorID)"))
+
+-- Color picker
+hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- Brightness controls
 hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true })

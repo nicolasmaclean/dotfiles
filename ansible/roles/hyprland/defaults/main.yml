@@ -12,6 +12,10 @@ hyprland_packages:
   - hyprpaper
   - hyprlauncher
   - hyprpwcenter
+  - hyprsunset
+  - hyprpicker
+  - cliphist
+  - wl-clipboard
   
   # xdph's Screenshot portal shells out to grim, and only registers the
   # interface if grim is on PATH when it starts. Without it flameshot's portal
