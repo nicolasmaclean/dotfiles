@@ -20,5 +20,7 @@ install_steam: false
 install_vpn: true
 install_battlenet: false
 
+install_hyprland: true
+
 # No nvidia_packages here: it has an empty role default, and the intel branch
 # of roles/gpu does not read it.

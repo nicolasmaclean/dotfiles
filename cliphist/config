@@ -1,0 +1,9 @@
+# cliphist config: one `key value` per line. Options and defaults:
+# https://github.com/sentriz/cliphist#configuration
+# The values below are the defaults, written out so they're easy to tune.
+
+# Oldest entries are dropped past this. Images count as one item each.
+max-items 20
+
+# How many recent items to check for a duplicate before storing a new one.
+max-dedupe-search 100
