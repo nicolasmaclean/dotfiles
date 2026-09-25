@@ -9,6 +9,7 @@ hyprland_packages:
   - hyprlock
   - hypridle
   - quickshell
+  - matugen
   - hyprpaper
   - hyprlauncher
   - hyprpwcenter
@@ -28,6 +29,9 @@ hyprland_daemons:
   - hyprpolkitagent.service
   - hyprpaper.service
   - hypridle.service
+
+hyprland_theme_seed: "#47105E"
+hyprland_theme_mode: dark
 
 hyprland_nvidia_packages:
   - libva-nvidia-driver

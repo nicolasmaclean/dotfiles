@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
+
+import qs
 
 Item {
   id: root
@@ -13,6 +14,7 @@ Item {
     id: icon
     font.pixelSize: 18
     text: "⏻"
+    color: Theme.text
   }
 
   MouseArea {

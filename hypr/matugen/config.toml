@@ -1,0 +1,5 @@
+[config]
+
+[templates.quickshell]
+input_path  = "./templates/Colors.qml"
+output_path = "~/dotfiles/hypr/qs/theme/Colors.qml"

@@ -1,12 +1,15 @@
-import QtQuick
-import Quickshell
 pragma Singleton
 
+import QtQuick
+import Quickshell
+
+import qs.theme
+
 Singleton {
-    readonly property color frame: "#eeeeee"
-    readonly property color hover: "#dddddd"
-    readonly property color text: "#000000"
-    readonly property color textDim: "#555555"
-    readonly property color accent: "#5B8234"
-    readonly property color urgent: "#B7472A"
+  readonly property color frame: Colors.surfaceContainer
+  readonly property color hover: Colors.surfaceContainerHigh
+  readonly property color text: Colors.oonSurface
+  readonly property color textDim: Colors.oonSurfaceVariant
+  readonly property color accent: Colors.primary
+  readonly property color urgent: Colors.error
 }

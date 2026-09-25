@@ -17,6 +17,14 @@
     name: "{{ hyprland_packages + (hyprland_nvidia_packages if gpu == 'nvidia' else []) }}"
     state: present
 
+- name: Generate default quickshell theme
+  ansible.builtin.command:
+    cmd: >-
+      matugen color hex "{{ hyprland_theme_seed }}"
+      -m {{ hyprland_theme_mode }}
+      -c {{ dotfiles_dir }}/hypr/matugen/config.toml
+    creates: "{{ dotfiles_dir }}/hypr/qs/theme/Colors.qml"
+
 # The greeter lists exactly one Hyprland session: the uwsm-managed one below.
 #
 # uwsm still needs a plain entry to launch, and it takes a path to one as well

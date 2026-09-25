@@ -15,7 +15,7 @@ Item {
     anchors.fill: parent
     text: Net.connectionGlyph
     font.pixelSize: 18
-    color: "#333333"
+    color: Theme.text
   }
 
   TapHandler {
