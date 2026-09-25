@@ -12,4 +12,7 @@ Singleton {
   readonly property color textDim: Colors.oonSurfaceVariant
   readonly property color accent: Colors.primary
   readonly property color urgent: Colors.error
+
+  readonly property real frameThickness: 8
+  readonly property real borderRadiusBig: 25
 }

@@ -17,7 +17,7 @@ PanelWindow {
 
   margins {
     top: 10
-    right: 18
+    right: 17
   }
 
   // fit notification area to the notifications its showing

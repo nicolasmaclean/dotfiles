@@ -3,6 +3,7 @@ import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
+
 import qs
 
 PanelWindow {
@@ -27,8 +28,8 @@ PanelWindow {
   Shape {
     id: frame
 
-    property real thickness: 8
-    property real innerRadius: 25
+    property real thickness: Theme.frameThickness
+    property real innerRadius: Theme.borderRadiusBig
 
     anchors.fill: parent
     preferredRendererType: Shape.CurveRenderer

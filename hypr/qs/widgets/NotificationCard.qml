@@ -84,7 +84,7 @@ Item {
 
     property real padding: 10
 
-    radius: 6
+    radius: Theme.borderRadiusBig
     color: Theme.frame
     border.width: root.critical ? 2 : 0
     border.color: Theme.urgent
