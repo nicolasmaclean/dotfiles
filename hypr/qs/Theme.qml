@@ -15,4 +15,5 @@ Singleton {
 
   readonly property real frameThickness: 8
   readonly property real borderRadiusBig: 25
+  readonly property real widgetIconSize: 18
 }

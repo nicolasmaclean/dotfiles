@@ -12,7 +12,7 @@ Item {
 
   Text {
     id: icon
-    font.pixelSize: 18
+    font.pixelSize: Theme.widgetIconSize
     text: "⏻"
     color: Theme.text
   }

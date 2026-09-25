@@ -13,7 +13,7 @@ Item {
     id: icon
     text: Bluetooth.connectivityGlyph
     color: Bluetooth.anyConnectedDevices ? Theme.text : Theme.textDim
-    font.pixelSize: 18
+    font.pixelSize: Theme.widgetIconSize
   }
   TapHandler {
     acceptedButtons: Qt.LeftButton

@@ -28,6 +28,8 @@ PanelWindow {
 
     // right widget group
     RowLayout {
+      MicWidget {}
+      VolumeWidget {}
       BluetoothWidget {}
       WifiWidget {}
       PowerWidget {}
