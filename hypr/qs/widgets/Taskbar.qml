@@ -30,7 +30,8 @@ PanelWindow {
 
     // right widget group
     RowLayout {
-      PowerMenu { }
+      WifiWidget { } 
+      PowerWidget { }
     }
   }
 

@@ -215,6 +215,14 @@ hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "
 --     border_size = 0,
 --     rounding    = 0,
 -- })
+hl.window_rule({
+  name = "nmtui-popup",
+  match = { class = "^nmtui$" },
+  float = true,
+
+  size = "600 800",
+  move  = "(monitor_w-window_w) 60",
+})
 
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 hl.config({
