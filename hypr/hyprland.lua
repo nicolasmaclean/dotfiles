@@ -324,10 +324,10 @@ hl.bind(mainMod .. " + S", hl.dsp.group.toggle())
 hl.bind(mainMod .. " + SPACE",         hl.dsp.group.next())
 -- hl.bind(mainMod .. " + SHIFT + TAB", hl.dsp.group.prev())
 
-hl.bind(mainMod .. " + SHIFT + H", hl.dsp.window.move({ into_group = "l" }))
-hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.move({ into_group = "d" }))
-hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.move({ into_group = "u" }))
-hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ into_group = "r" }))
+hl.bind(mainMod .. " + SHIFT + H", hl.dsp.window.move({ direction = "l", group_aware = true }))
+hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.move({ direction = "d", group_aware = true }))
+hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.move({ direction = "u", group_aware = true }))
+hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "r", group_aware = true }))
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.window.move({ out_of_group = true }))
 
 -- Handle workspaces
