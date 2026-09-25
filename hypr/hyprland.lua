@@ -42,6 +42,14 @@ hl.monitor({
     scale    = 1,
 })
 
+-- Laptop screen
+hl.monitor({
+    output = "eDP-1",
+    mode = "preferred",
+    position = "auto",
+    scale = 1.2,
+})
+
 -- Fallback for any other monitor
 hl.monitor({
     output   = "",

@@ -26,10 +26,6 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/alacritty/alacritty.toml"
   - src: .ideavimrc
     dest: "{{ ansible_facts['env']['HOME'] }}/.ideavimrc"
-  - src: bin/qtile-nested
-    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-nested"
-  - src: bin/rofi-power-menu
-    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/rofi-power-menu"
 
 # Flameshot expands neither $HOME nor ~ — verified twice: with either form
 # `flameshot full --clipboard` blocks until timeout and saves nothing at all.
