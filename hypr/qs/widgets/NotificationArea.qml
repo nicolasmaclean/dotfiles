@@ -34,9 +34,8 @@ PanelWindow {
 
       Component {
         id: notificationDelegate
-        NotificationCard { }
+        NotificationCard {}
       }
     }
   }
 }
-

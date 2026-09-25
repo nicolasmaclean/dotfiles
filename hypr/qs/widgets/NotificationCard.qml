@@ -30,10 +30,12 @@ Item {
 
   readonly property int timeoutMs: {
     // use expiration time from notification
-    if (modelData.expireTimeout > 0) return modelData.expireTimeout 
+    if (modelData.expireTimeout > 0)
+      return modelData.expireTimeout
 
-    // never expire 
-    if (modelData.expireTimeout === 0 || critical) return 0
+    // never expire
+    if (modelData.expireTimeout === 0 || critical)
+      return 0
 
     // default expiration times
     return modelData.urgency === NotificationUrgency.Low ? 4000 : 6000
@@ -47,8 +49,10 @@ Item {
   }
 
   function restartExpire() {
-    if (timeoutMs > 0) expire.restart()
-    else expire.stop()
+    if (timeoutMs > 0)
+      expire.restart()
+    else
+      expire.stop()
   }
 
   Component.onCompleted: restartExpire()
@@ -57,10 +61,18 @@ Item {
   // restart expiration timer when updated
   Connections {
     target: root.modelData
-    function onSummaryChanged() { root.restartExpire() }
-    function onBodyChanged() { root.restartExpire() }
-    function onHintsChanged() { root.restartExpire() }
-    function onExpireTimeoutChanged() { root.restartExpire() }
+    function onSummaryChanged() {
+      root.restartExpire()
+    }
+    function onBodyChanged() {
+      root.restartExpire()
+    }
+    function onHintsChanged() {
+      root.restartExpire()
+    }
+    function onExpireTimeoutChanged() {
+      root.restartExpire()
+    }
   }
 
   // visuals
@@ -82,12 +94,17 @@ Item {
 
     Behavior on x {
       enabled: !mouse.drag.active
-      NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+      NumberAnimation {
+        duration: 150
+        easing.type: Easing.OutCubic
+      }
     }
 
     // a handler rather than the MouseArea's containsMouse so hovering the
     // action buttons (which sit on top of it) still counts
-    HoverHandler { id: hover }
+    HoverHandler {
+      id: hover
+    }
 
     MouseArea {
       id: mouse
@@ -101,21 +118,31 @@ Item {
       // a drag shouldn't also count as a click on release
       property bool dragged: false
       onPressed: dragged = false
-      drag.onActiveChanged: if (drag.active) dragged = true
+      drag.onActiveChanged: if (drag.active)
+        dragged = true
 
       onReleased: {
-        if (!dragged) return
-        if (card.x > card.width / 3) root.modelData.dismiss()
-        else card.x = 0
+        if (!dragged)
+          return
+        if (card.x > card.width / 3)
+          root.modelData.dismiss()
+        else
+          card.x = 0
       }
 
       onClicked: event => {
-        if (dragged) return
-        if (event.button === Qt.RightButton) Notify.dismissAll()
-        else if (event.button === Qt.MiddleButton) root.modelData.dismiss()
+        if (dragged)
+          return
+        if (event.button === Qt.RightButton)
+          Notify.dismissAll()
+        else if (event.button === Qt.MiddleButton)
+          root.modelData.dismiss()
+        else
         // invoking an action closes the notification unless it's resident
-        else if (root.defaultAction) root.defaultAction.invoke()
-        else root.modelData.dismiss()
+        if (root.defaultAction)
+          root.defaultAction.invoke()
+        else
+          root.modelData.dismiss()
       }
     }
 
@@ -124,8 +151,10 @@ Item {
     readonly property string iconSource: {
       const entry = root.modelData.desktopEntry ? DesktopEntries.byId(root.modelData.desktopEntry) : null
       const icon = root.modelData.appIcon || entry?.icon || ""
-      if (icon === "" || icon.startsWith("file://")) return icon
-      if (icon.startsWith("/")) return "file://" + icon
+      if (icon === "" || icon.startsWith("file://"))
+        return icon
+      if (icon.startsWith("/"))
+        return "file://" + icon
       return Quickshell.iconPath(icon, true)
     }
 

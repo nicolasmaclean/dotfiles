@@ -18,9 +18,15 @@ PanelWindow {
 
   default property alias content: contentArea.data
 
-  function open() { visible = true }
-  function close() { visible = false }
-  function toggle() { visible = !visible }
+  function open() {
+    visible = true
+  }
+  function close() {
+    visible = false
+  }
+  function toggle() {
+    visible = !visible
+  }
 
   visible: false
   screen: anchorItem.QsWindow.window?.screen ?? null

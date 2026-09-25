@@ -22,7 +22,8 @@ Singleton {
     // do not disturb drops everything but critical notifications
     // (untracked notifications are discarded by the server)
     onNotification: n => {
-      if (root.dnd && n.urgency !== NotificationUrgency.Critical) return
+      if (root.dnd && n.urgency !== NotificationUrgency.Critical)
+        return
       n.tracked = true
     }
   }
@@ -30,17 +31,26 @@ Singleton {
 
   function dismissAll() {
     // copy first, dismissing removes from the list being iterated
-    for (const n of [...server.trackedNotifications.values]) n.dismiss()
+    for (const n of [...server.trackedNotifications.values])
+      n.dismiss()
   }
 
   // qs --path ~/dotfiles/hypr/qs ipc call notifications <fn>
   IpcHandler {
     target: "notifications"
 
-    function dismissAll(): void { root.dismissAll() }
-    function toggleDnd(): bool { root.dnd = !root.dnd; return root.dnd }
-    function setDnd(on: bool): void { root.dnd = on }
-    function isDnd(): bool { return root.dnd }
+    function dismissAll(): void {
+      root.dismissAll()
+    }
+    function toggleDnd(): bool {
+      root.dnd = !root.dnd
+      return root.dnd
+    }
+    function setDnd(on: bool): void {
+      root.dnd = on
+    }
+    function isDnd(): bool {
+      return root.dnd
+    }
   }
 }
-

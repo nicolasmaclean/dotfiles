@@ -137,7 +137,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end, { buffer = args.buf, desc = "Apply fix-it" })
 
     -- format on save, delegated to whichever client actually formats well
-    local formatters = { c = "clangd", cpp = "clangd", python = "ruff" }
+    -- qmlls picks up .qmlformat.ini from the file's dir or its parents
+    local formatters = { c = "clangd", cpp = "clangd", python = "ruff", qml = "qmlls" }
     local formatter = formatters[vim.bo[args.buf].filetype]
     -- python attaches two clients, so only wire the autocmd up once per buffer
     if formatter and not vim.b[args.buf].user_format_on_save then
