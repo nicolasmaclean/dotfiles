@@ -13,7 +13,7 @@
   pre_tasks:
     # This also proves the var layout resolves, which is worth a task on its
     # own: form_factor comes from inventory/host_vars/ (inventory-adjacent)
-    # while qtile_version comes from group_vars/ next to this playbook
+    # while dotfiles_dir comes from group_vars/ next to this playbook
     # (playbook-adjacent). The two are found by different mechanisms, so a run
     # that finds one is no evidence it found the other.
     - name: Host must declare the branching vars the roles gate on
@@ -22,10 +22,9 @@
           - form_factor in ['laptop', 'desktop']
           - gpu in ['intel', 'nvidia']
           - install_steam is boolean
-          - install_vpn is boolean
           - install_battlenet is boolean
           - install_hyprland is boolean
-          - qtile_version is defined
+          - dotfiles_dir is defined
         fail_msg: >-
           inventory/host_vars/{{ inventory_hostname }}.yml is missing or
           malformed, or group_vars/all.yml was not picked up.
@@ -59,15 +58,14 @@
         msg: >-
           {{ inventory_hostname }} ({{ ansible_facts['distribution'] }}
           {{ ansible_facts['distribution_version'] }}): form_factor={{ form_factor }}
-          gpu={{ gpu }} steam={{ install_steam }} vpn={{ install_vpn }}
+          gpu={{ gpu }} steam={{ install_steam }}
           user={{ ansible_facts['user_id'] }} home={{ ansible_facts['env']['HOME'] }}
           dotfiles={{ dotfiles_dir }}
           hyprland={{install_hyprland }}
       tags: always
 
-  # Ordered as they must run. Only two orderings are load-bearing: toolchains
-  # installs uv, which the qtile role then uses, and apps names the AUR list
-  # that the aur role immediately after it consumes. Every role is
+  # Ordered as they must run. Only one ordering is load-bearing: apps names
+  # the AUR list that the aur role immediately after it consumes. Every role is
   # independently runnable with --tags.
   #
   # `aur` sits after `apps`, not before it: role defaults are resolved as the
@@ -84,8 +82,10 @@
     - {role: xorg, tags: [xorg]}
     - {role: gpu, tags: [gpu]}
     - {role: display_manager, tags: [display-manager, dm]}
-    - {role: qtile, tags: [qtile]}
+    # One-off teardown of the old qtile session; see the role for when to drop it.
+    - {role: qtile_removal, tags: [qtile-removal]}
     - {role: hyprland, tags: [hyprland], when: install_hyprland | bool}
+    - {role: autostart_apps, tags: [autostart-apps], when: install_hyprland | bool}
     - {role: desktop_apps, tags: [desktop-apps]}
     - {role: dotfiles, tags: [dotfiles]}
     - {role: neovim, tags: [neovim]}
@@ -98,6 +98,5 @@
       tags: [aur]
       vars:
         aur_packages: "{{ apps_aur_packages }}"
-    - {role: vpn, tags: [vpn], when: install_vpn | bool}
     - {role: spotify_now_playing, tags: [spotify]}
     - {role: identity, tags: [identity]}

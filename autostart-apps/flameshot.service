@@ -1,0 +1,19 @@
+[Unit]
+Description=flameshot screenshot daemon
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+# Not a convenience. The clipboard is owned by the process that set it, so a
+# one-shot `flameshot screen` hands it an image and then exits, taking the
+# image with it. A resident daemon keeps owning it, so the paste works. It also
+# means Print opens immediately instead of paying Qt's startup cost each time.
+#
+# No quickshell ordering: disabledTrayIcon=true in flameshot.ini.
+[Service]
+ExecStart=/usr/bin/flameshot
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

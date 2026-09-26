@@ -8,7 +8,6 @@ gpu: nvidia
 
 # Apps
 install_steam: true
-install_vpn: true
 install_battlenet: true
 
 # Desktop environment

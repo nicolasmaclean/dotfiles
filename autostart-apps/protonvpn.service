@@ -1,0 +1,14 @@
+[Unit]
+Description=Proton VPN tray app
+PartOf=graphical-session.target
+Wants=quickshell.service
+After=graphical-session.target quickshell.service
+Requisite=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/protonvpn-app --start-minimized
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

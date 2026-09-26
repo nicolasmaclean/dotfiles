@@ -9,10 +9,6 @@ xorg_packages:
   # bin/qtile-nested runs the config in a nested X server; it is the only way
   # to test a config change without betting the session on it.
   - xorg-server-xephyr
-  # polkit-agent.service execs this package's agent. Without it polkit can only
-  # answer "Authorization requires interaction" and GUI apps report that as
-  # their own vague failure.
-  - polkit-gnome
   # qtile-session exports QT_QPA_PLATFORMTHEME=gtk3, and the plugin that makes
   # that mean anything is shipped by qt5-base and qt6-base themselves on Arch
   # (both carry platformthemes/libqgtk3.so) — so there is no separate

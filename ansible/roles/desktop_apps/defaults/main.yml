@@ -27,8 +27,9 @@ desktop_apps_packages:
 # org.gnome.desktop.input-sources is not read here, so an engine missing from
 # this key cannot be selected at all.
 #
-# The daemon that reads these is started by ibus.service, installed and enabled
-# by roles/qtile — nothing on a no-DE Arch install starts it otherwise.
+# The daemon that reads these is started by autostart-apps/ibus.service,
+# installed and enabled by roles/autostart_apps — nothing on a no-DE Arch
+# install starts it otherwise.
 desktop_apps_gsettings:
   - key: org.freedesktop.ibus.general preload-engines
     value: "['xkb:us::eng', 'libpinyin']"

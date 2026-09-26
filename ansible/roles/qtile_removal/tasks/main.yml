@@ -1,0 +1,49 @@
+---
+# One-off teardown of what roles/qtile installed, so every host converges on a
+# Hyprland-only setup on its next run. Every task is `ok` once a box is clean;
+# delete this role once cnick and unick have both run it.
+#
+# The qtile/ directory in the repo, and its ~/.config/qtile link from
+# roles/dotfiles, are left alone on purpose.
+
+# failed_when: false because a unit that was never installed (a fresh box, or
+# nm-applet on cnick) makes systemd answer "Could not find the requested
+# service" - which here just means there is nothing to undo.
+- name: Stop and disable the qtile session services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+    scope: user
+  loop: "{{ qtile_removal_services }}"
+  register: qtile_removal_disabled
+  failed_when: false
+  changed_when: qtile_removal_disabled.changed | default(false)
+  when: not ansible_check_mode
+
+- name: Remove the qtile session units
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ qtile_removal_files }}"
+  notify: Reload the user manager
+
+- name: Remove the session launcher
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/bin/qtile-session
+    state: absent
+
+# polkit-agent.service was its only user; hyprpolkitagent (roles/hyprland) is
+# the agent now.
+- name: Uninstall polkit-gnome
+  become: true
+  community.general.pacman:
+    name: polkit-gnome
+    state: absent
+
+# Takes ~/.local/bin/qtile and the rest of the venv's entry points with it.
+- name: Uninstall the qtile tool venv
+  ansible.builtin.command:
+    cmd: uv tool uninstall qtile
+    removes: "{{ ansible_facts['env']['HOME'] }}/.local/share/uv/tools/qtile"

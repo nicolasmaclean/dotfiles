@@ -7,31 +7,8 @@ git_user_name: "Nick Maclean"
 git_user_email: "nick@imaclean.me"
 
 # --- paths ----------------------------------------------------------------
-# bootstrap.sh clones here, and qtile/pyrightconfig.json's relative venvPath
-# ("../../.local/share/uv/tools") assumes it.
+# bootstrap.sh clones here.
 dotfiles_dir: "{{ ansible_facts['env']['HOME'] }}/dotfiles"
-
-# extra/uv installs to /usr/bin, not ~/.local/bin as the install script did.
-# Read by roles/toolchains (which installs it) and roles/qtile (which uses it);
-# the tools uv installs still land in ~/.local/bin, so ~/.local/bin/qtile and
-# ~/.local/bin/qtile-nested are unaffected by this path.
-uv_bin: /usr/bin/uv
-
-# --- version pins ---------------------------------------------------------
-# The qtile venv is a single `uv tool install` with four --with packages. That
-# list is a contract, not a convenience: spotify_web.py is stdlib-only so the
-# now-playing widget adds nothing to it, and these five names are exactly what
-# ~/.local/share/uv/tools/qtile/uv-receipt.toml records.
-#
-# Kept pinned even though extra/qtile is 0.37.0 and extra/python-psutil is
-# 7.2.2 — exactly these two versions — because qtile-extras is AUR-only, so a
-# native install would split the five-package set across two package managers
-# and give up the lockstep this list exists to hold.
-qtile_version: "0.37.0"
-qtile_extras_version: "0.37.0"
-psutil_version: "7.2.2"
-dbus_fast_version: "5.0.22"
-pyxdg_version: "0.28"
 
 # --- system ---------------------------------------------------------------
 system_timezone: "America/Chicago"

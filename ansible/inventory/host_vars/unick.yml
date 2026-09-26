@@ -17,7 +17,6 @@ form_factor: laptop
 gpu: intel
 
 install_steam: false
-install_vpn: true
 install_battlenet: false
 
 install_hyprland: true

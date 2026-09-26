@@ -1,16 +1,5 @@
 ---
 # ═══ uv ═══════════════════════════════════════════════════════════════════
-# qtile lives in a uv tool venv rather than in the repos: the venv is what
-# keeps the five pinned packages in lockstep, and qtile-extras is AUR-only, so
-# a native install would split that set across two package managers. The qtile
-# role does the install; this only puts uv on the box.
-#
-# extra/uv puts the binary at /usr/bin/uv rather than ~/.local/bin/uv where the
-# install script put it — group_vars/all.yml's uv_bin is that path and
-# roles/qtile reads the same var, which is the only reason this role is
-# threaded into another one. `uv tool install` still places the tools it
-# installs under ~/.local/bin, so ~/.local/bin/qtile and
-# ~/.local/bin/qtile-nested are unaffected.
 - name: Install uv
   become: true
   community.general.pacman:

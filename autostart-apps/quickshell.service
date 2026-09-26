@@ -1,0 +1,15 @@
+[Unit]
+Description=Quickshell Desktop Environment
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+Type=dbus
+BusName=org.kde.StatusNotifierWatcher
+ExecStart=/usr/bin/qs --path %h/dotfiles/hypr/qs
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

@@ -17,6 +17,10 @@ hyprland_packages:
   - hyprpicker
   - cliphist
   - wl-clipboard
+  # uwsm/env exports QT_QPA_PLATFORMTHEME=gtk3; the plugin that reads it ships
+  # with qt5-base/qt6-base, and gtk3 is named here so it has something to
+  # read. Also carries the schema desktop_apps' color-scheme gsetting writes.
+  - gtk3
   
   # xdph's Screenshot portal shells out to grim, and only registers the
   # interface if grim is on PATH when it starts. Without it flameshot's portal

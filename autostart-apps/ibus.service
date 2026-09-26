@@ -1,0 +1,19 @@
+[Unit]
+Description=ibus input method daemon
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+# Nothing else on a no-DE Arch install starts this. Toolkits only route through
+# it because hypr/uwsm/env.j2 sets GTK_IM_MODULE, QT_IM_MODULE and XMODIFIERS.
+#
+# --xim serves X clients under XWayland. --replace makes a restart of this unit
+# take over from any daemon a stray autostart already started, rather than
+# exiting because the bus name is taken.
+ExecStart=/usr/bin/ibus-daemon --xim --replace
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

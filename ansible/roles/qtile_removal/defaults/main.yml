@@ -1,0 +1,19 @@
+---
+qtile_removal_units_dir: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
+
+# Everything roles/qtile ever enabled, including nm-applet from before the bar
+# drew its own network indicator. flameshot, ibus and 1Password are not here:
+# they live on in autostart-apps/, reinstalled WantedBy=graphical-session.target.
+qtile_removal_services:
+  - picom.service
+  - polkit-agent.service
+  - nm-applet.service
+
+qtile_removal_files:
+  - "{{ qtile_removal_units_dir }}/qtile-session.target"
+  - "{{ qtile_removal_units_dir }}/qtile-session.target.wants"
+  - "{{ qtile_removal_units_dir }}/picom.service"
+  - "{{ qtile_removal_units_dir }}/polkit-agent.service"
+  - "{{ qtile_removal_units_dir }}/nm-applet.service"
+  # Where the launcher lived before it moved to /usr/local/bin.
+  - "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-session"

@@ -1,0 +1,53 @@
+---
+# Proton VPN sign-in stays manual: the app keeps its own credentials and there
+# is nothing here to template. Sign in once from the tray icon.
+- name: Install the autostart app packages
+  become: true
+  community.general.pacman:
+    name: "{{ autostart_apps_packages }}"
+    state: present
+
+# No mode on the directory, for the reason given at the top of roles/dotfiles.
+- name: Create the user unit directory  # noqa: risky-file-permissions
+  ansible.builtin.file:
+    path: "{{ autostart_apps_units_dir }}"
+    state: directory
+
+- name: Find the autostart units
+  ansible.builtin.find:
+    paths: "{{ autostart_apps_src }}"
+    patterns: "*.service"
+  register: autostart_apps_units
+
+# Copied rather than symlinked: systemd resolves a unit symlink to its target
+# and would treat the repo copy as the canonical unit.
+#
+# Removing a file from autostart-apps/ does not remove it here. Its installed
+# copy stays, and stays enabled, until it is disabled and deleted by hand.
+- name: Install the autostart units
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ autostart_apps_units_dir }}/{{ item.path | basename }}"
+    remote_src: true
+    mode: "0644"
+  loop: "{{ autostart_apps_units.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  notify: Reload the user manager
+
+- name: Reload the user manager before enabling anything
+  ansible.builtin.meta: flush_handlers
+
+# Enabled, not started: graphical-session.target starts them at login, and
+# starting them from a play run outside a session would have no display.
+# Skipped in check mode because the copy above only pretends to run there, so
+# on a fresh box the units do not exist yet.
+- name: Enable the autostart units
+  ansible.builtin.systemd_service:
+    name: "{{ item.path | basename }}"
+    scope: user
+    enabled: true
+  loop: "{{ autostart_apps_units.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  when: not ansible_check_mode

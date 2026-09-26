@@ -1,0 +1,15 @@
+[Unit]
+Description=Email client
+PartOf=graphical-session.target
+Wants=quickshell.service
+After=graphical-session.target quickshell.service
+Requisite=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/mailspring --background
+Restart=on-failure
+RestartSec=2
+KillMode=mixed
+
+[Install]
+WantedBy=graphical-session.target

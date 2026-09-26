@@ -1,0 +1,11 @@
+---
+# Every *.service in this directory is installed and enabled; there is no list
+# to keep in sync. The units are WantedBy=graphical-session.target, which uwsm
+# brings up at login, so this only means anything in the Hyprland session.
+autostart_apps_src: "{{ dotfiles_dir }}/autostart-apps"
+autostart_apps_units_dir: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
+
+# Packages for units in autostart-apps/ that no other role installs. Mailspring
+# and Signal come from roles/apps.
+autostart_apps_packages:
+  - proton-vpn-gtk-app
