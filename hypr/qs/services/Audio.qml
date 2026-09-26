@@ -15,13 +15,13 @@ Singleton {
   readonly property bool source_on: !source?.audio?.muted ?? false
 
   readonly property string volumeGlyph: {
-    if (muted || volume == 0) {
+    if (muted) {
       return "󰝟"
     }
-    if (volume < 0.33) {
+    if (volume === 0) {
       return "󰕿"
     }
-    if (volume < 0.66) {
+    if (volume < 0.5) {
       return "󰖀"
     }
     return "󰕾"

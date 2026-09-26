@@ -6,36 +6,17 @@ import Quickshell.Hyprland
 
 import qs.services
 
-PanelWindow {
-  screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+ColumnLayout {
+  id: layout
 
-  color: "transparent"
-  anchors {
-    top: true
-    right: true
-  }
+  Repeater {
+    model: ScriptModel {
+      values: [...Notify.notifications.values]
+    }
 
-  margins {
-    top: 10
-    right: 17
-  }
-
-  // fit notification area to the notifications its showing
-  implicitWidth: layout.implicitWidth
-  implicitHeight: layout.implicitHeight
-
-  ColumnLayout {
-    id: layout
-
-    Repeater {
-      model: ScriptModel {
-        values: [...Notify.notifications.values]
-      }
-
-      Component {
-        id: notificationDelegate
-        NotificationCard {}
-      }
+    Component {
+      id: notificationDelegate
+      NotificationCard {}
     }
   }
 }

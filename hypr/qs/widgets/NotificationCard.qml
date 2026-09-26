@@ -25,7 +25,7 @@ Item {
   // this allows notification to reused for volume/brightness
   readonly property var progress: modelData.hints.value ?? null
 
-  implicitWidth: 350
+  implicitWidth: Theme.notificationWidth
   implicitHeight: card.implicitHeight
 
   readonly property int timeoutMs: {

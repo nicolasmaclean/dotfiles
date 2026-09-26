@@ -13,4 +13,9 @@ Item {
     text: Audio.volumeGlyph
     font.pixelSize: Theme.widgetIconSize
   }
+
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    onTapped: Osd.pin()
+  }
 }

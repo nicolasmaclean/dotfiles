@@ -5,7 +5,7 @@ import Quickshell
 import qs
 
 PanelWindow {
-  implicitHeight: 40
+  implicitHeight: Theme.taskbarThickness
   color: Theme.frame
 
   anchors {

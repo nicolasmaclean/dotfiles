@@ -4,16 +4,50 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 
+import qs.services
 import qs.widgets
 
 Scope {
   id: root
 
   property bool taskbarVisible: true
-  NotificationArea {}
+  property real inset: taskbarVisible ? Theme.taskbarThickness : Theme.frameThickness
+
+  PanelWindow {
+    id: osd
+
+    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+    exclusionMode: ExclusionMode.Ignore
+
+    color: "transparent"
+    implicitWidth: stack.implicitWidth
+    implicitHeight: stack.implicitHeight
+    anchors {
+      top: true
+      right: true
+    }
+    margins {
+      top: root.inset + 10
+      right: 16
+    }
+
+    ColumnLayout {
+      id: stack
+      OsdArea {
+        HyprlandFocusGrab {
+          active: Osd.pinned
+          windows: [osd]
+          onCleared: Osd.shown = Osd.pinned = false
+        }
+      }
+      NotificationArea {}
+    }
+  }
 
   Variants {
     model: Quickshell.screens
@@ -26,7 +60,7 @@ Scope {
 
       Frame {
         screen: screenScope.modelData
-        topInset: root.taskbarVisible ? 40 : thickness
+        topInset: root.inset
       }
 
       Taskbar {
