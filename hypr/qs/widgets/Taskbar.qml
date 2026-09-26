@@ -5,6 +5,8 @@ import Quickshell
 import qs
 
 PanelWindow {
+  id: window
+
   implicitHeight: Theme.taskbarThickness
   color: Theme.frame
 
@@ -20,7 +22,11 @@ PanelWindow {
     anchors.rightMargin: 28
 
     // left widget group
-    RowLayout {}
+    RowLayout {
+      WorkspacesWidget {
+        screen: window.screen
+      }
+    }
 
     Item {
       Layout.fillWidth: true

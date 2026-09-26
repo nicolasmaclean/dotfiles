@@ -82,4 +82,26 @@ Scope {
       root.taskbarVisible = !root.taskbarVisible
     }
   }
+
+  // need to let WorkspacesWidget work on login
+  // Connections {
+  //   target: Hyprland
+  //   function onRawEvent(event) {
+  //     if (["createworkspacev2", "moveworkspacev2", "focusedmon"].includes(event.name)) {
+  //       Hyprland.refreshMonitors()
+  //       Hyprland.refreshWorkspaces()
+  //     }
+  //   }
+  // }
+
+  // Timer {
+  //   interval: 1000
+  //   running: true
+  //   onTriggered: {
+  //     for (const s of Quickshell.screens)
+  //       Hyprland.monitorFor(s)
+  //     Hyprland.refreshMonitors()
+  //     Hyprland.refreshWorkspaces()
+  //   }
+  // }
 }

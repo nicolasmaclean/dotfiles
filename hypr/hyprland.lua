@@ -81,9 +81,9 @@ local menu        = uwsm .. "hyprlauncher"
 -- Autostart necessary processes (like notifications daemons, status bars, etc.)
 -- Or execute your favorite apps at launch like this:
 
+local waitTillMonitors = [[sh -c 'until hyprctl workspaces -j | jq -e "length > 0" >/dev/null; do sleep 0.1; done; exec ]] 
 hl.on("hyprland.start", function () 
   -- most apps we run need to go through uwsm
-  hl.exec_cmd(uwsm .. "qs --path ~/dotfiles/hypr/qs") -- quickshell (taskbar, widgets, etc.)
   hl.exec_cmd(uwsm .. "hyprlauncher -d")
   hl.exec_cmd(uwsm .. "wl-paste --watch cliphist store")
 end)
@@ -124,7 +124,12 @@ hl.permission("/usr/(lib|libexec|lib64)/xdg-desktop-portal-hyprland", "screencop
 hl.config({
     general = {
         gaps_in  = 5,
-        gaps_out = 20,
+        gaps_out = {
+          top=12, 
+          right=20, 
+          bottom=20, 
+          left=20
+        },
 
         border_size = 2,
 
@@ -143,7 +148,7 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 10,
+        rounding       = 20,
         rounding_power = 2,
 
         -- Change transparency of focused and unfocused windows
@@ -215,6 +220,8 @@ hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "
 --     border_size = 0,
 --     rounding    = 0,
 -- })
+
+
 hl.window_rule({
   name = "nmtui-popup",
   match = { class = "^nmtui$" },
@@ -347,7 +354,8 @@ hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "r", group_a
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.window.move({ out_of_group = true }))
 
 -- Handle workspaces
-for i = 1, 5 do
+num_workspaces = 5
+for i = 1, num_workspaces do
     local key = i 
     hl.bind(mainMod .. " + " .. key,             hl.dsp.focus({ workspace = i}))
     hl.bind(mainMod .. " + SHIFT + " .. key,     hl.dsp.window.move({ workspace = i }))
