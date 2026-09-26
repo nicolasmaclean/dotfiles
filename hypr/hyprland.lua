@@ -233,6 +233,12 @@ hl.window_rule({
   move  = "(monitor_w-650) 60",
 })
 
+hl.window_rule({
+  name = "calendar-popup",
+  match = { class = "^gsimplecal$" },
+  move = "(monitor_w/2-window_w/2) 52",
+})
+
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 hl.config({
     dwindle = {
