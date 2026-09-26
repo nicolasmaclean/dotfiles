@@ -21,6 +21,9 @@ apps_repo_packages:
   - discord                # extra/discord is 1.0.157 — byte-for-byte the old pin
   - signal-desktop
   - obs-studio
+  # cachyos/mailspring, not the AUR. It keeps account credentials in
+  # gnome-keyring (a hard dependency), which roles/display_manager unlocks at login.
+  - mailspring
   # spotify-launcher, not the AUR `spotify` PKGBUILD with its GPG-key dance: it
   # is the official thin launcher that fetches and runs the real client. Also a
   # bar dependency, not just an app — the now-playing widget takes Spotify's
