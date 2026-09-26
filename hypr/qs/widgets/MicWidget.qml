@@ -13,4 +13,8 @@ Item {
     text: Audio.micGlyph
     font.pixelSize: Theme.widgetIconSize
   }
+
+  HoverHandler {
+    cursorShape: Qt.PointingHandCursor
+  }
 }

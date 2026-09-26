@@ -17,9 +17,13 @@ Item {
     color: Theme.text
   }
 
-  MouseArea {
-    anchors.fill: parent
-    onClicked: menu.open()
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    onTapped: menu.open()
+  }
+
+  HoverHandler {
+    cursorShape: Qt.PointingHandCursor
   }
 
   PopupMenu {

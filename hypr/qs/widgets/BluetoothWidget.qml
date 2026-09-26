@@ -15,9 +15,14 @@ Item {
     color: Bluetooth.anyConnectedDevices ? Theme.text : Theme.textDim
     font.pixelSize: Theme.widgetIconSize
   }
+
   TapHandler {
     acceptedButtons: Qt.LeftButton
     onTapped: bluetui.running = !bluetui.running
+  }
+
+  HoverHandler {
+    cursorShape: Qt.PointingHandCursor
   }
 
   Process {

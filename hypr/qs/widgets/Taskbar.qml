@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Shapes
 import Quickshell
+
 import qs
 
 PanelWindow {
@@ -16,8 +16,8 @@ PanelWindow {
 
   RowLayout {
     anchors.fill: parent
-    anchors.leftMargin: 8
-    anchors.rightMargin: 8
+    anchors.leftMargin: 28
+    anchors.rightMargin: 28
 
     // left widget group
     RowLayout {}
@@ -28,6 +28,7 @@ PanelWindow {
 
     // right widget group
     RowLayout {
+      Tray {}
       MicWidget {}
       VolumeWidget {}
       BluetoothWidget {}

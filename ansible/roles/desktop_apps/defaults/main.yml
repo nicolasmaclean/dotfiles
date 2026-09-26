@@ -1,13 +1,15 @@
 ---
 desktop_apps_packages:
+  - dolphin
   - playerctl
   - brightnessctl           # brightness.py drives the panel through this
   - flameshot
   - rofi
   - gsimplecal              # the calendar the bar clock opens
   - networkmanager          # not enabled by the package on Arch — see tasks/
-  - network-manager-applet  # nmcli's backend; network.py polls it
   - libnotify               # notify-send, which notify.py shells out to
+  - ibus
+  - ibus-libpinyin
   # Arch splits what Ubuntu's `pipewire` pulled in, so the compatibility
   # shims have to be named: without pipewire-pulse nothing implements the
   # PulseAudio API, and wpctl (volume.py) has nothing to talk to.
@@ -15,9 +17,6 @@ desktop_apps_packages:
   - pipewire-pulse
   - pipewire-alsa
   - wireplumber             # volume.py drives wpctl
-  - ibus
-  - ibus-libpinyin
-  - dolphin
 
 # Deliberately NOT lm-sensors: qtile reads temperatures through psutil, which
 # walks /sys/class/hwmon directly. It is absent on the laptop and the thermal

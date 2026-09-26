@@ -18,4 +18,8 @@ Item {
     acceptedButtons: Qt.LeftButton
     onTapped: Osd.pin()
   }
+
+  HoverHandler {
+    cursorShape: Qt.PointingHandCursor
+  }
 }

@@ -23,6 +23,10 @@ Item {
     onTapped: nmtui.running = !nmtui.running
   }
 
+  HoverHandler {
+    cursorShape: Qt.PointingHandCursor
+  }
+
   Process {
     id: nmtui
     command: Apps.wifitui

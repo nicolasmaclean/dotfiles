@@ -1,6 +1,11 @@
-//patch in default fonts (as opposed to symlink from .config to here)
-//pragmas must come before any import or quickshell silently ignores them
+// pragmas must come before any import or quickshell silently ignores them
+//
+// patch in default fonts (as opposed to symlink from .config to here)
 //@ pragma Env FONTCONFIG_FILE=~/dotfiles/hypr/qs/fonts.conf
+//
+// quickshell must be run as QApplication to use native menu widget for the system tray
+// TODO: remove after I have custom menu ui
+//@ pragma UseQApplication
 pragma ComponentBehavior: Bound
 
 import QtQuick
