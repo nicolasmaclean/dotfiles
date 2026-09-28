@@ -18,6 +18,8 @@ base_packages:
   # The Nerd Font the bar needs is roles/fonts; these are the fallbacks under it.
   - ttf-dejavu
   - noto-fonts
+  - ttf-nerd-fonts-symbols
+  - ttf-nerd-fonts-symbols-mono
   # Pairing the mouse. bluetui pulls in bluez (the daemon) itself; bluez-utils
   # is named for bluetoothctl as the fallback. The service is enabled in tasks.
   - bluetui
