@@ -12,8 +12,20 @@ RowLayout {
   Layout.fillWidth: false
 
   ListView {
+    id: workspaces
+
+    readonly property var liveWorkspaces: Hyprland.workspaces.values.filter(w => w.monitor?.name === root.screen.name)
+    property var shownWorkspaces: liveWorkspaces
+    onLiveWorkspacesChanged: batchTimer.restart()
+
+    Timer {
+      id: batchTimer
+      interval: 30
+      onTriggered: workspaces.shownWorkspaces = workspaces.liveWorkspaces
+    }
+
     model: ScriptModel {
-      values: Hyprland.workspaces.values.filter(w => w.monitor?.name === root.screen.name)
+      values: workspaces.shownWorkspaces
     }
 
     orientation: ListView.Horizontal
@@ -23,18 +35,16 @@ RowLayout {
     implicitWidth: contentWidth
     implicitHeight: contentItem.childrenRect.height
 
+    Behavior on implicitWidth {
+      NumberAnimation {
+        duration: 200
+        easing.type: Easing.OutCubic
+      }
+    }
+
     delegate: Rectangle {
       id: workspace
       required property HyprlandWorkspace modelData
-
-      property bool fresh: true
-      Timer {
-        running: true
-        interval: 100
-        onTriggered: workspace.fresh = false
-      }
-
-      onImplicitWidthChanged: console.log(name, "implicitWidth", implicitWidth, "fresh", fresh)
 
       // during remove animation, these are frozen to prevent null derefence when workspace is destroyed
       property string name: modelData?.name ?? ""
@@ -115,16 +125,10 @@ RowLayout {
 
     // animate workspace add, remove
     displaced: Transition {
-      id: displaced
-
       NumberAnimation {
         property: "x"
-        duration: displaced.ViewTransition.item?.fresh ? 0 : 200
+        duration: 200
         easing.type: Easing.OutCubic
-      }
-
-      ScriptAction {
-        script: console.log("displaced", displaced.ViewTransition.item.name)
       }
 
       // if displaced interrupts add, this will make sure opacity is still animated
