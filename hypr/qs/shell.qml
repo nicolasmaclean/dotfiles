@@ -34,11 +34,11 @@ Scope {
     implicitHeight: stack.implicitHeight
     anchors {
       top: true
-      right: true
+      left: true
     }
     margins {
       top: root.inset + 10
-      right: 16
+      left: 16
     }
 
     ColumnLayout {
