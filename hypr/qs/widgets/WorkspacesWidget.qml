@@ -69,6 +69,24 @@ RowLayout {
         restoreMode: Binding.RestoreNone
       }
 
+      // change workspace on click
+      TapHandler {
+        acceptedButtons: Qt.LeftButton
+        onTapped: workspace.modelData?.activate()
+      }
+
+      // close workspace on right click
+      // TODO
+      // TapHandler {
+      //   acceptedButtons: Qt.RightButton
+      //   onTapped:
+      // }
+
+      HoverHandler {
+        cursorShape: Qt.PointingHandCursor
+      }
+
+      // formatting
       color: Theme.accent
       readonly property real hPadding: 12
       readonly property real vPadding: 4
@@ -77,6 +95,7 @@ RowLayout {
       implicitWidth: row.implicitWidth + hPadding * 2
       implicitHeight: row.implicitHeight + vPadding * 2
 
+      // show workspace content (title + app icons)
       RowLayout {
         id: row
         x: workspace.hPadding
