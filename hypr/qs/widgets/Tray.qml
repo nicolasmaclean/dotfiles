@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
@@ -13,14 +12,12 @@ Repeater {
     values: [...SystemTray.items.values].sort((a, b) => TrayOrder.rank(a.id) - TrayOrder.rank(b.id))
   }
 
-  delegate: Text {
+  delegate: IconImage {
     id: icon
     required property SystemTrayItem modelData
 
-    text: Apps.icon(modelData.id)
-    font.pixelSize: Theme.widgetIconSize
-    font.family: "Symbols Nerd Font"
-    renderType: Text.NativeRendering
+    source: modelData.icon
+    implicitSize: Theme.widgetIconSize
 
     // handle clicks
     TapHandler {
