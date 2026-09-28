@@ -28,6 +28,14 @@ return require('packer').startup(function(use)
   }
 
   use({
+      'kylechui/nvim-surround',
+      tag = '*', -- follow stable releases
+      config = function()
+          require('nvim-surround').setup({})
+      end
+  })
+
+  use({
 	  'rose-pine/neovim',
 	  as = 'rose-pine',
 	  config = function()
