@@ -6,7 +6,11 @@ vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set({ "n", "x" }, ";", ":")
 vim.keymap.set({ "n", "x" }, ":", ";")
 
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
+-- <leader>c toggles comments via nvim's built-in gc (remap needed to reach it)
+vim.keymap.set("n", "<leader>c", "gcc", { remap = true })
+vim.keymap.set("x", "<leader>c", "gc", { remap = true })
+
+vim.keymap.set("v", "J",":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 
 -- move by display line, counts included, so 8k goes exactly where the 8 in the
