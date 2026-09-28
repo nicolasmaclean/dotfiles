@@ -8,6 +8,7 @@ Singleton {
 
   property bool shown: false
   property bool pinned: false
+  property var _lastSink: null
 
   function pin(): void {
     shown = !shown
@@ -17,6 +18,10 @@ Singleton {
   }
 
   function notify(): void {
+    if (!Audio.sink?.ready || Audio.sink !== _lastSink) {
+      _lastSink = Audio.sink?.ready ? Audio.sink : null
+      return
+    }
     if (pinned)
       return
     shown = true
