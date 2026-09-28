@@ -14,7 +14,7 @@ Item {
     font.pixelSize: Theme.widgetIconSize
   }
 
-  HoverHandler {
-    cursorShape: Qt.PointingHandCursor
-  }
+  // HoverHandler {
+  //   cursorShape: Qt.PointingHandCursor
+  // }
 }

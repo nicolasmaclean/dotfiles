@@ -23,9 +23,12 @@ PanelWindow {
 
     // left widget group
     RowLayout {
-      WorkspacesWidget {
-        screen: window.screen
-      }
+      PowerWidget {}
+      BatteryWidget {}
+      WifiWidget {}
+      BluetoothWidget {}
+      VolumeWidget {}
+      MicWidget {}
     }
 
     Item {
@@ -35,11 +38,7 @@ PanelWindow {
     // right widget group
     RowLayout {
       Tray {}
-      MicWidget {}
-      VolumeWidget {}
-      BluetoothWidget {}
-      WifiWidget {}
-      PowerWidget {}
+      ClockWidget {}
     }
   }
 
@@ -48,6 +47,8 @@ PanelWindow {
   RowLayout {
     anchors.centerIn: parent
 
-    ClockWidget {}
+    WorkspacesWidget {
+      screen: window.screen
+    }
   }
 }

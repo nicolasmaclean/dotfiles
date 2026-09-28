@@ -9,6 +9,9 @@ hyprland_packages:
   - hyprlock
   - hypridle
   - quickshell
+  # quickshell's battery widget reads UPower over D-Bus. Harmless on a desktop:
+  # the widget hides itself when there's no laptop battery.
+  - upower
   - matugen
   - hyprpaper
   - hyprlauncher
