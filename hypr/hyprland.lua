@@ -397,7 +397,7 @@ hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
 
 -- Development
-hl.bind(mainMod .. " + CONTROL + R", hl.dsp.exec_cmd("qs kill -p " .. qsPath .. "; qs -p " .. qsPath))
+hl.bind(mainMod .. " + CONTROL + R", hl.dsp.exec_cmd("systemctl --user restart quickshell.service"))
 
 --------------------------------
 ---- WINDOWS AND WORKSPACES ----

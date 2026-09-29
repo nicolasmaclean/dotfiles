@@ -9,6 +9,9 @@ Requisite=graphical-session.target
 ExecStart=/usr/bin/mailspring --background
 Restart=on-failure
 RestartSec=2
+# Exit 1 means another instance already holds the lock. Restarting would
+# poke that instance every 2s, and each poke re-opens its window.
+RestartPreventExitStatus=1
 KillMode=mixed
 
 [Install]
