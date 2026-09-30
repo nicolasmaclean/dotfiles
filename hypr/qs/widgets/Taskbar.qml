@@ -38,6 +38,9 @@ PanelWindow {
     // right widget group
     RowLayout {
       Tray {}
+      Text {
+        text: " | "
+      }
       ClockWidget {}
     }
   }

@@ -30,8 +30,8 @@ Scope {
     exclusionMode: ExclusionMode.Ignore
 
     color: "transparent"
-    implicitWidth: stack.implicitWidth
-    implicitHeight: stack.implicitHeight
+    implicitWidth: osdStack.implicitWidth
+    implicitHeight: osdStack.implicitHeight
     anchors {
       top: true
       left: true
@@ -42,7 +42,7 @@ Scope {
     }
 
     ColumnLayout {
-      id: stack
+      id: osdStack
       OsdArea {
         HyprlandFocusGrab {
           active: Osd.pinned
@@ -50,6 +50,29 @@ Scope {
           onCleared: Osd.shown = Osd.pinned = false
         }
       }
+    }
+  }
+
+  PanelWindow {
+    id: notifications
+
+    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+    exclusionMode: ExclusionMode.Ignore
+
+    color: "transparent"
+    implicitWidth: notificationsStack.implicitWidth
+    implicitHeight: notificationsStack.implicitHeight
+    anchors {
+      top: true
+      right: true
+    }
+    margins {
+      top: root.inset + 10
+      right: 16
+    }
+
+    ColumnLayout {
+      id: notificationsStack
       NotificationArea {}
     }
   }
@@ -82,26 +105,4 @@ Scope {
       root.taskbarVisible = !root.taskbarVisible
     }
   }
-
-  // need to let WorkspacesWidget work on login
-  // Connections {
-  //   target: Hyprland
-  //   function onRawEvent(event) {
-  //     if (["createworkspacev2", "moveworkspacev2", "focusedmon"].includes(event.name)) {
-  //       Hyprland.refreshMonitors()
-  //       Hyprland.refreshWorkspaces()
-  //     }
-  //   }
-  // }
-
-  // Timer {
-  //   interval: 1000
-  //   running: true
-  //   onTriggered: {
-  //     for (const s of Quickshell.screens)
-  //       Hyprland.monitorFor(s)
-  //     Hyprland.refreshMonitors()
-  //     Hyprland.refreshWorkspaces()
-  //   }
-  // }
 }
