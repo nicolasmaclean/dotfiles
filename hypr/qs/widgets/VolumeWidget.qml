@@ -16,7 +16,7 @@ Item {
 
   TapHandler {
     acceptedButtons: Qt.LeftButton
-    onTapped: Osd.pin()
+    onTapped: Osd.volume.toggle()
   }
 
   HoverHandler {

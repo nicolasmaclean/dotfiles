@@ -34,6 +34,11 @@ hl.monitor({
     position = "1080x0",
     scale    = 1,
 })
+hl.config({
+  cursor = {
+    default_monitor = "DP-1",
+  }
+})
 -- Right
 hl.monitor({
     output   = "desc:Acer Technologies CB242Y 0x0190179D",
@@ -433,11 +438,11 @@ hl.window_rule({
 })
 
 -- Layer rules also return a handle.
--- local overlayLayerRule = hl.layer_rule({
---     name  = "no-anim-overlay",
---     match = { namespace = "^my-overlay$" },
---     no_anim = true,
--- })
+local overlaylayerrule = hl.layer_rule({
+    name  = "qs-osd",
+    match = { namespace = "^qs-osd$" },
+    no_anim = true,
+})
 -- overlayLayerRule:set_enabled(false)
 
 -- Hyprland-run windowrule

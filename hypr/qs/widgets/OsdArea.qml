@@ -1,17 +1,75 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 
+import qs
 import qs.services
 
-Item {
-  implicitWidth: card.implicitWidth
-  implicitHeight: card.implicitHeight
-  visible: Osd.shown
+ListView {
+  id: column
 
-  SliderCard {
+  model: ScriptModel {
+    values: Osd.entries.filter(e => e.shown).sort((a, b) => a.shownAt - b.shownAt)
+  }
+
+  delegate: Loader {
     id: card
-    title: "Volume"
-    value: Audio.volume
-    onMoved: value => Audio.setVolume(value)
+    required property var modelData
+    width: ListView.view.width
+
+    sourceComponent: ({
+        [Osd.Kind.Volume]: volumeCard,
+        [Osd.Kind.Mic]: micCard
+      })[modelData.kind]
+
+    HoverHandler {
+      onHoveredChanged: card.modelData.hovered = hovered
+    }
+  }
+
+  implicitWidth: Theme.notificationWidth
+  spacing: 5
+  interactive: false
+
+  // OSD Cards
+  Component {
+    id: volumeCard
+    SliderCard {
+      title: "Volume"
+      value: Audio.volume
+      onMoved: value => Audio.setVolume(value)
+    }
+  }
+
+  Component {
+    id: micCard
+    SliderCard {
+      title: "Mic"
+      value: 0.5
+    }
+  }
+
+  // animations
+  add: Transition {
+    NumberAnimation {
+      property: "opacity"
+      from: 0
+      to: 1
+    }
+  }
+
+  remove: Transition {
+    NumberAnimation {
+      property: "opacity"
+      to: 0
+      duration: 200
+    }
+  }
+
+  displaced: Transition {
+    NumberAnimation {
+      property: "y"
+    }
   }
 }

@@ -14,6 +14,11 @@ Item {
     font.pixelSize: Theme.widgetIconSize
   }
 
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    onTapped: Osd.mic.toggle()
+  }
+
   // HoverHandler {
   //   cursorShape: Qt.PointingHandCursor
   // }

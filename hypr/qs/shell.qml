@@ -12,6 +12,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import Quickshell.Hyprland
 
 import qs.services
@@ -26,30 +27,35 @@ Scope {
   PanelWindow {
     id: osd
 
+    WlrLayershell.namespace: "qs-osd"
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
     exclusionMode: ExclusionMode.Ignore
+    mask: Region {
+      item: osdArea
+      height: osdArea.contentHeight
+    }
 
     color: "transparent"
-    implicitWidth: osdStack.implicitWidth
-    implicitHeight: osdStack.implicitHeight
     anchors {
       top: true
       left: true
+      bottom: true
     }
     margins {
       top: root.inset + 10
       left: 16
     }
 
-    ColumnLayout {
-      id: osdStack
-      OsdArea {
-        HyprlandFocusGrab {
-          active: Osd.pinned
-          windows: [osd]
-          onCleared: Osd.shown = Osd.pinned = false
-        }
-      }
+    implicitWidth: osdArea.implicitWidth
+    OsdArea {
+      id: osdArea
+      anchors.fill: parent
+
+      // HyprlandFocusGrab {
+      //   active: Osd.pinned
+      //   windows: [osd]
+      //   onCleared: Osd.shown = Osd.pinned = false
+      // }
     }
   }
 
