@@ -20,7 +20,8 @@ ListView {
 
     sourceComponent: ({
         [Osd.Kind.Volume]: volumeCard,
-        [Osd.Kind.Mic]: micCard
+        [Osd.Kind.Mic]: micCard,
+        [Osd.Kind.Nightlight]: nightlightCard
       })[modelData.kind]
 
     HoverHandler {
@@ -47,6 +48,20 @@ ListView {
     SliderCard {
       title: "Mic"
       value: 0.5
+    }
+  }
+
+  Component {
+    id: nightlightCard
+    SliderCard {
+      title: "Night light"
+      value: Nightlight.temperature
+      onMoved: value => Nightlight.setTemperature(value)
+
+      from: 2500
+      to: 6500
+      stepSize: 100
+      format: v => v >= 6500 ? "Night light: off" : `Night light: ${Math.round(v)}K`
     }
   }
 

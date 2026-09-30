@@ -12,7 +12,7 @@ Singleton {
     Volume,
     Mic,
     Brightness,
-    NightLight,
+    Nightlight,
     Wifi,
     Bluetooth
   }
@@ -69,16 +69,11 @@ Singleton {
   readonly property Entry mic: Entry {
     kind: Osd.Kind.Mic
   }
-  property list<Entry> entries: [volume, mic]
-
-  function _getEntry(kind): Entry {
-    switch (kind) {
-    case Osd.Kind.Volume:
-      return volume
-    default:
-      return null
-    }
+  readonly property Entry nightlight: Entry {
+    kind: Osd.Kind.Nightlight
   }
+
+  readonly property list<Entry> entries: [volume, mic, nightlight]
 
   Connections {
     id: audioConnections

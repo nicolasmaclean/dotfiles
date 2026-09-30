@@ -29,6 +29,7 @@ PanelWindow {
       BluetoothWidget {}
       VolumeWidget {}
       MicWidget {}
+      NightlightWidget {}
     }
 
     Item {

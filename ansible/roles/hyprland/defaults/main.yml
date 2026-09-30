@@ -36,6 +36,7 @@ hyprland_daemons:
   - hyprpolkitagent.service
   - hyprpaper.service
   - hypridle.service
+  - hyprsunset.service
 
 hyprland_theme_seed: "#47105E"
 hyprland_theme_mode: dark

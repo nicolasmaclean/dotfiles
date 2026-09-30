@@ -31,7 +31,7 @@ Scope {
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
     exclusionMode: ExclusionMode.Ignore
     mask: Region {
-      item: osdArea
+      width: osdArea.width
       height: osdArea.contentHeight
     }
 

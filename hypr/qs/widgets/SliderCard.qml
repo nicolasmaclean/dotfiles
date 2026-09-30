@@ -12,6 +12,11 @@ Item {
   required property string title
   required property real value
 
+  property real from: 0
+  property real to: 1
+  property real stepSize: 0.05
+  property var format: v => `${root.title}: ${Math.round(v * 100)}%`
+
   // event for slider to apply value changes
   signal moved(real value)
 
@@ -38,16 +43,16 @@ Item {
 
       Text {
         Layout.alignment: Qt.AlignHCenter
-        text: `${root.title}: ${Math.round(root.value * 100)}%`
+        text: root.format(root.value)
       }
 
       Slider {
         id: slider
 
         wheelEnabled: true
-        stepSize: 0.05
-        from: 0
-        to: 1
+        stepSize: root.stepSize
+        from: root.from
+        to: root.to
         value: root.value
 
         // don't worry about root.value being out-of-date, this event will force that to update too
