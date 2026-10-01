@@ -34,3 +34,13 @@ base_packages:
 # awk program), so this is the cheap answer and fish is a later decision on its
 # own merits. Set to "" to leave whatever the installer chose alone.
 base_login_shell: /bin/bash
+
+# The kernel command line, as GRUB_CMDLINE_LINUX_DEFAULT. The first three are
+# the CachyOS installer's own. The rest keep the boot text off the screen so
+# Plymouth hands straight to the greeter: `quiet` silences systemd's [ OK ]
+# lines (loglevel=3 only covers the kernel's), rd.udev.log_level does the same
+# for udev in the initramfs, and the cursor flag hides the blinking console
+# cursor between Plymouth and cage.
+base_kernel_cmdline: >-
+  nowatchdog nvme_load=YES splash quiet loglevel=3
+  rd.udev.log_level=3 vt.global_cursor_default=0

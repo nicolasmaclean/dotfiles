@@ -1,0 +1,7 @@
+---
+# Only picks up the unit drop-in; greetd itself is not restarted, since that
+# would end the running session. It applies from the next boot.
+- name: Reload the system manager
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true

@@ -14,3 +14,10 @@
   become: true
   community.general.pacman:
     update_cache: true
+
+# /etc/default/grub is only an input; the bootloader reads grub.cfg.
+- name: Regenerate the GRUB config
+  become: true
+  ansible.builtin.command:
+    cmd: grub-mkconfig -o /boot/grub/grub.cfg
+  changed_when: true

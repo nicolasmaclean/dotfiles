@@ -108,3 +108,30 @@
 # happen before the apps role reaches steam rather than at the end of the play.
 - name: Sync the databases before any later role installs a 32-bit package
   ansible.builtin.meta: flush_handlers
+
+# Only on GRUB. CachyOS can also install with Limine or systemd-boot, which keep
+# the command line elsewhere, and this would then write a file nothing reads.
+# There is no /etc/default/grub.d/ to drop into either: that is a Debian patch,
+# and Arch's grub-mkconfig reads only this one file.
+- name: Check for a GRUB defaults file
+  ansible.builtin.stat:
+    path: /etc/default/grub
+  register: base_grub_defaults
+
+- name: Set the kernel command line
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+    line: "GRUB_CMDLINE_LINUX_DEFAULT='{{ base_kernel_cmdline }}'"
+    backup: true
+  when: base_grub_defaults.stat.exists
+  notify: Regenerate the GRUB config
+
+- name: Warn that the kernel command line is unmanaged
+  ansible.builtin.debug:
+    msg: >-
+      /etc/default/grub does not exist, so this box boots with something other
+      than GRUB and base_kernel_cmdline was not applied. Set it in that
+      bootloader's config by hand.
+  when: not base_grub_defaults.stat.exists

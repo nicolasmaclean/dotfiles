@@ -11,8 +11,51 @@
   community.general.pacman:
     name:
       - greetd
-      - greetd-tuigreet
+      - greetd-tuigreet # we have a custom greeter now, but leave this as backup
+      - cage
     state: present
+
+# Copied from the real files rather than greeter/ itself: greeter/ symlinks
+# Theme.qml and theme/ from hypr/qs, and also holds a .qmlls.ini symlink into
+# /run/user that must not be copied.
+- name: Create the Quickshell greeter directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ display_manager_greeter_dir }}"
+    state: directory
+    mode: "0755"
+  when: display_manager_greeter == 'quickshell'
+
+- name: Install the Quickshell greeter
+  become: true
+  ansible.builtin.copy:
+    src: "{{ dotfiles_dir }}/{{ item }}"
+    dest: "{{ display_manager_greeter_dir }}/"
+    mode: "u=rwX,go=rX"
+  loop:
+    - greeter/shell.qml
+    - greeter/login.png
+    - hypr/qs/Theme.qml
+    - hypr/qs/theme
+  when: display_manager_greeter == 'quickshell'
+
+# Owned by the greeter user, since its home (/) is not writable. Created now
+# as well as at boot, so the first restart of greetd after this already has it.
+- name: Declare the Quickshell greeter's cache directory
+  become: true
+  ansible.builtin.copy:
+    content: "d {{ display_manager_greeter_cache_dir }} 0755 greeter greeter -\n"
+    dest: /etc/tmpfiles.d/qs-greeter.conf
+    mode: "0644"
+  register: display_manager_greeter_tmpfiles
+  when: display_manager_greeter == 'quickshell'
+
+- name: Create the Quickshell greeter's cache directory
+  become: true
+  ansible.builtin.command:
+    cmd: systemd-tmpfiles --create /etc/tmpfiles.d/qs-greeter.conf
+  when: display_manager_greeter_tmpfiles is changed
+  changed_when: true
 
 # config.toml is in the package's backup=(), so pacman keeps this over the
 # packaged one on upgrade and leaves a .pacnew instead.
@@ -23,6 +66,24 @@
     dest: /etc/greetd/config.toml
     mode: "0644"
     backup: true
+
+# greetd shares its VT with the boot console, so whatever systemd and the
+# initramfs wrote there shows through for a moment before cage draws the
+# greeter, and again between cage exiting and Hyprland taking the display.
+# These are the settings getty uses to wipe a VT's screen and scrollback before
+# and after its service runs.
+- name: Clear greetd's VT before and after it runs
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/greetd.service.d/10-clear-tty.conf
+    content: |
+      # Managed by Ansible (roles/display_manager).
+      [Service]
+      TTYPath=/dev/tty{{ display_manager_vt }}
+      TTYReset=yes
+      TTYVTDisallocate=yes
+    mode: "0644"
+  notify: Reload the system manager
 
 # The lightdm package shipped these lines in its own PAM file; greetd's does
 # not. Without them the login keyring is never unlocked with the login

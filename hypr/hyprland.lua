@@ -36,7 +36,7 @@ hl.monitor({
 })
 hl.config({
   cursor = {
-    default_monitor = "DP-1",
+    default_monitor = "HDMI-A-2",
   }
 })
 -- Right
@@ -359,7 +359,7 @@ hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "r", group_a
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.window.move({ out_of_group = true }))
 
 -- Handle workspaces
-num_workspaces = 5
+num_workspaces = 9
 for i = 1, num_workspaces do
     local key = i 
     hl.bind(mainMod .. " + " .. key,             hl.dsp.focus({ workspace = i}))

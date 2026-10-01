@@ -1,4 +1,18 @@
 ---
+display_manager_greeter: quickshell
+
+# The VT greetd runs on. The greetd unit's TTYPath= drop-in clears this same
+# VT, so the two are one var rather than two literals that can drift.
+display_manager_vt: 1
+
+# Where the Quickshell greeter's config is copied. The greeter user cannot read
+# /home/nick, so it lives beside the session entry instead.
+display_manager_greeter_dir: "{{ hyprland_session_entry | dirname }}/greeter"
+
+# The greeter user's home is /, which it cannot write. Quickshell's cache (QML
+# cache, crash reports) goes here instead, via XDG_CACHE_HOME.
+display_manager_greeter_cache_dir: /var/cache/qs-greeter
+
 # Autologin skips the greeter entirely: greetd runs
 # display_manager_session_command straight away as this user on the first
 # start after boot, and only shows tuigreet after that session ends.

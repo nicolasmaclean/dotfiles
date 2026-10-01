@@ -3,13 +3,19 @@
 # runs agreety. See greetd(5).
 
 [terminal]
-vt = 1
+vt = {{ display_manager_vt }}
 
+[default_session]
+{% if display_manager_greeter == 'quickshell' %}
+# No compositor runs yet, so cage hosts the greeter; -s keeps VT switching.
+# Greetd.launch() quits Quickshell, and cage exits with its only client.
+command = "systemd-cat -t qs-greeter env QT_WAYLAND_DISABLE_WINDOWDECORATION=1 XDG_CACHE_HOME={{ display_manager_greeter_cache_dir }} cage -s -m last -- quickshell -p {{ display_manager_greeter_dir }}"
+{% else %}
 # tuigreet lists /usr/share/wayland-sessions and /usr/share/xsessions itself;
 # --cmd is only the fallback before a session has been remembered. greetd
 # splits this line like a shell does, hence the inner quotes.
-[default_session]
 command = "tuigreet --time --asterisks --remember --remember-user-session --cmd '{{ display_manager_session_command }}'"
+{% endif %}
 user = "greeter"
 {% if display_manager_autologin %}
 

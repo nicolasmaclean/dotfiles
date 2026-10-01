@@ -10,4 +10,5 @@ nvim/plugin/packer_compiled.lua
 
 # quickshell rewrites this per machine
 quickshell/.qmlls.ini
+greeter/.qmlls.ini
 hypr/qs/.qmlls.ini
