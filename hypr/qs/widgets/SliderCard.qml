@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -15,7 +16,8 @@ Item {
   property real from: 0
   property real to: 1
   property real stepSize: 0.05
-  property var format: v => `${root.title}: ${Math.round(v * 100)}%`
+  property var format: v => `${root.title} - ${Math.round(v * 100)}%`
+  readonly property real padding: 13
 
   // event for slider to apply value changes
   signal moved(real value)
@@ -23,27 +25,35 @@ Item {
   implicitWidth: card.implicitWidth
   implicitHeight: card.implicitHeight
 
+  property Component header: Text {
+    horizontalAlignment: Text.AlignHCenter
+    text: root.format(root.value)
+  }
+
   Rectangle {
     id: card
 
     color: Theme.frame
     radius: Theme.borderRadiusBig
     implicitWidth: Theme.notificationWidth
-    implicitHeight: 65
+    implicitHeight: cardLayout.implicitHeight + 2 * root.padding
 
     ColumnLayout {
+      id: cardLayout
+
       spacing: 0
       anchors {
-        verticalCenter: card.verticalCenter
+        top: card.top
         left: card.left
         right: card.right
+        topMargin: root.padding
         leftMargin: 10
         rightMargin: 10
       }
 
-      Text {
-        Layout.alignment: Qt.AlignHCenter
-        text: root.format(root.value)
+      Loader {
+        sourceComponent: root.header
+        Layout.fillWidth: true
       }
 
       Slider {

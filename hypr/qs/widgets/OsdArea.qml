@@ -41,6 +41,12 @@ ListView {
       title: "Volume"
       value: Audio.volume
       onMoved: value => Audio.setVolume(value)
+
+      header: AudioDeviceDropdown {
+        devices: Audio.sinks
+        current: Audio.sink
+        onPicked: n => Audio.setSink(n)
+      }
     }
   }
 
@@ -50,6 +56,12 @@ ListView {
       title: "Mic"
       value: Audio.sourceVolume
       onMoved: value => Audio.setSourceVolume(value)
+
+      header: AudioDeviceDropdown {
+        devices: Audio.sources
+        current: Audio.source
+        onPicked: n => Audio.setSource(n)
+      }
     }
   }
 
