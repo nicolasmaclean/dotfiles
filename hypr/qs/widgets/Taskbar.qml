@@ -30,6 +30,7 @@ PanelWindow {
       VolumeWidget {}
       MicWidget {}
       NightlightWidget {}
+      BrightnessWidget {}
     }
 
     Item {

@@ -21,7 +21,8 @@ ListView {
     sourceComponent: ({
         [Osd.Kind.Volume]: volumeCard,
         [Osd.Kind.Mic]: micCard,
-        [Osd.Kind.Nightlight]: nightlightCard
+        [Osd.Kind.Nightlight]: nightlightCard,
+        [Osd.Kind.Brightness]: brightnessCard
       })[modelData.kind]
 
     HoverHandler {
@@ -48,6 +49,15 @@ ListView {
     SliderCard {
       title: "Mic"
       value: 0.5
+    }
+  }
+
+  Component {
+    id: brightnessCard
+    SliderCard {
+      title: "Brightnesss"
+      value: Brightness.value
+      onMoved: value => Brightness.setValue(value)
     }
   }
 

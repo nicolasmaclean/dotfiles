@@ -72,8 +72,11 @@ Singleton {
   readonly property Entry nightlight: Entry {
     kind: Osd.Kind.Nightlight
   }
+  readonly property Entry brightness: Entry {
+    kind: Osd.Kind.Brightness
+  }
 
-  readonly property list<Entry> entries: [volume, mic, nightlight]
+  readonly property list<Entry> entries: [volume, mic, nightlight, brightness]
 
   Connections {
     id: audioConnections
