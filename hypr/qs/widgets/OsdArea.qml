@@ -48,7 +48,8 @@ ListView {
     id: micCard
     SliderCard {
       title: "Mic"
-      value: 0.5
+      value: Audio.sourceVolume
+      onMoved: value => Audio.setSourceVolume(value)
     }
   }
 

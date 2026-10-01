@@ -19,6 +19,11 @@ Item {
     onTapped: Osd.volume.toggle()
   }
 
+  TapHandler {
+    acceptedButtons: Qt.RightButton
+    onTapped: Audio.toggleMuted()
+  }
+
   HoverHandler {
     cursorShape: Qt.PointingHandCursor
   }

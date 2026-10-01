@@ -12,7 +12,8 @@ Singleton {
 
   readonly property real volume: sink?.audio?.volume ?? 0
   readonly property bool muted: sink?.audio?.muted ?? true
-  readonly property bool source_on: !source?.audio?.muted ?? false
+  readonly property real sourceVolume: source?.audio?.volume ?? 0
+  readonly property bool sourceOn: !(source?.audio?.muted) ?? false
 
   readonly property string volumeGlyph: {
     if (muted) {
@@ -28,12 +29,27 @@ Singleton {
   }
 
   readonly property string micGlyph: {
-    return source_on ? "󰍬" : "󰍭"
+    return sourceOn ? "󰍬" : "󰍭"
   }
 
   function setVolume(v) {
     if (sink?.audio)
       sink.audio.volume = v
+  }
+
+  function toggleMuted() {
+    if (sink?.audio)
+      sink.audio.muted = !sink.audio.muted
+  }
+
+  function setSourceVolume(v) {
+    if (source?.audio)
+      source.audio.volume = v
+  }
+
+  function toggleSourceMuted() {
+    if (source?.audio)
+      source.audio.muted = !source.audio.muted
   }
 
   // make sure pipewire properties live (propagate changes automatically)

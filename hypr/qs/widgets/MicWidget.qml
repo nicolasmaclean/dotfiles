@@ -19,7 +19,12 @@ Item {
     onTapped: Osd.mic.toggle()
   }
 
-  // HoverHandler {
-  //   cursorShape: Qt.PointingHandCursor
-  // }
+  TapHandler {
+    acceptedButtons: Qt.RightButton
+    onTapped: Audio.toggleSourceMuted()
+  }
+
+  HoverHandler {
+    cursorShape: Qt.PointingHandCursor
+  }
 }
