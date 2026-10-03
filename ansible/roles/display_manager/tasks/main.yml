@@ -72,6 +72,13 @@
 # greeter, and again between cage exiting and Hyprland taking the display.
 # These are the settings getty uses to wipe a VT's screen and scrollback before
 # and after its service runs.
+- name: Create greetd's drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/greetd.service.d
+    state: directory
+    mode: "0755"
+
 - name: Clear greetd's VT before and after it runs
   become: true
   ansible.builtin.copy:
