@@ -40,6 +40,7 @@ apps_repo_packages:
   #   busctl --user list | grep -i mpris
   #   busctl --user get-property <service> <path> org.kde.StatusNotifierItem Id
   - spotify-launcher
+  - obsidian
 
 # Consumed by the `aur` role, which site.yml runs immediately after this one —
 # the list lives here so the answer to "which apps does this box get" stays in
