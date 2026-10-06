@@ -62,24 +62,29 @@ Scope {
   PanelWindow {
     id: notifications
 
+    WlrLayershell.namespace: "qs-notifications"
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
     exclusionMode: ExclusionMode.Ignore
+    mask: Region {
+      width: notificationArea.width
+      height: notificationArea.contentHeight
+    }
 
     color: "transparent"
-    implicitWidth: notificationsStack.implicitWidth
-    implicitHeight: notificationsStack.implicitHeight
     anchors {
       top: true
       right: true
+      bottom: true
     }
     margins {
       top: root.inset + 10
       right: 16
     }
 
-    ColumnLayout {
-      id: notificationsStack
-      NotificationArea {}
+    implicitWidth: notificationArea.implicitWidth
+    NotificationArea {
+      id: notificationArea
+      anchors.fill: parent
     }
   }
 
