@@ -1,5 +1,5 @@
 ---
-# Nine packages exist only in the AUR, and no AUR helper can be driven
+# Ten packages exist only in the AUR, and no AUR helper can be driven
 # non-interactively without root: paru builds as an unprivileged user and then
 # calls `sudo pacman -U` itself, and ansible's --ask-become-pass password lives
 # inside ansible's own become plugin — paru's inner sudo gets a pipe with no

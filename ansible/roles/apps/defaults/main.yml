@@ -56,6 +56,7 @@ apps_aur_packages:
   - gitkraken
   - onlyoffice-bin
   - unityhub               # the AUR flags this out-of-date as of 2026-09-10
+  - dankcalendar-bin       # calendar app for the dank desktop; pulls in quickshell
   # rofi/config.rasi:12 sets icon-theme: "Yaru-dark", and Yaru is Ubuntu's — so
   # on a fresh Arch box rofi's icons resolve to nothing. Chosen over
   # extra/papirus-icon-theme specifically to keep rofi pixel-identical to the
