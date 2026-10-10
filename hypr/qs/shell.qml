@@ -39,10 +39,8 @@ Scope {
       left: true
       bottom: true
     }
-    margins {
-      top: root.inset + 10
-      left: 16
-    }
+    margins.top: root.inset
+    margins.left: 16
 
     property real maxWidth: Math.max(Theme.notificationWidth * 2, osdArea.implicitWidth)
     implicitWidth: maxWidth

@@ -14,11 +14,13 @@ Row {
   readonly property Region inputMask: Region {
     Region {
       x: system.x
+      y: system.topMargin
       width: system.width
       height: system.contentHeight
     }
     Region {
       x: sliders.x
+      y: sliders.topMargin
       width: sliders.width
       height: sliders.contentHeight
     }
@@ -45,6 +47,25 @@ Row {
     Component {
       id: powerCard
       PowerCard {}
+    }
+
+    // animations
+    add: Transition {
+      id: slideIn
+      NumberAnimation {
+        property: "y"
+        from: -(slideIn.ViewTransition.item.height + system.topMargin)
+        easing.type: Easing.OutCubic
+      }
+    }
+
+    remove: Transition {
+      id: slideOut
+      NumberAnimation {
+        property: "y"
+        to: -(slideIn.ViewTransition.item.height + system.topMargin)
+        easing.type: Easing.OutCubic
+      }
     }
   }
 
@@ -135,6 +156,7 @@ Row {
       top: parent.top
       bottom: parent.bottom
     }
+    topMargin: 10
 
     // animations
     add: Transition {
