@@ -15,6 +15,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
+import qs
 import qs.services
 import qs.widgets
 
@@ -30,10 +31,7 @@ Scope {
     WlrLayershell.namespace: "qs-osd"
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
     exclusionMode: ExclusionMode.Ignore
-    mask: Region {
-      width: osdArea.width
-      height: osdArea.contentHeight
-    }
+    mask: osdArea.inputMask
 
     color: "transparent"
     anchors {
@@ -46,11 +44,13 @@ Scope {
       left: 16
     }
 
-    implicitWidth: osdArea.implicitWidth
+    property real maxWidth: Math.max(Theme.notificationWidth * 2, osdArea.implicitWidth)
+    implicitWidth: maxWidth
     OsdArea {
       id: osdArea
       anchors.fill: parent
 
+      onImplicitWidthChanged: osd.maxWidth = Math.max(osd.maxWidth, implicitWidth)
       // HyprlandFocusGrab {
       //   active: Osd.pinned
       //   windows: [osd]

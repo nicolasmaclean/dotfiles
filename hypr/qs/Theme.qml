@@ -16,6 +16,7 @@ Singleton {
   readonly property real taskbarThickness: 40
   readonly property real frameThickness: 8
   readonly property real borderRadiusBig: 25
+  readonly property real borderRadius: 8
   readonly property real widgetIconSize: 18
   readonly property real notificationWidth: 350
 }
