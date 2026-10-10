@@ -1,19 +1,18 @@
 ---
-# Laptop. Still Ubuntu 24.04 and therefore unmanaged — see inventory/hosts.yml.
-# This file costs nothing and is the target for the eventual conversion.
+# Laptop. CachyOS, minimal profile, same as cnick.
 #
-# No hardware values belong in this file. Battery, backlight, thermal sensor,
-# wallpaper and the number of screens are detected at runtime by
-# qtile/hardware.py, which is what lets one config serve both machines and
-# survive a hotplug. Only *software* branching lives here.
+# No hardware values belong in this file. Battery, backlight and monitors are
+# detected at runtime by the session (hypr/qs and hypr/hyprland.lua), which is
+# what lets one config serve both machines. Only *software* branching lives
+# here.
 
 form_factor: laptop
 
-# Which GPU drives X, not which GPUs are present. This box is hybrid — Intel
-# UHD 630 plus a GTX 1650 Mobile on PRIME on-demand, so X runs on i915 and the
-# nvidia branch of the `gpu` role must not fire here. (The 1650 is Turing, so
-# whenever this box is converted it lands in nvidia-open's supported range too,
-# for whatever that is worth given it takes the intel branch.)
+# Which GPU drives the display, not which GPUs are present. This box is hybrid
+# — Intel UHD 630 plus a GTX 1650 Mobile on PRIME on-demand, so the session
+# renders on i915 and the nvidia branch of the `gpu` role must not fire here.
+# (The 1650 is Turing, so it is in nvidia-open's supported range too, for
+# whatever that is worth given it takes the intel branch.)
 gpu: intel
 
 install_steam: false

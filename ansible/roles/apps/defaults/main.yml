@@ -25,20 +25,7 @@ apps_repo_packages:
   # gnome-keyring (a hard dependency), which roles/display_manager unlocks at login.
   - mailspring
   # spotify-launcher, not the AUR `spotify` PKGBUILD with its GPG-key dance: it
-  # is the official thin launcher that fetches and runs the real client. Also a
-  # bar dependency, not just an app — the now-playing widget takes Spotify's
-  # MPRIS interface as its primary source, so see roles/spotify_now_playing.
-  #
-  # Two exact strings in the qtile config depend on what the launcher's client
-  # calls itself, and both are UNVERIFIED against it:
-  #   config.py:297 objname="org.mpris.MediaPlayer2.spotify" — an exact bus name
-  #   config.py:246 hidden_ids=("spotify",)                  — a tray-id substring
-  # The second is the lower risk: widgets.py:701 says outright that the
-  # substring exists to survive the app renaming itself from `spotify` to
-  # `spotify-client`, so a third spelling is probably absorbed too. Settle both
-  # with the commands config.py:244 already documents for this —
-  #   busctl --user list | grep -i mpris
-  #   busctl --user get-property <service> <path> org.kde.StatusNotifierItem Id
+  # is the official thin launcher that fetches and runs the real client.
   - spotify-launcher
   - obsidian
 
@@ -57,12 +44,6 @@ apps_aur_packages:
   - onlyoffice-bin
   - unityhub               # the AUR flags this out-of-date as of 2026-09-10
   - dankcalendar-bin       # calendar app for the dank desktop; pulls in quickshell
-  # rofi/config.rasi:12 sets icon-theme: "Yaru-dark", and Yaru is Ubuntu's — so
-  # on a fresh Arch box rofi's icons resolve to nothing. Chosen over
-  # extra/papirus-icon-theme specifically to keep rofi pixel-identical to the
-  # laptop, which means the repo's .rasi file needs no change at all. It is an
-  # AUR build, which is why it is in this list rather than roles/desktop_apps.
-  - yaru-icon-theme
 
 # JetBrains Toolbox is deliberately out of scope for this pass — it
 # self-manages its IDEs and its licences are manual either way, so nothing here

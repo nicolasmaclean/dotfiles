@@ -17,3 +17,35 @@ qtile_removal_files:
   - "{{ qtile_removal_units_dir }}/nm-applet.service"
   # Where the launcher lived before it moved to /usr/local/bin.
   - "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-session"
+
+# Links into the checkout that the X11 session used: qtile and rofi from
+# roles/dotfiles, the rest from the README's old manual steps. Removed only
+# while they are still symlinks — see tasks/main.yml.
+qtile_removal_links:
+  - "{{ ansible_facts['env']['HOME'] }}/.config/qtile"
+  - "{{ ansible_facts['env']['HOME'] }}/.config/rofi"
+  - "{{ ansible_facts['env']['HOME'] }}/.config/picom"
+  - "{{ ansible_facts['env']['HOME'] }}/.local/bin/rofi-power-menu"
+  - "{{ ansible_facts['env']['HOME'] }}/.local/bin/qtile-nested"
+
+# The Xorg drop-ins roles/gpu and roles/xorg wrote, and the timestamped copies
+# their `backup: true` left beside them, which is why these are globs. The
+# directory itself stays: 00-keyboard.conf in it is localectl's, not ours.
+qtile_removal_xorg_dir: /etc/X11/xorg.conf.d
+qtile_removal_xorg_patterns:
+  - "20-nvidia.conf*"
+  - "90-touchpad.conf*"
+
+# polkit-gnome served polkit-agent.service; hyprpolkitagent (roles/hyprland) is
+# the agent now. Yaru was only ever rofi's icon theme.
+#
+# xorg-xrandr is deliberately not here, although roles/xorg installed it:
+# steam, lutris and umu-launcher depend on it, and pacman refuses to remove a
+# package something else still requires — the whole task would fail. XWayland
+# is xorg-xwayland, a dependency of hyprland, and is untouched.
+qtile_removal_packages:
+  - polkit-gnome
+  - rofi
+  - yaru-icon-theme
+  - xorg-server
+  - xorg-server-xephyr

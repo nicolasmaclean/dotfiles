@@ -1,9 +1,9 @@
 ---
-# Symlinks, not copies: editing the repo is editing the live config, which is
-# the whole point of the live-edit loop qtile's mod+ctrl+r reload depends on.
+# Symlinks, not copies: editing the repo is editing the live config.
+#
+# Dropping an entry here does not remove its link from a host that already has
+# it; roles/qtile_removal does that for the ones the X11 session left behind.
 dotfiles_links:
-  - src: qtile
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/qtile"
   - src: nvim
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
   # flameshot and gsimplecal both have to sit at their XDG default path: each
@@ -13,8 +13,6 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/flameshot"
   - src: gsimplecal
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/gsimplecal"
-  - src: rofi
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/rofi"
   - src: quickshell
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/quickshell"
   - src: cliphist

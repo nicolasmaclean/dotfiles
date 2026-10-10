@@ -2,28 +2,24 @@
 desktop_apps_packages:
   - dolphin
   - playerctl
-  - brightnessctl           # brightness.py drives the panel through this
+  # The bar's brightness slider, the brightness keys and hypridle all drive the
+  # panel through this.
+  - brightnessctl
   - flameshot
-  - rofi
   - gsimplecal              # the calendar the bar clock opens
   - networkmanager          # not enabled by the package on Arch — see tasks/
-  - libnotify               # notify-send, which notify.py shells out to
+  - libnotify               # notify-send, for testing the bar's notifications
   - ibus
   - ibus-libpinyin
   # Arch splits what Ubuntu's `pipewire` pulled in, so the compatibility
   # shims have to be named: without pipewire-pulse nothing implements the
-  # PulseAudio API, and wpctl (volume.py) has nothing to talk to.
+  # PulseAudio API, and wpctl (the volume keys) has nothing to talk to.
   - pipewire
   - pipewire-pulse
   - pipewire-alsa
-  - wireplumber             # volume.py drives wpctl
+  - wireplumber             # the volume keys in hyprland.lua drive wpctl
 
-# Deliberately NOT lm-sensors: qtile reads temperatures through psutil, which
-# walks /sys/class/hwmon directly. It is absent on the laptop and the thermal
-# widget works — and psutil's route is distro-independent, so this stays true.
-
-# preload-engines is the list ibus honours outside a GNOME session, and it is
-# what widgets.py's KeyboardLayout cycles through. GNOME's own
+# preload-engines is the list ibus honours outside a GNOME session. GNOME's own
 # org.gnome.desktop.input-sources is not read here, so an engine missing from
 # this key cannot be selected at all.
 #
@@ -38,9 +34,9 @@ desktop_apps_gsettings:
   # ibus-ui-gtk3 keeps running, because it also draws the pinyin candidates.
   - key: org.freedesktop.ibus.panel show-icon-on-systray
     value: "false"
-  # org.gnome.desktop.interface, not a qtile/ibus namespace, but its schema
+  # org.gnome.desktop.interface, not an ibus namespace, but its schema
   # ships in gsettings-desktop-schemas, which arrives here as a transitive
-  # dependency of gtk3 (roles/xorg) via at-spi2-core — no extra package
+  # dependency of gtk3 (roles/hyprland) via at-spi2-core — no extra package
   # needed. GTK3.24+/GTK4 read this key directly without a running portal, so
   # Adwaita and any theme that ships a dark variant switch on its own; Firefox
   # and other GTK apps follow suit.

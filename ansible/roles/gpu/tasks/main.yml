@@ -1,12 +1,10 @@
 ---
-# `gpu` is which card drives X, not which cards are present — unick has a GTX
-# 1650 sitting next to the UHD 630 and still takes the intel branch, because
-# PRIME is set to on-demand and X runs on i915.
+# `gpu` is which card drives the display, not which cards are present — unick
+# has a GTX 1650 sitting next to the UHD 630 and still takes the intel branch,
+# because PRIME is set to on-demand and the session renders on i915.
 #
 # Unlike Ubuntu, a minimal Arch install does not include mesa, so the intel
-# branch is no longer a debug message. modesetting rather than
-# xf86-video-intel: the DDX driver is unmaintained and worse on modern parts.
-# Laptop-only today, and therefore untested.
+# branch is no longer a debug message.
 - name: Install the Intel graphics stack
   become: true
   community.general.pacman:
@@ -43,8 +41,8 @@
         state: present
 
     # nouveau and the NVIDIA module cannot both own the card; when nouveau wins
-    # the race the X server comes up on the wrong driver and every setting
-    # below is silently inert. Probably redundant on Arch — see
+    # the race the session comes up on the wrong driver and the NVIDIA one sits
+    # unused. Probably redundant on Arch — see
     # gpu_blacklist_nouveau in defaults/main.yml for the one command that
     # settles it.
     - name: Blacklist nouveau
@@ -58,26 +56,3 @@
         mode: "0644"
         backup: true
       notify: Rebuild the initramfs
-
-    - name: Create the Xorg drop-in directory
-      ansible.builtin.file:
-        path: /etc/X11/xorg.conf.d
-        state: directory
-        mode: "0755"
-
-    # picom composites, but on NVIDIA that is not enough on its own: without a
-    # forced composition pipeline a fullscreen video tears regardless of
-    # picom's vsync setting.
-    - name: Force a full composition pipeline
-      ansible.builtin.copy:
-        dest: /etc/X11/xorg.conf.d/20-nvidia.conf
-        content: |
-          # Managed by Ansible (roles/gpu).
-          Section "Device"
-              Identifier "nvidia"
-              Driver     "nvidia"
-              Option     "ForceFullCompositionPipeline" "{{ gpu_force_composition_pipeline | ternary('On', 'Off') }}"
-              Option     "TripleBuffer" "on"
-          EndSection
-        mode: "0644"
-        backup: true

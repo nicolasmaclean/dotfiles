@@ -1,10 +1,12 @@
 ---
-# One-off teardown of what roles/qtile installed, so every host converges on a
-# Hyprland-only setup on its next run. Every task is `ok` once a box is clean;
-# delete this role once cnick and unick have both run it.
+# One-off teardown of the qtile/X11 session: what roles/qtile, roles/xorg, the
+# X11 half of roles/gpu and the old rofi/qtile links left on a host, so every
+# host converges on a Hyprland-only setup on its next run. Every task is `ok`
+# once a box is clean; delete this role once cnick and unick have both run it.
 #
-# The qtile/ directory in the repo, and its ~/.config/qtile link from
-# roles/dotfiles, are left alone on purpose.
+# Dropping a role or a list entry never undoes what it did, which is why this
+# role exists. The other half of that is ordering: nothing it removes may still
+# be installed or linked by a later role, or every run would undo the last.
 
 # failed_when: false because a unit that was never installed (a fresh box, or
 # nm-applet on cnick) makes systemd answer "Could not find the requested
@@ -34,12 +36,50 @@
     path: /usr/local/bin/qtile-session
     state: absent
 
-# polkit-agent.service was its only user; hyprpolkitagent (roles/hyprland) is
-# the agent now.
-- name: Uninstall polkit-gnome
+# Same guard as roles/dotfiles, from the other side: a symlink is ours, a real
+# directory is not. `state: absent` on a real ~/.config/qtile would delete it
+# recursively, so only links are removed. Removing a link never follows it, so
+# the repo directory it points at is untouched.
+- name: Inspect the X11 session's config links
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    follow: false
+  loop: "{{ qtile_removal_links }}"
+  register: qtile_removal_link_state
+
+- name: Remove the X11 session's config links
+  ansible.builtin.file:
+    path: "{{ item.item }}"
+    state: absent
+  loop: "{{ qtile_removal_link_state.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.stat.islnk | default(false)
+
+# find rather than a fixed list: the backups' names carry a pid and timestamp.
+# A missing directory is a warning from find, not a failure.
+- name: Find the Xorg drop-ins
+  ansible.builtin.find:
+    paths: "{{ qtile_removal_xorg_dir }}"
+    patterns: "{{ qtile_removal_xorg_patterns }}"
+  register: qtile_removal_xorg_files
+
+- name: Remove the Xorg drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ qtile_removal_xorg_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+# Plain `state: absent`, so only the named packages go. Whatever they pulled
+# in as dependencies stays behind as orphans; `pacman -Qdt` lists them, and
+# reviewing that by hand is safer than a recursive removal here.
+- name: Uninstall the X11 session packages
   become: true
   community.general.pacman:
-    name: polkit-gnome
+    name: "{{ qtile_removal_packages }}"
     state: absent
 
 # Takes ~/.local/bin/qtile and the rest of the venv's entry points with it.

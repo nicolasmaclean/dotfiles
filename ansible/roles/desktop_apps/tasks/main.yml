@@ -5,7 +5,7 @@
     name: "{{ desktop_apps_packages }}"
     state: present
 
-# The bars draw their own network indicator, and nm-applet's XDG autostart
+# The bar draws its own network indicator, and nm-applet's XDG autostart
 # entry would otherwise put a second one in the tray. nm-connection-editor
 # goes with it: it came in as the applet's dependency, and nmtui covers it.
 - name: Remove the NetworkManager applet
@@ -18,8 +18,8 @@
 
 # New on Arch, and not optional. Ubuntu's network-manager package enables the
 # unit at install time; Arch's does not, so without this there is no wifi at
-# all and network.py — which polls nmcli — draws a permanently disconnected
-# indicator.
+# all and the bar's wifi widget (hypr/qs/services/Net.qml, which talks to
+# NetworkManager) draws a permanently disconnected indicator.
 #
 # The check-mode guard is the same one every service enable downstream of an
 # install carries: in a dry run the install above has only *reported* that it

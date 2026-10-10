@@ -71,18 +71,18 @@
   # `aur` sits after `apps`, not before it: role defaults are resolved as the
   # play is built rather than as each role runs, so nothing needs that ordering
   # to see apps_aur_packages — and nothing earlier in the play needs an AUR
-  # package at install time. yaru-icon-theme is the only AUR package another
-  # role's config names, and rofi reads its icon theme at runtime. (The one
-  # case that would flip this is a pre-Turing NVIDIA card needing an AUR DKMS
-  # driver; see roles/gpu. cnick's 3060 Ti is Ampere, so it does not arise.)
+  # package at install time. (The one case that would flip this is a
+  # pre-Turing NVIDIA card needing an AUR DKMS driver; see roles/gpu. cnick's
+  # 3060 Ti is Ampere, so it does not arise.)
   roles:
     - {role: base, tags: [base]}
     - {role: fonts, tags: [fonts]}
     - {role: toolchains, tags: [toolchains]}
-    - {role: xorg, tags: [xorg]}
     - {role: gpu, tags: [gpu]}
     - {role: display_manager, tags: [display-manager, dm]}
-    # One-off teardown of the old qtile session; see the role for when to drop it.
+    # One-off teardown of the old qtile/X11 session; see the role for when to
+    # drop it. It runs before desktop_apps and dotfiles, which no longer
+    # install or link anything it removes.
     - {role: qtile_removal, tags: [qtile-removal]}
     - {role: hyprland, tags: [hyprland], when: install_hyprland | bool}
     - {role: autostart_apps, tags: [autostart-apps], when: install_hyprland | bool}
@@ -98,5 +98,4 @@
       tags: [aur]
       vars:
         aur_packages: "{{ apps_aur_packages }}"
-    - {role: spotify_now_playing, tags: [spotify]}
     - {role: identity, tags: [identity]}

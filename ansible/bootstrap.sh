@@ -59,11 +59,3 @@ if ! ansible-inventory --host "$HOST" >/dev/null 2>&1; then
 fi
 
 ansible-playbook site.yml --limit "$HOST" --ask-become-pass "$@"
-
-cat <<NEXT
-
-==> done. One manual step remains, once per host:
-      Spotify: register the app, write
-      ~/.config/qtile-spotify/credentials.json (0600), and run
-        python3 ~/.config/qtile/spotify_auth.py
-NEXT
