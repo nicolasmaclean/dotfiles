@@ -51,11 +51,11 @@ Scope {
       anchors.fill: parent
 
       onImplicitWidthChanged: osd.maxWidth = Math.max(osd.maxWidth, implicitWidth)
-      // HyprlandFocusGrab {
-      //   active: Osd.pinned
-      //   windows: [osd]
-      //   onCleared: Osd.shown = Osd.pinned = false
-      // }
+      HyprlandFocusGrab {
+        active: Osd.hasPinned
+        windows: [osd]
+        onCleared: Osd.dismissPinned()
+      }
     }
   }
 

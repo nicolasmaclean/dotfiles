@@ -83,6 +83,13 @@ Singleton {
   readonly property list<Entry> entries: [volume, mic, nightlight, brightness]
   readonly property list<Entry> quickEntries: [power]
 
+  readonly property list<Entry> allEntries: [...entries, ...quickEntries]
+  readonly property bool hasPinned: allEntries.some(e => e.shown && e.pinned)
+
+  function dismissPinned(): void {
+    allEntries.filter(e => e.pinned).forEach(e => e.dismiss())
+  }
+
   Connections {
     id: audioConnections
     target: Audio
