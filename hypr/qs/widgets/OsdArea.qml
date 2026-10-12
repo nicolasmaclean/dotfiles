@@ -48,25 +48,6 @@ Row {
       id: powerCard
       PowerCard {}
     }
-
-    // animations
-    add: Transition {
-      id: slideIn
-      NumberAnimation {
-        property: "y"
-        from: -(slideIn.ViewTransition.item.height + system.topMargin)
-        easing.type: Easing.OutCubic
-      }
-    }
-
-    remove: Transition {
-      id: slideOut
-      NumberAnimation {
-        property: "y"
-        to: -(slideIn.ViewTransition.item.height + system.topMargin)
-        easing.type: Easing.OutCubic
-      }
-    }
   }
 
   OsdList {
@@ -160,18 +141,20 @@ Row {
 
     // animations
     add: Transition {
+      id: slideIn
       NumberAnimation {
-        property: "opacity"
-        from: 0
-        to: 1
+        property: "y"
+        from: -(slideIn.ViewTransition.item.height + system.topMargin)
+        easing.type: Easing.OutCubic
       }
     }
 
     remove: Transition {
+      id: slideOut
       NumberAnimation {
-        property: "opacity"
-        to: 0
-        duration: 200
+        property: "y"
+        to: -(slideOut.ViewTransition.item.height + system.topMargin)
+        easing.type: Easing.OutCubic
       }
     }
 
@@ -179,14 +162,6 @@ Row {
       NumberAnimation {
         property: "y"
       }
-    }
-  }
-
-  move: Transition {
-    NumberAnimation {
-      property: "x"
-      duration: 200
-      easing.type: Easing.OutCubic
     }
   }
 }

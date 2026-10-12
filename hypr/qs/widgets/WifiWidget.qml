@@ -16,6 +16,7 @@ Item {
     text: Net.connectionGlyph
     font.pixelSize: Theme.widgetIconSize
     color: Theme.text
+    font.family: Theme.iconFont
   }
 
   TapHandler {

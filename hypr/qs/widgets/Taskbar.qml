@@ -23,14 +23,26 @@ PanelWindow {
 
     // left widget group
     RowLayout {
-      PowerWidget {}
-      BatteryWidget {}
-      WifiWidget {}
-      BluetoothWidget {}
-      VolumeWidget {}
-      MicWidget {}
-      NightlightWidget {}
-      BrightnessWidget {}
+      Pill {
+        color: "#CCCCCC"
+        PowerWidget {}
+        BatteryWidget {}
+      }
+      Pill {
+        color: "#CCCCCC"
+
+        WifiWidget {}
+        BluetoothWidget {}
+      }
+
+      Pill {
+        color: "#CCCCCC"
+
+        VolumeWidget {}
+        MicWidget {}
+      }
+
+      OsdToggle {}
     }
 
     Item {
@@ -54,6 +66,19 @@ PanelWindow {
 
     WorkspacesWidget {
       screen: window.screen
+    }
+  }
+
+  component Pill: Rectangle {
+    default property alias content: pillRow.data
+
+    implicitWidth: pillRow.implicitWidth + Theme.pillPadding * 2
+    implicitHeight: pillRow.implicitHeight
+    radius: height / 2
+
+    RowLayout {
+      id: pillRow
+      anchors.centerIn: parent
     }
   }
 }

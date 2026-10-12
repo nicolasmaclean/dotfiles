@@ -84,7 +84,25 @@ Singleton {
   readonly property list<Entry> quickEntries: [power]
 
   readonly property list<Entry> allEntries: [...entries, ...quickEntries]
+  readonly property bool hasShown: allEntries.some(e => e.shown)
+  readonly property bool allShown: allEntries.every(e => e.shown)
   readonly property bool hasPinned: allEntries.some(e => e.shown && e.pinned)
+
+  function showAll(): void {
+    allEntries.forEach(e => e.show(true))
+  }
+
+  function dismissAll(): void {
+    allEntries.forEach(e => e.dismiss())
+  }
+
+  function toggleAll(): void {
+    if (hasShown) {
+      dismissAll()
+    } else {
+      showAll()
+    }
+  }
 
   function dismissPinned(): void {
     allEntries.filter(e => e.pinned).forEach(e => e.dismiss())

@@ -16,6 +16,7 @@ Item {
     font.pixelSize: Theme.widgetIconSize
     text: "⏻"
     color: Theme.text
+    font.family: Theme.iconFont
   }
 
   TapHandler {

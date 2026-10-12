@@ -5,23 +5,23 @@ import qs
 import qs.services
 
 Item {
+  id: root
   implicitWidth: icon.implicitWidth
   implicitHeight: icon.implicitHeight
 
+  readonly property string stateGlyph: Osd.hasShown ? (Osd.allShown ? "●" : "◐") : "○"
+
   Text {
     id: icon
-    text: "\u{f0594}"
+    text: root.stateGlyph
     font.pixelSize: Theme.widgetIconSize
+    font.family: Theme.iconFont
+    color: Theme.textDim
   }
 
   TapHandler {
     acceptedButtons: Qt.LeftButton
-    onTapped: Osd.nightlight.toggle()
-  }
-
-  TapHandler {
-    acceptedButtons: Qt.RightButton
-    onTapped: Nightlight.resetTemperature()
+    onTapped: Osd.toggleAll()
   }
 
   HoverHandler {

@@ -13,7 +13,8 @@ Item {
     id: icon
     text: Bluetooth.connectivityGlyph
     color: Bluetooth.anyConnectedDevices ? Theme.text : Theme.textDim
-    font.pixelSize: Theme.widgetIconSize
+    font.pixelSize: Theme.widgetIconSize - 4
+    font.family: Theme.iconFont
   }
 
   TapHandler {

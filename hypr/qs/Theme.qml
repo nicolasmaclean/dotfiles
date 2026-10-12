@@ -12,11 +12,17 @@ Singleton {
   readonly property color textDim: Colors.oonSurfaceVariant
   readonly property color accent: Colors.primary
   readonly property color urgent: Colors.error
+  readonly property color pillColor: Colors.surfaceContainerHigh
 
   readonly property real taskbarThickness: 40
   readonly property real frameThickness: 8
   readonly property real borderRadiusBig: 25
   readonly property real borderRadius: 8
-  readonly property real widgetIconSize: 18
   readonly property real notificationWidth: 350
+
+  readonly property string iconFont: "MesloLGS Nerd Font Mono"
+  readonly property real widgetIconSize: 20
+
+  readonly property real pillPadding: 10
+  readonly property real pillSpacing: 5
 }
