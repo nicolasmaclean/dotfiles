@@ -8,7 +8,7 @@ Singleton {
 
   readonly property var actions: [
     {
-      "label": "Shutdown",
+      "label": "Power",
       "icon": "󰐥",
       "run": () => {
         return Quickshell.execDetached(["systemctl", "poweroff"])

@@ -16,6 +16,12 @@ Singleton {
     Disconnecting
   }
 
+  enum SwitchState {
+    HardwareOff,
+    Off,
+    On
+  }
+
   readonly property var wifiDevices: Networking.devices.values.filter(d => d.type === DeviceType.Wifi)
   readonly property var wifiDevice: wifiDevices.find(d => d.state === ConnectionState.Connected) ?? null
   readonly property var connectionGlyph: {
@@ -88,7 +94,26 @@ Singleton {
     return Net.Status.Disconnected
   }
 
-  readonly property real signalStrength: {
-    return wifiDevice?.networks.values.find(n => n.connected)?.signalStrength ?? 0
+  readonly property int switchState: {
+    if (!Networking.wifiHardwareEnabled || Net.wifiDevices.length === 0)
+      return Net.SwitchState.HardwareOff
+
+    if (!Networking.wifiEnabled) {
+      return Net.SwitchState.Off
+    }
+    return Net.SwitchState.On
+  }
+
+  readonly property var connectedNetwork: {
+    return wifiDevice?.networks.values.find(n => n.connected)
+  }
+  readonly property real signalStrength: connectedNetwork?.signalStrength ?? 0
+  readonly property string ssid: connectedNetwork?.name ?? ""
+
+  function toggleWifi(): void {
+    if (switchState === Net.SwitchState.HardwareOff) {
+      return
+    }
+    Networking.wifiEnabled = !Networking.wifiEnabled
   }
 }

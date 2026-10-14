@@ -21,6 +21,11 @@ Item {
 
   TapHandler {
     acceptedButtons: Qt.LeftButton
+    onTapped: Osd.wifi.toggle()
+  }
+
+  TapHandler {
+    acceptedButtons: Qt.RightButton
     onTapped: nmtui.running = !nmtui.running
   }
 

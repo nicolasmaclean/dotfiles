@@ -10,63 +10,75 @@ import qs.services
 Item {
   id: root
 
-  readonly property real padding: 13
-
   implicitWidth: card.implicitWidth
   implicitHeight: card.implicitHeight
 
-  Rectangle {
+  GridLayout {
     id: card
 
-    color: Theme.frame
-    radius: Theme.borderRadiusBig
-    width: parent.width
-    implicitWidth: cardLayout.implicitWidth + 20
-    implicitHeight: cardLayout.implicitHeight + 2 * root.padding
+    anchors {
+      left: parent.left
+      right: parent.right
+      top: parent.top
+    }
 
-    ColumnLayout {
-      id: cardLayout
+    columns: 2
+    rowSpacing: 5
+    columnSpacing: 5
 
-      spacing: 0
-      anchors {
-        top: card.top
-        left: card.left
-        right: card.right
-        topMargin: root.padding
-        leftMargin: 10
-        rightMargin: 10
-      }
+    Repeater {
+      model: Power.actions
+      delegate: Rectangle {
+        id: actionEntry
+        required property var modelData
 
-      Repeater {
-        model: Power.actions
-        delegate: Rectangle {
-          id: actionEntry
-          required property var modelData
+        Layout.fillWidth: true
+        radius: Theme.borderRadiusBig
+        color: {
+          let c = Theme.frame
+          if (hover.hovered) {
+            c = Qt.lighter(c, Theme.hoverLighten)
+          }
+          return c
+        }
 
-          Layout.fillWidth: true
-          implicitWidth: actionText.implicitWidth + 16
-          implicitHeight: 32
-          radius: implicitHeight / 2
-          color: hover.hovered ? Theme.hover : "transparent"
+        implicitWidth: content.implicitWidth
+        implicitHeight: Math.max(Theme.osdRowHeight, content.implicitHeight + 16)
+
+        ColumnLayout {
+          id: content
+          anchors.centerIn: parent
+          spacing: 0
 
           Text {
-            id: actionText
-            x: 8
-            anchors.verticalCenter: parent.verticalCenter
-            text: `${actionEntry.modelData.icon}  ${actionEntry.modelData.label}`
+            text: actionEntry.modelData.icon
+            Layout.alignment: Qt.AlignHCenter
+            font.pixelSize: 24
           }
 
-          TapHandler {
-            acceptedButtons: Qt.LeftButton
-            onTapped: () => {
-              Osd.power.dismiss()
-              actionEntry.modelData.run()
-            }
+          Text {
+            text: actionEntry.modelData.label
+            Layout.alignment: Qt.AlignHCenter
           }
+        }
 
-          HoverHandler {
-            id: hover
-            cursorShape: Qt.PointingHandCursor
+        TapHandler {
+          acceptedButtons: Qt.LeftButton
+          onTapped: () => {
+            Osd.power.dismiss()
+            actionEntry.modelData.run()
+          }
+        }
+
+        HoverHandler {
+          id: hover
+          cursorShape: Qt.PointingHandCursor
+        }
+
+        // simple fade animation when changing card color
+        Behavior on color {
+          ColorAnimation {
+            duration: 100
           }
         }
       }

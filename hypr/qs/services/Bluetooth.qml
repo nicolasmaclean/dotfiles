@@ -8,7 +8,8 @@ Singleton {
   id: root
 
   readonly property bool enabled: QsBt.Bluetooth.defaultAdapter?.enabled ?? false
-  readonly property var anyConnectedDevices: QsBt.Bluetooth.devices.values.some(d => d.connected)
+  readonly property var connectedDevices: QsBt.Bluetooth.devices.values.filter(d => d.connected)
+  readonly property bool anyConnectedDevices: connectedDevices.length > 0
 
   readonly property string connectivityGlyph: {
     if (!enabled)

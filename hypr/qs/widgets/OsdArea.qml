@@ -35,18 +35,25 @@ Row {
     delegate: Loader {
       required property var modelData
       width: ListView.view.width
+      height: Math.max(Theme.osdRowHeight, item?.implicitHeight ?? 0)
 
       sourceComponent: ({
-          [Osd.Kind.Power]: powerCard
+          [Osd.Kind.Power]: powerCard,
+          [Osd.Kind.Wifi]: wifiCard
         })[modelData.kind]
     }
 
-    // fit this column to width of the widest card
-    width: Array.prototype.reduce.call(contentItem.children, (w, c) => Math.max(w, c.implicitWidth), 0)
+    visible: contentItem.children.length > 0
+    width: Theme.osdSystemColumnWidth
 
     Component {
       id: powerCard
       PowerCard {}
+    }
+
+    Component {
+      id: wifiCard
+      WifiCard {}
     }
   }
 
@@ -60,6 +67,7 @@ Row {
       id: card
       required property var modelData
       width: ListView.view.width
+      height: Math.max(Theme.osdRowHeight, item?.implicitHeight ?? 0)
 
       sourceComponent: ({
           [Osd.Kind.Volume]: volumeCard,
@@ -131,13 +139,14 @@ Row {
   }
 
   component OsdList: ListView {
-    spacing: 5
     interactive: false
+
+    spacing: 5
+    topMargin: 10
     anchors {
       top: parent.top
       bottom: parent.bottom
     }
-    topMargin: 10
 
     // animations
     add: Transition {

@@ -1,0 +1,63 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls.Basic
+import QtQuick.Layouts
+import Quickshell
+
+import qs
+import qs.services
+
+Rectangle {
+  id: root
+
+  readonly property real padding: 13
+
+  implicitWidth: content.implicitWidth + padding * 2
+  implicitHeight: content.implicitHeight + 2 * padding
+
+  radius: Theme.borderRadiusBig
+  color: {
+    // default to wifi hardware switch set to off
+    let c = "#333333"
+
+    if (Net.switchState === Net.SwitchState.On) {
+      c = Theme.accent
+    } else if (Net.switchState === Net.SwitchState.Off) {
+      c = Theme.frame
+    }
+
+    if (hover.hovered) {
+      c = Qt.lighter(c, Theme.hoverLighten)
+    }
+
+    return c
+  }
+
+  Text {
+    id: content
+
+    x: root.padding
+    width: parent.width - root.padding * 2
+    anchors.verticalCenter: parent.verticalCenter
+
+    elide: Text.ElideRight
+    text: `${Net.connectionGlyph}  ‧ ${Net.ssid !== "" ? Net.ssid : "Disconnected"}`
+  }
+
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    onTapped: Net.toggleWifi()
+  }
+
+  HoverHandler {
+    id: hover
+    cursorShape: Qt.PointingHandCursor
+  }
+
+  // simple fade animation when changing card color
+  Behavior on color {
+    ColorAnimation {
+      duration: 100
+    }
+  }
+}

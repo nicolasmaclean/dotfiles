@@ -33,10 +33,16 @@ Item {
   Rectangle {
     id: card
 
-    color: Theme.frame
     radius: Theme.borderRadiusBig
     implicitWidth: Theme.notificationWidth
     implicitHeight: cardLayout.implicitHeight + 2 * root.padding
+    color: {
+      let c = Theme.frame
+      if (hover.hovered) {
+        c = Qt.lighter(c, Theme.hoverLighten)
+      }
+      return c
+    }
 
     ColumnLayout {
       id: cardLayout
@@ -77,6 +83,17 @@ Item {
           radius: 3
           color: slider.pressed ? Theme.hover : Theme.accent
         }
+      }
+    }
+
+    HoverHandler {
+      id: hover
+    }
+
+    // simple fade animation when changing card color
+    Behavior on color {
+      ColorAnimation {
+        duration: 100
       }
     }
   }

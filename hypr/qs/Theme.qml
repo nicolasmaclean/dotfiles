@@ -23,6 +23,11 @@ Singleton {
   readonly property string iconFont: "MesloLGS Nerd Font Mono"
   readonly property real widgetIconSize: 20
 
+  readonly property real osdRowHeight: 74
+  readonly property real osdSystemColumnWidth: 200
   readonly property real pillPadding: 10
   readonly property real pillSpacing: 5
+
+  readonly property real hoverLighten: 1.5
+  readonly property real hoverDarken: 2.0
 }
