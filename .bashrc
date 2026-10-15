@@ -1,3 +1,7 @@
+# default editor (git, sudoedit, crontab, etc.)
+export EDITOR=nvim
+export VISUAL=nvim
+
 alias vim="nvim"
 
 # prettier git log
