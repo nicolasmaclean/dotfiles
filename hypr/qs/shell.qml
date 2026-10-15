@@ -102,8 +102,9 @@ Scope {
 
       Taskbar {
         screen: screenScope.modelData
-        visible: root.taskbarVisible
+        showContent: root.taskbarVisible
         isMainScreen: screenScope.modelData === Theme.mainScreen
+        implicitHeight: root.inset
       }
     }
   }

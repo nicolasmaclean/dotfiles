@@ -25,6 +25,13 @@ PanelWindow {
   // frame doesn't consume any mouse input
   WlrLayershell.layer: WlrLayer.Bottom
 
+  Behavior on topInset {
+    NumberAnimation {
+      duration: 200
+      easing.type: Easing.OutCubic
+    }
+  }
+
   Shape {
     id: frame
 

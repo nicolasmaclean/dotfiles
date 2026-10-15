@@ -9,8 +9,8 @@ PanelWindow {
   id: window
 
   required property bool isMainScreen
+  required property bool showContent
 
-  implicitHeight: Theme.taskbarThickness
   color: Theme.frame
 
   anchors {
@@ -20,9 +20,14 @@ PanelWindow {
   }
 
   RowLayout {
-    anchors.fill: parent
+    visible: window.showContent
+
+    anchors.left: parent.left
+    anchors.right: parent.right
     anchors.leftMargin: 28
     anchors.rightMargin: 28
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: (Theme.taskbarThickness - implicitHeight) / 2
 
     // left widget group
     RowLayout {
@@ -103,7 +108,10 @@ PanelWindow {
   // center widget group
   // this is separate so if left/right are varying sizes, this group will stay center
   RowLayout {
-    anchors.centerIn: parent
+    visible: window.showContent
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: (Theme.taskbarThickness - implicitHeight) / 2
 
     WorkspacesWidget {
       screen: window.screen
