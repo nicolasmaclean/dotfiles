@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 
 import qs
+import qs.services
 
 PanelWindow {
   id: window
@@ -51,11 +52,44 @@ PanelWindow {
 
     // right widget group
     RowLayout {
-      Tray {}
-      Text {
-        text: " | "
+
+      Pill {
+        color: "#CCCCCC"
+        TrayWidget {}
       }
-      ClockWidget {}
+
+      Pill {
+        color: "#CCCCCC"
+
+        TrayIcon {
+          modelData: Tray.getItem(Tray.ids.mailspring)
+        }
+
+        TrayIcon {
+          modelData: Tray.getItem(Tray.ids.discord)
+        }
+
+        TrayIcon {
+          modelData: Tray.getItem(Tray.ids.signal)
+        }
+      }
+
+      Pill {
+        color: "#CCCCCC"
+
+        TrayIcon {
+          modelData: Tray.getItem(Tray.ids.one_password)
+        }
+        TrayIcon {
+          modelData: Tray.getItem(Tray.ids.proton_vpn)
+        }
+      }
+
+      Pill {
+        color: "#CCCCCC"
+
+        ClockWidget {}
+      }
     }
   }
 
@@ -66,19 +100,6 @@ PanelWindow {
 
     WorkspacesWidget {
       screen: window.screen
-    }
-  }
-
-  component Pill: Rectangle {
-    default property alias content: pillRow.data
-
-    implicitWidth: pillRow.implicitWidth + Theme.pillPadding * 2
-    implicitHeight: pillRow.implicitHeight
-    radius: height / 2
-
-    RowLayout {
-      id: pillRow
-      anchors.centerIn: parent
     }
   }
 }

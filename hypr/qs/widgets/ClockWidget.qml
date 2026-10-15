@@ -7,7 +7,10 @@ import qs.services
 
 Text {
   text: Time.time
+  font.pixelSize: 13
+  font.family: Theme.iconFont
   color: Theme.text
+  padding: 4
 
   TapHandler {
     acceptedButtons: Qt.LeftButton

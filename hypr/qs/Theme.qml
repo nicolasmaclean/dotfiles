@@ -22,6 +22,7 @@ Singleton {
 
   readonly property string iconFont: "MesloLGS Nerd Font Mono"
   readonly property real widgetIconSize: 20
+  readonly property real trayIconSize: 17
 
   readonly property real osdRowHeight: 74
   readonly property real osdSystemColumnWidth: 200
