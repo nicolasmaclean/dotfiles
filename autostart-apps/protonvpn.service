@@ -1,6 +1,6 @@
 [Unit]
 Description=Proton VPN tray app
-PartOf=graphical-session.target
+PartOf=graphical-session.target quickshell.service
 Wants=quickshell.service
 After=graphical-session.target quickshell.service
 Requisite=graphical-session.target
