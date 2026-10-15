@@ -29,7 +29,7 @@ Scope {
     id: osd
 
     WlrLayershell.namespace: "qs-osd"
-    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+    screen: Theme.mainScreen
     exclusionMode: ExclusionMode.Ignore
     mask: osdArea.inputMask
 
@@ -61,7 +61,7 @@ Scope {
     id: notifications
 
     WlrLayershell.namespace: "qs-notifications"
-    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+    screen: Theme.mainScreen
     exclusionMode: ExclusionMode.Ignore
     mask: Region {
       width: notificationArea.width
@@ -103,6 +103,7 @@ Scope {
       Taskbar {
         screen: screenScope.modelData
         visible: root.taskbarVisible
+        isMainScreen: screenScope.modelData === Theme.mainScreen
       }
     }
   }

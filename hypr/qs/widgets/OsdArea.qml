@@ -39,7 +39,8 @@ Row {
 
       sourceComponent: ({
           [Osd.Kind.Power]: powerCard,
-          [Osd.Kind.Wifi]: wifiCard
+          [Osd.Kind.Wifi]: wifiCard,
+          [Osd.Kind.Bluetooth]: bluetoothCard
         })[modelData.kind]
     }
 
@@ -54,6 +55,11 @@ Row {
     Component {
       id: wifiCard
       WifiCard {}
+    }
+
+    Component {
+      id: bluetoothCard
+      BluetoothCard {}
     }
   }
 

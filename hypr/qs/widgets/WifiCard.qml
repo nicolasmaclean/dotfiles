@@ -13,7 +13,7 @@ Rectangle {
   readonly property real padding: 13
 
   implicitWidth: content.implicitWidth + padding * 2
-  implicitHeight: content.implicitHeight + 2 * padding
+  implicitHeight: Math.max(Theme.osdRowHeight, content.implicitHeight + 2 * padding)
 
   radius: Theme.borderRadiusBig
   color: {

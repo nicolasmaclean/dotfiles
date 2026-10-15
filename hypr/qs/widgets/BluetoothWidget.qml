@@ -19,7 +19,7 @@ Item {
 
   TapHandler {
     acceptedButtons: Qt.LeftButton
-    onTapped: bluetui.running = !bluetui.running
+    onTapped: Osd.bluetooth.toggle()
   }
 
   HoverHandler {

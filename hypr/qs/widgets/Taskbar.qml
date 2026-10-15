@@ -8,6 +8,8 @@ import qs.services
 PanelWindow {
   id: window
 
+  required property bool isMainScreen
+
   implicitHeight: Theme.taskbarThickness
   color: Theme.frame
 
@@ -24,6 +26,8 @@ PanelWindow {
 
     // left widget group
     RowLayout {
+      visible: window.isMainScreen
+
       Pill {
         color: "#CCCCCC"
         PowerWidget {}
@@ -51,44 +55,47 @@ PanelWindow {
     }
 
     // right widget group
-    RowLayout {
+    Loader {
+      active: window.isMainScreen
+      sourceComponent: RowLayout {
 
-      Pill {
-        color: "#CCCCCC"
-        TrayWidget {}
-      }
-
-      Pill {
-        color: "#CCCCCC"
-
-        TrayIcon {
-          modelData: Tray.getItem(Tray.ids.mailspring)
+        Pill {
+          color: "#CCCCCC"
+          TrayWidget {}
         }
 
-        TrayIcon {
-          modelData: Tray.getItem(Tray.ids.discord)
+        Pill {
+          color: "#CCCCCC"
+
+          TrayIcon {
+            modelData: Tray.getItem(Tray.ids.mailspring)
+          }
+
+          TrayIcon {
+            modelData: Tray.getItem(Tray.ids.discord)
+          }
+
+          TrayIcon {
+            modelData: Tray.getItem(Tray.ids.signal)
+          }
         }
 
-        TrayIcon {
-          modelData: Tray.getItem(Tray.ids.signal)
+        Pill {
+          color: "#CCCCCC"
+
+          TrayIcon {
+            modelData: Tray.getItem(Tray.ids.one_password)
+          }
+          TrayIcon {
+            modelData: Tray.getItem(Tray.ids.proton_vpn)
+          }
         }
-      }
 
-      Pill {
-        color: "#CCCCCC"
+        Pill {
+          color: "#CCCCCC"
 
-        TrayIcon {
-          modelData: Tray.getItem(Tray.ids.one_password)
+          ClockWidget {}
         }
-        TrayIcon {
-          modelData: Tray.getItem(Tray.ids.proton_vpn)
-        }
-      }
-
-      Pill {
-        color: "#CCCCCC"
-
-        ClockWidget {}
       }
     }
   }

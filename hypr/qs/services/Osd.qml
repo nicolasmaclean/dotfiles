@@ -82,9 +82,12 @@ Singleton {
   readonly property Entry wifi: Entry {
     kind: Osd.Kind.Wifi
   }
+  readonly property Entry bluetooth: Entry {
+    kind: Osd.Kind.Bluetooth
+  }
 
   readonly property list<Entry> entries: [volume, mic, nightlight, brightness]
-  readonly property list<Entry> quickEntries: [power, wifi]
+  readonly property list<Entry> quickEntries: [power, wifi, bluetooth]
 
   readonly property list<Entry> allEntries: [...entries, ...quickEntries]
   readonly property bool hasShown: allEntries.some(e => e.shown)
