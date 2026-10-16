@@ -16,7 +16,7 @@ Item {
     text: root.stateGlyph
     font.pixelSize: Theme.widgetIconSize
     font.family: Theme.iconFont
-    color: Theme.textDim
+    color: MyColors.surfaceDim
   }
 
   TapHandler {

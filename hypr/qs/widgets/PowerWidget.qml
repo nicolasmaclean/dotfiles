@@ -15,7 +15,7 @@ Item {
     id: icon
     font.pixelSize: Theme.widgetIconSize
     text: "⏻"
-    color: Theme.text
+    color: MyColors.oonErrorContainer
     font.family: Theme.iconFont
   }
 

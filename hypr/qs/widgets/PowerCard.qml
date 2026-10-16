@@ -35,7 +35,7 @@ Item {
         Layout.fillWidth: true
         radius: Theme.borderRadiusBig
         color: {
-          let c = Theme.frame
+          let c = MyColors.background
           if (hover.hovered) {
             c = Qt.lighter(c, Theme.hoverLighten)
           }
@@ -54,11 +54,13 @@ Item {
             text: actionEntry.modelData.icon
             Layout.alignment: Qt.AlignHCenter
             font.pixelSize: 24
+            color: MyColors.oonBackground
           }
 
           Text {
             text: actionEntry.modelData.label
             Layout.alignment: Qt.AlignHCenter
+            color: MyColors.oonBackground
           }
         }
 

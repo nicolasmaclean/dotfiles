@@ -12,7 +12,7 @@ Item {
   Text {
     id: icon
     text: Bluetooth.connectivityGlyph
-    color: Bluetooth.anyConnectedDevices ? Theme.text : Theme.textDim
+    color: MyColors.oonSecondaryContainer
     font.pixelSize: Theme.widgetIconSize - 4
     font.family: Theme.iconFont
   }

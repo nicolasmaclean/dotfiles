@@ -13,7 +13,7 @@ Item {
     text: Audio.volumeGlyph
     font.pixelSize: Theme.widgetIconSize
     font.family: Theme.iconFont
-    color: Theme.text
+    color: MyColors.oonTertiaryContainer
   }
 
   TapHandler {

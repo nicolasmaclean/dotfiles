@@ -44,7 +44,7 @@ PanelWindow {
     layer.enabled: true
 
     ShapePath {
-      fillColor: Theme.frame
+      fillColor: MyColors.background
       strokeWidth: 0
       fillRule: ShapePath.OddEvenFill
 
@@ -70,7 +70,7 @@ PanelWindow {
 
     layer.effect: MultiEffect {
       shadowEnabled: true
-      shadowColor: Qt.alpha("#000000", 1)
+      shadowColor: MyColors.shadow
       // shadowBlur: 0.5
       blurMax: 40
       shadowScale: 0.995

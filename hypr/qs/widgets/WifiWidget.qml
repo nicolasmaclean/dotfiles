@@ -15,7 +15,7 @@ Item {
     anchors.fill: parent
     text: Net.connectionGlyph
     font.pixelSize: Theme.widgetIconSize
-    color: Theme.text
+    color: MyColors.oonSecondaryContainer
     font.family: Theme.iconFont
   }
 

@@ -9,7 +9,7 @@ Text {
   text: Time.time
   font.pixelSize: 13
   font.family: Theme.iconFont
-  color: Theme.text
+  color: MyColors.oonSurface
   padding: 4
 
   TapHandler {

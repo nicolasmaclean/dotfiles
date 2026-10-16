@@ -10,6 +10,7 @@ Rectangle {
   implicitWidth: pillRow.implicitWidth + Theme.pillPadding * 2
   implicitHeight: pillRow.implicitHeight
   radius: height / 2
+  color: MyColors.surfaceDim
 
   RowLayout {
     id: pillRow

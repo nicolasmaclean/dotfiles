@@ -3,17 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-import qs.theme
-
 Singleton {
-  readonly property color frame: Colors.surfaceContainer
-  readonly property color hover: Colors.surfaceContainerHigh
-  readonly property color text: Colors.oonSurface
-  readonly property color textDim: Colors.oonSurfaceVariant
-  readonly property color accent: Colors.primary
-  readonly property color urgent: Colors.error
-  readonly property color pillColor: Colors.surfaceContainerHigh
-
   readonly property real taskbarThickness: 40
   readonly property real frameThickness: 8
   readonly property real borderRadiusBig: 25
@@ -29,8 +19,8 @@ Singleton {
   readonly property real pillPadding: 10
   readonly property real pillSpacing: 5
 
-  readonly property real hoverLighten: 1.5
-  readonly property real hoverDarken: 2.0
+  readonly property real hoverLighten: 1.2
+  readonly property real hoverDarken: 1.5
 
   readonly property string mainScreenName: "HDMI-A-2"
   readonly property ShellScreen mainScreen: Quickshell.screens.find(s => s.name === mainScreenName)

@@ -37,7 +37,7 @@ Item {
     implicitWidth: Theme.notificationWidth
     implicitHeight: cardLayout.implicitHeight + 2 * root.padding
     color: {
-      let c = Theme.frame
+      let c = MyColors.background
       if (hover.hovered) {
         c = Qt.lighter(c, Theme.hoverLighten)
       }
@@ -81,7 +81,31 @@ Item {
           implicitWidth: 6
           implicitHeight: 18
           radius: 3
-          color: slider.pressed ? Theme.hover : Theme.accent
+          color: {
+            let c = MyColors.tertiary
+            if (slider.pressed) {
+              c = Qt.lighter(c, Theme.hoverLighten)
+            }
+            return c
+          }
+        }
+        background: Rectangle {
+          x: slider.leftPadding
+          y: slider.topPadding + (slider.availableHeight - height) / 2
+          implicitWidth: 200
+          implicitHeight: 6
+          width: slider.availableWidth
+          height: implicitHeight
+          radius: 3
+          color: MyColors.surfaceContainerHighest  // unfilled
+          scale: slider.mirrored ? -1 : 1
+
+          Rectangle {
+            width: slider.position * parent.width
+            height: 6
+            radius: 3
+            color: MyColors.tertiaryContainer
+          }
         }
       }
     }

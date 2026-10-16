@@ -18,12 +18,12 @@ Rectangle {
   radius: Theme.borderRadiusBig
   color: {
     // default to wifi hardware switch set to off
-    let c = "#333333"
+    let c = MyColors.surfaceDim
 
     if (Bluetooth.switchState === Bluetooth.SwitchState.Enabled) {
-      c = Theme.accent
+      c = MyColors.primaryContainer
     } else if (Bluetooth.switchState === Bluetooth.SwitchState.Disabled) {
-      c = Theme.frame
+      c = MyColors.secondaryContainer
     }
 
     if (hover.hovered) {
@@ -40,6 +40,7 @@ Rectangle {
     width: parent.width - root.padding * 2
     anchors.verticalCenter: parent.verticalCenter
 
+    color: MyColors.oonBackground
     elide: Text.ElideRight
     text: {
       let str = `${Bluetooth.connectivityGlyph} ‧ `

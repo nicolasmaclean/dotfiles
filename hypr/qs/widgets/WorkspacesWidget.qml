@@ -87,7 +87,7 @@ RowLayout {
       }
 
       // formatting
-      color: Theme.accent
+      color: MyColors.tertiaryContainer
       readonly property real hPadding: 12
       readonly property real vPadding: 4
       radius: height / 2
@@ -103,7 +103,7 @@ RowLayout {
 
         Text {
           text: workspace.name
-          color: Theme.text
+          color: MyColors.oonTertiaryContainer
         }
 
         Repeater {

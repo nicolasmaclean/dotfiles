@@ -18,12 +18,12 @@ Rectangle {
   radius: Theme.borderRadiusBig
   color: {
     // default to wifi hardware switch set to off
-    let c = "#333333"
+    let c = MyColors.surfaceDim
 
     if (Net.switchState === Net.SwitchState.On) {
-      c = Theme.accent
+      c = MyColors.primaryContainer
     } else if (Net.switchState === Net.SwitchState.Off) {
-      c = Theme.frame
+      c = MyColors.secondaryContainer
     }
 
     if (hover.hovered) {
@@ -42,6 +42,7 @@ Rectangle {
 
     elide: Text.ElideRight
     text: `${Net.connectionGlyph}  ‧ ${Net.ssid !== "" ? Net.ssid : "Disconnected"}`
+    color: MyColors.oonBackground
   }
 
   TapHandler {

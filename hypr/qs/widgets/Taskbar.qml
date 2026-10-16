@@ -11,7 +11,7 @@ PanelWindow {
   required property bool isMainScreen
   required property bool showContent
 
-  color: Theme.frame
+  color: MyColors.background
 
   anchors {
     top: true
@@ -34,19 +34,19 @@ PanelWindow {
       visible: window.isMainScreen
 
       Pill {
-        color: "#CCCCCC"
+        color: MyColors.errorContainer
         PowerWidget {}
         BatteryWidget {}
       }
       Pill {
-        color: "#CCCCCC"
+        color: MyColors.secondaryContainer
 
         WifiWidget {}
         BluetoothWidget {}
       }
 
       Pill {
-        color: "#CCCCCC"
+        color: MyColors.tertiaryContainer
 
         VolumeWidget {}
         MicWidget {}
@@ -65,12 +65,11 @@ PanelWindow {
       sourceComponent: RowLayout {
 
         Pill {
-          color: "#CCCCCC"
           TrayWidget {}
         }
 
         Pill {
-          color: "#CCCCCC"
+          color: MyColors.tertiaryContainer
 
           TrayIcon {
             modelData: Tray.getItem(Tray.ids.mailspring)
@@ -86,8 +85,7 @@ PanelWindow {
         }
 
         Pill {
-          color: "#CCCCCC"
-
+          color: MyColors.secondaryContainer
           TrayIcon {
             modelData: Tray.getItem(Tray.ids.one_password)
           }
@@ -97,8 +95,6 @@ PanelWindow {
         }
 
         Pill {
-          color: "#CCCCCC"
-
           ClockWidget {}
         }
       }

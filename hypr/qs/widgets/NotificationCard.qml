@@ -85,9 +85,9 @@ Item {
     property real padding: 10
 
     radius: Theme.borderRadiusBig
-    color: Theme.frame
+    color: MyColors.background
     border.width: root.critical ? 2 : 0
-    border.color: Theme.urgent
+    border.color: MyColors.error
 
     // fade out as it's dragged away
     opacity: 1 - Math.max(0, x) / width
@@ -194,7 +194,7 @@ Item {
         Text {
           Layout.fillWidth: true
           text: root.modelData.summary
-          color: root.critical ? Theme.urgent : Theme.text
+          color: MyColors.oonBackground
           font.bold: true
           elide: Text.ElideRight
         }
@@ -202,7 +202,7 @@ Item {
         Text {
           Layout.fillWidth: true
           text: root.modelData.body
-          color: Theme.textDim
+          color: MyColors.oonBackground
           textFormat: Text.StyledText
           wrapMode: Text.Wrap
           maximumLineCount: 4
@@ -217,14 +217,14 @@ Item {
           Layout.topMargin: 4
           implicitHeight: 6
           radius: 3
-          color: Theme.hover
+          color: MyColors.oonSurfaceVariant
           visible: root.progress !== null
 
           Rectangle {
             height: parent.height
             width: parent.width * Math.max(0, Math.min(100, root.progress ?? 0)) / 100
             radius: parent.radius
-            color: root.critical ? Theme.urgent : Theme.accent
+            color: MyColors.primary
           }
         }
 
@@ -244,16 +244,16 @@ Item {
               Layout.fillWidth: true
               implicitHeight: 24
               radius: 4
-              color: buttonMouse.containsMouse ? Theme.hover : "transparent"
-              border.width: 1
-              border.color: Theme.hover
+              color: buttonMouse.containsMouse ? MyColors.secondaryContainer : "transparent"
+              // border.width: 1
+              // border.color: Theme.hover
 
               Text {
                 anchors.centerIn: parent
                 width: parent.width - 8
                 horizontalAlignment: Text.AlignHCenter
                 text: button.modelData.text
-                color: Theme.text
+                color: MyColors.oonSecondaryContainer
                 elide: Text.ElideRight
               }
 
