@@ -9,5 +9,5 @@ Text {
   visible: Battery.available
   font.family: Theme.iconFont
   font.pixelSize: Theme.widgetIconSize
-  color: Theme.text
+  color: MyColors.oonTertiaryContainer
 }
