@@ -88,8 +88,30 @@ RowLayout {
         cursorShape: Qt.PointingHandCursor
       }
 
+      property real lift: workspace.active ? 2 : 0
+      Behavior on lift {
+        NumberAnimation {
+          duration: 80
+        }
+      }
+      transform: Translate {
+        y: -workspace.lift
+        x: -workspace.lift
+      }
+
+      Rectangle {
+        z: -1
+        width: parent.width
+        height: parent.height
+        radius: parent.radius
+        color: Qt.darker(parent.color, 1.5)
+        y: workspace.lift
+        x: workspace.lift
+      }
+
       // formatting
-      color: workspace.active ? MyColors.secondaryContainer : MyColors.tertiaryContainer
+      // color: workspace.active ? MyColors.secondaryContainer : MyColors.tertiaryContainer
+      color: MyColors.tertiaryContainer
       readonly property real hPadding: 12
       readonly property real vPadding: 4
       radius: height / 2
