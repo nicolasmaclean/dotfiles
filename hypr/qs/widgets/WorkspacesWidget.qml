@@ -105,7 +105,7 @@ RowLayout {
 
         Text {
           text: workspace.name
-          color: MyColors.oonTertiaryContainer
+          color: workspace.active ? MyColors.oonSecondaryContainer : MyColors.oonTertiaryContainer
         }
 
         Repeater {
