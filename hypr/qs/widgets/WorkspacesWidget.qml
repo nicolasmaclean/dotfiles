@@ -76,18 +76,20 @@ RowLayout {
       }
 
       // close workspace on right click
-      // TODO
-      // TapHandler {
-      //   acceptedButtons: Qt.RightButton
-      //   onTapped:
-      // }
+      TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: {
+          for (const t of workspace.modelData?.toplevels.values ?? [])
+            Hyprland.dispatch(`hl.dsp.window.close({ window = "address:0x${t.address}" })`)
+        }
+      }
 
       HoverHandler {
         cursorShape: Qt.PointingHandCursor
       }
 
       // formatting
-      color: MyColors.tertiaryContainer
+      color: workspace.active ? MyColors.secondaryContainer : MyColors.tertiaryContainer
       readonly property real hPadding: 12
       readonly property real vPadding: 4
       radius: height / 2
@@ -114,6 +116,7 @@ RowLayout {
             required property string modelData
 
             readonly property string iconName: {
+              // leave this expression statement, it forces this binding dependency
               DesktopEntries.applications.values
               return DesktopEntries.heuristicLookup(modelData)?.icon ?? ""
             }
@@ -140,6 +143,60 @@ RowLayout {
           easing.type: Easing.OutCubic
         }
       }
+
+      ListView.onAdd: addAnimation.start()
+      ParallelAnimation {
+        id: addAnimation
+        NumberAnimation {
+          target: workspace
+          property: "opacity"
+          from: 0
+          to: 1
+          duration: 100
+        }
+        NumberAnimation {
+          target: workspace
+          property: "scale"
+          from: 0.4
+          to: 1
+          duration: 200
+          easing.type: Easing.OutBack
+          easing.overshoot: 5
+        }
+      }
+
+      ListView.onRemove: removeAnimation.start()
+      SequentialAnimation {
+        id: removeAnimation
+
+        PropertyAction {
+          target: workspace
+          property: "ListView.delayRemove"
+          value: true
+        }
+
+        ParallelAnimation {
+          NumberAnimation {
+            target: workspace
+            property: "opacity"
+            to: 0
+            duration: 150
+          }
+          NumberAnimation {
+            target: workspace
+            property: "scale"
+            to: 0
+            duration: 120
+            easing.type: Easing.InBack
+          }
+        }
+
+        PropertyAction {
+          target: workspace
+          property: "ListView.delayRemove"
+          value: false
+        }
+      }
     }
 
     // animate workspace add, remove
@@ -157,22 +214,28 @@ RowLayout {
         duration: 200
       }
     }
+  }
 
-    add: Transition {
-      NumberAnimation {
-        property: "opacity"
-        from: 0
-        to: 1
-        duration: 150
-      }
+  Rectangle {
+    radius: height / 2
+    color: MyColors.tertiaryContainer
+    implicitWidth: addButtonText.implicitWidth + 12
+    implicitHeight: addButtonText.implicitHeight + 4
+
+    Text {
+      id: addButtonText
+      text: "+"
+      color: MyColors.oonTertiaryContainer
+      anchors.centerIn: parent
     }
 
-    remove: Transition {
-      NumberAnimation {
-        property: "opacity"
-        to: 0
-        duration: 150
-      }
+    TapHandler {
+      acceptedButtons: Qt.LeftButton
+      onTapped: Hyprland.dispatch(`hl.dsp.focus({ workspace = "emptym" })`)
+    }
+
+    HoverHandler {
+      cursorShape: Qt.PointingHandCursor
     }
   }
 }
