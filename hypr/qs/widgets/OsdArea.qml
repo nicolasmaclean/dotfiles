@@ -160,7 +160,10 @@ Row {
       NumberAnimation {
         property: "y"
         from: -(slideIn.ViewTransition.item.height + system.topMargin)
-        easing.type: Easing.OutCubic
+        easing.type: Easing.OutElastic
+        easing.amplitude: 1
+        easing.period: 0.8
+        duration: 550
       }
     }
 
