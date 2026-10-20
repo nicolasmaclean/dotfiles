@@ -93,11 +93,11 @@ PanelWindow {
             modelData: Tray.getItem(Tray.ids.proton_vpn)
           }
         }
-
-        Pill {
-          ClockWidget {}
-        }
       }
+    }
+
+    Pill {
+      ClockWidget {}
     }
   }
 
