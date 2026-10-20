@@ -14,11 +14,6 @@ Text {
 
   TapHandler {
     acceptedButtons: Qt.LeftButton
-    onTapped: calendar.running = !calendar.running
-  }
-
-  Process {
-    id: calendar
-    command: Apps.calendar
+    onTapped: Calendar.toggle()
   }
 }

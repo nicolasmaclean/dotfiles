@@ -64,8 +64,15 @@ Scope {
     screen: Theme.mainScreen
     exclusionMode: ExclusionMode.Ignore
     mask: Region {
-      width: notificationArea.width
-      height: notificationArea.contentHeight
+      Region {
+        item: calendarCard.visible ? calendarCard : null
+      }
+      Region {
+        x: notificationArea.x
+        y: notificationArea.y
+        width: notificationArea.width
+        height: notificationArea.contentHeight
+      }
     }
 
     color: "transparent"
@@ -79,10 +86,32 @@ Scope {
       right: 16
     }
 
-    implicitWidth: notificationArea.implicitWidth
-    NotificationArea {
-      id: notificationArea
+    implicitWidth: Math.max(calendarCard.item?.implicitWidth ?? 0, notificationArea.implicitWidth)
+
+    ColumnLayout {
+      id: notificationsLayout
+
       anchors.fill: parent
+
+      Loader {
+        id: calendarCard
+        active: Calendar.open
+        visible: Calendar.open
+
+        sourceComponent: CalendarCard {
+
+          // HyprlandFocusGrab {
+          //   active: true
+          //   windows: [notifications]
+          //   onCleared: Calendar.open = false
+          // }
+        }
+      }
+      NotificationArea {
+        id: notificationArea
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+      }
     }
   }
 
