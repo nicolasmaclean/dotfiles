@@ -4,7 +4,7 @@ import Quickshell
 
 import qs
 
-Rectangle {
+RaisedButtonBase {
   default property alias content: pillRow.data
 
   implicitWidth: pillRow.implicitWidth + Theme.pillPadding * 2

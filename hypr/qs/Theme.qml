@@ -24,4 +24,8 @@ Singleton {
 
   readonly property string mainScreenName: "HDMI-A-2"
   readonly property ShellScreen mainScreen: Quickshell.screens.find(s => s.name === mainScreenName)
+
+  readonly property real pillLiftX: 2
+  readonly property real pillLiftY: 2
+  readonly property real pillLiftDuration: 80
 }

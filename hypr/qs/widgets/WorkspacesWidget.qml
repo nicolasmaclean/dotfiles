@@ -42,7 +42,7 @@ RowLayout {
       }
     }
 
-    delegate: Rectangle {
+    delegate: RaisedButtonBase {
       id: workspace
       required property HyprlandWorkspace modelData
 
@@ -69,6 +69,9 @@ RowLayout {
         restoreMode: Binding.RestoreNone
       }
 
+      // the active workspace is raised
+      raised: workspace.active || hovered
+
       // change workspace on click
       TapHandler {
         acceptedButtons: Qt.LeftButton
@@ -88,29 +91,7 @@ RowLayout {
         cursorShape: Qt.PointingHandCursor
       }
 
-      property real lift: workspace.active ? 2 : 0
-      Behavior on lift {
-        NumberAnimation {
-          duration: 80
-        }
-      }
-      transform: Translate {
-        y: -workspace.lift
-        x: -workspace.lift
-      }
-
-      Rectangle {
-        z: -1
-        width: parent.width
-        height: parent.height
-        radius: parent.radius
-        color: Qt.darker(parent.color, 1.5)
-        y: workspace.lift
-        x: workspace.lift
-      }
-
       // formatting
-      // color: workspace.active ? MyColors.secondaryContainer : MyColors.tertiaryContainer
       color: MyColors.tertiaryContainer
       readonly property real hPadding: 12
       readonly property real vPadding: 4
@@ -127,7 +108,7 @@ RowLayout {
 
         Text {
           text: workspace.name
-          color: workspace.active ? MyColors.oonSecondaryContainer : MyColors.oonTertiaryContainer
+          color: MyColors.oonTertiaryContainer
         }
 
         Repeater {
@@ -238,7 +219,7 @@ RowLayout {
     }
   }
 
-  Rectangle {
+  RaisedButtonBase {
     radius: height / 2
     color: MyColors.tertiaryContainer
     implicitWidth: addButtonText.implicitWidth + 12
