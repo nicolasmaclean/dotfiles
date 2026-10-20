@@ -2,17 +2,16 @@
 # Symlinks, not copies: editing the repo is editing the live config.
 #
 # Dropping an entry here does not remove its link from a host that already has
-# it; roles/qtile_removal does that for the ones the X11 session left behind.
+# it; move it to dotfiles_removed_links below. roles/qtile_removal does the same
+# for the ones the X11 session left behind.
 dotfiles_links:
   - src: nvim
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
-  # flameshot and gsimplecal both have to sit at their XDG default path: each
-  # is started by dbus activation or by a bare exec with no way to pass a
-  # config flag, so a config anywhere else is read by nothing.
+  # flameshot has to sit at its XDG default path: it is started by dbus
+  # activation with no way to pass a config flag, so a config anywhere else is
+  # read by nothing.
   - src: flameshot
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/flameshot"
-  - src: gsimplecal
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/gsimplecal"
   - src: quickshell
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/quickshell"
   - src: cliphist
@@ -24,6 +23,12 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/alacritty/alacritty.toml"
   - src: .ideavimrc
     dest: "{{ ansible_facts['env']['HOME'] }}/.ideavimrc"
+
+# Links whose config has left the repo. Removed only while they are still
+# symlinks — see tasks/main.yml.
+dotfiles_removed_links:
+  # gsimplecal was replaced by the bar's own calendar widget (hypr/qs).
+  - "{{ ansible_facts['env']['HOME'] }}/.config/gsimplecal"
 
 # Flameshot expands neither $HOME nor ~ — verified twice: with either form
 # `flameshot full --clipboard` blocks until timeout and saves nothing at all.

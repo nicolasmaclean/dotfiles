@@ -49,6 +49,24 @@
     - item.stat.exists
     - not item.stat.islnk
 
+# The same guard from the other side: a symlink is ours to remove, a real
+# directory is not. Removing a link never follows it.
+- name: Inspect the retired links
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    follow: false
+  loop: "{{ dotfiles_removed_links }}"
+  register: dotfiles_removed_state
+
+- name: Remove the retired links
+  ansible.builtin.file:
+    path: "{{ item.item }}"
+    state: absent
+  loop: "{{ dotfiles_removed_state.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.stat.islnk | default(false)
+
 # Gitignored, so a fresh checkout lacks it — but quickshell only fills in the
 # qmlls import paths when the file already exists next to shell.qml. Once it
 # has, the file is a symlink into quickshell's per-session vfs under

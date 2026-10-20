@@ -6,7 +6,6 @@ desktop_apps_packages:
   # panel through this.
   - brightnessctl
   - flameshot
-  - gsimplecal              # the calendar the bar clock opens
   - networkmanager          # not enabled by the package on Arch — see tasks/
   - libnotify               # notify-send, for testing the bar's notifications
   - ibus
@@ -18,6 +17,17 @@ desktop_apps_packages:
   - pipewire-pulse
   - pipewire-alsa
   - wireplumber             # the volume keys in hyprland.lua drive wpctl
+
+# Removed rather than just dropped from the list above, which would leave them
+# installed on every existing host.
+desktop_apps_removed_packages:
+  # The bar draws its own network indicator, and nm-applet's XDG autostart
+  # entry would otherwise put a second one in the tray. nm-connection-editor
+  # goes with it: it came in as the applet's dependency, and nmtui covers it.
+  - network-manager-applet
+  - nm-connection-editor
+  # The bar clock opens its own calendar widget now (hypr/qs).
+  - gsimplecal
 
 # preload-engines is the list ibus honours outside a GNOME session. GNOME's own
 # org.gnome.desktop.input-sources is not read here, so an engine missing from
