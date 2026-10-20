@@ -100,11 +100,11 @@ Scope {
 
         sourceComponent: CalendarCard {
 
-          // HyprlandFocusGrab {
-          //   active: true
-          //   windows: [notifications]
-          //   onCleared: Calendar.open = false
-          // }
+          HyprlandFocusGrab {
+            active: true
+            windows: [notifications]
+            onCleared: Calendar.open = false
+          }
         }
       }
       NotificationArea {
