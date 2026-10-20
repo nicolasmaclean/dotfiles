@@ -69,7 +69,7 @@ Scope {
       }
       Region {
         x: notificationArea.x
-        y: notificationArea.y
+        y: notificationsLayout.y + notificationArea.y
         width: notificationArea.width
         height: notificationArea.contentHeight
       }
@@ -82,7 +82,7 @@ Scope {
       bottom: true
     }
     margins {
-      top: root.inset + 10
+      top: root.inset
       right: 16
     }
 
@@ -92,14 +92,51 @@ Scope {
       id: notificationsLayout
 
       anchors.fill: parent
+      anchors.topMargin: 10
 
       Loader {
         id: calendarCard
-        active: Calendar.open
-        visible: Calendar.open
+
+        active: Calendar.open || slideOut.running
+        visible: active
+
+        states: State {
+          name: "open"
+          when: Calendar.open
+          PropertyChanges {
+            slide.y: 0
+          }
+        }
+
+        transitions: [
+          Transition {
+            to: "open"
+            NumberAnimation {
+              target: slide
+              property: "y"
+              easing.type: Easing.OutElastic
+              easing.amplitude: 1
+              easing.period: 0.8
+              duration: 550
+            }
+          },
+          Transition {
+            id: slideOut
+            from: "open"
+            NumberAnimation {
+              target: slide
+              property: "y"
+              easing.type: Easing.OutCubic
+            }
+          }
+        ]
+
+        transform: Translate {
+          id: slide
+          y: -(calendarCard.height + 10)
+        }
 
         sourceComponent: CalendarCard {
-
           HyprlandFocusGrab {
             active: true
             windows: [notifications]
