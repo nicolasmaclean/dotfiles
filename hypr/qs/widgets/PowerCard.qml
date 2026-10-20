@@ -83,6 +83,9 @@ Item {
             duration: 100
           }
         }
+        CardShadow {
+          target: actionEntry
+        }
       }
     }
   }

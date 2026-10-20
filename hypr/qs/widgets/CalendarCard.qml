@@ -188,4 +188,8 @@ Rectangle {
       }
     }
   }
+
+  CardShadow {
+    target: root
+  }
 }

@@ -268,5 +268,9 @@ Item {
         }
       }
     }
+
+    CardShadow {
+      target: card
+    }
   }
 }

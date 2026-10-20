@@ -61,4 +61,8 @@ Rectangle {
       duration: 100
     }
   }
+
+  CardShadow {
+    target: root
+  }
 }
