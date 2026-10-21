@@ -39,12 +39,15 @@ Scope {
         item: launcherWindow
       }
 
-      implicitWidth: launcherWindow.implicitWidth
-      implicitHeight: launcherWindow.maxHeight + 5
+      readonly property int overshootPad: 30
+      implicitWidth: launcherWindow.implicitWidth + overshootPad * 2
+      implicitHeight: launcherWindow.maxHeight + overshootPad * 2
 
       color: "transparent"
       LauncherWindow {
         id: launcherWindow
+        x: launcher.overshootPad
+        y: launcher.overshootPad
       }
 
       HyprlandFocusGrab {

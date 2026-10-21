@@ -27,8 +27,12 @@ Rectangle {
     anchors.leftMargin: Theme.launcherPaddingX
     anchors.rightMargin: Theme.launcherPaddingX
 
+    spacing: 10
+
     TextInput {
       id: search
+
+      leftPadding: 15
 
       // escape to exit the launcher
       focus: true
@@ -110,8 +114,9 @@ Rectangle {
       }
 
       Behavior on Layout.preferredHeight {
+        enabled: root.introDone
         NumberAnimation {
-          duration: 250
+          duration: 200
           easing.type: Easing.OutCubic
         }
       }
@@ -125,5 +130,27 @@ Rectangle {
   // TODO: all instances of this component are getting clipped by their parent...
   CardShadow {
     target: root
+  }
+
+  transform: Scale {
+    id: introScale
+    yScale: 0
+    origin.y: root.height / 2
+  }
+
+  property bool introDone: false
+
+  NumberAnimation {
+    running: true
+    onFinished: root.introDone = true
+    target: introScale
+    property: "yScale"
+    from: 0
+    to: 1
+
+    easing.type: Easing.OutElastic
+    duration: 350
+    easing.amplitude: 1
+    easing.period: 0.8
   }
 }

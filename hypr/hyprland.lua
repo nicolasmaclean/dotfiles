@@ -470,6 +470,12 @@ hl.window_rule({
     float = true,
 })
 
+hl.layer_rule({
+    name    = "qs-launcher",
+    match   = { namespace = "^qs-launcher$" },
+    no_anim = true,
+})
+
 -- Flameshot's capture overlay: float it so it never gets tiled (which shoves
 -- the other windows aside and animates them back when it closes), and skip
 -- its open/close animation. Matches both the X11 class and the Wayland app id.
