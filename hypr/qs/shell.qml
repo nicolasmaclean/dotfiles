@@ -25,6 +25,37 @@ Scope {
   property bool taskbarVisible: true
   property real inset: taskbarVisible ? Theme.taskbarThickness : Theme.frameThickness
 
+  // app launcher
+  LazyLoader {
+    active: Launcher.open
+    PanelWindow {
+      id: launcher
+
+      screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+      WlrLayershell.namespace: "qs-launcher"
+      exclusionMode: ExclusionMode.Ignore
+      WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+      mask: Region {
+        item: launcherWindow
+      }
+
+      implicitWidth: launcherWindow.implicitWidth
+      implicitHeight: launcherWindow.maxHeight
+
+      color: "transparent"
+      LauncherWindow {
+        id: launcherWindow
+      }
+
+      HyprlandFocusGrab {
+        active: true
+        windows: [launcher]
+        onCleared: Launcher.close()
+      }
+    }
+  }
+
+  // osd (power, wifi, bluetooth, etc.)
   PanelWindow {
     id: osd
 
@@ -57,6 +88,7 @@ Scope {
     }
   }
 
+  // calendar window and notifications
   PanelWindow {
     id: notifications
 
@@ -152,6 +184,7 @@ Scope {
     }
   }
 
+  // taskbar and frame
   Variants {
     model: Quickshell.screens
 
@@ -175,11 +208,21 @@ Scope {
     }
   }
 
+  // IPC for taskbar visibility
   IpcHandler {
     target: "taskbar"
 
     function toggle(): void {
       root.taskbarVisible = !root.taskbarVisible
+    }
+  }
+
+  // IPC for launcher
+  IpcHandler {
+    target: "launcher"
+
+    function toggle(): void {
+      Launcher.toggle()
     }
   }
 }

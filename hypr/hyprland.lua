@@ -74,7 +74,6 @@ local uwsm = "uwsm app -- "
 -- that needs to be done through uwsm
 local terminal    = uwsm .. "alacritty"
 local fileManager = uwsm .. "dolphin"
-local menu        = uwsm .. "hyprlauncher"
 
 
 -------------------
@@ -341,7 +340,7 @@ local qsPath = "~/dotfiles/hypr/qs"
 
 -- Open apps
 hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu)) -- search for app to open
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("qs ipc -p " .. qsPath .. " call launcher toggle"))
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("1password --quick-access"))
 
 -- Manipulate current window
@@ -352,6 +351,7 @@ local closeWindowBind = hl.bind(mainMod .. " + W", function()
 end)
 hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
 -- hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- ALT+P now opens 1Password quick access
+hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen())
 
 -- Hide current screen's windows
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc -p " .. qsPath .. " call taskbar toggle"))

@@ -28,4 +28,9 @@ Singleton {
   readonly property real pillLiftX: 2
   readonly property real pillLiftY: 2
   readonly property real pillLiftDuration: 80
+
+  readonly property real launcherWidth: 550
+  readonly property real launcherHeight: 400
+  readonly property real launcherPaddingX: 15
+  readonly property real launcherPaddingY: 10
 }
