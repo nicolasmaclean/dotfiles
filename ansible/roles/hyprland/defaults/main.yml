@@ -4,6 +4,10 @@ hyprland_packages:
   - xdg-desktop-portal-hyprland
   - xdg-desktop-portal-gtk
   - uwsm
+  # Opens Terminal=true desktop entries; GLib tries it before its hardcoded
+  # terminal list, which has no alacritty. Reads ~/.config/xdg-terminals.list
+  # (roles/dotfiles).
+  - xdg-terminal-exec
   - libnewt
   - hyprpolkitagent
   - hyprlock

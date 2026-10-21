@@ -7,7 +7,7 @@
 # --limit is required — see inventory/hosts.yml for why. bootstrap.sh passes it.
 
 - name: Provision workstation
-  hosts: workstations
+  hosts: "{{ lookup('pipe', 'uname -n') }}"
   gather_facts: true
 
   pre_tasks:

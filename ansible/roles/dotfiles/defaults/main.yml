@@ -21,6 +21,11 @@ dotfiles_links:
   # and stops at the first hit, so the two shadow rather than merge.
   - src: alacritty.toml
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/alacritty/alacritty.toml"
+  # The terminal xdg-terminal-exec picks for Terminal=true desktop entries,
+  # e.g. the arch-update tray's "Run Arch-Update". Without it GLib's fallback
+  # list never reaches alacritty and the launch fails silently.
+  - src: xdg-terminals.list
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/xdg-terminals.list"
   - src: .ideavimrc
     dest: "{{ ansible_facts['env']['HOME'] }}/.ideavimrc"
 

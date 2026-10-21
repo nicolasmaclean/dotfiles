@@ -1,0 +1,26 @@
+[Unit]
+Description=arch-update tray applet
+PartOf=graphical-session.target
+Wants=quickshell.service
+After=graphical-session.target quickshell.service
+Requisite=graphical-session.target
+
+[Service]
+# forking, not simple: `arch-update --tray` is a launcher script that sets up
+# its state files, then `setsid`s the real tray binary into the background and
+# exits 0. As a simple unit that clean exit ends the service and systemd kills
+# the backgrounded tray with it. forking waits for the launcher to exit and
+# adopts the tray as the main process, so Restart= still watches it.
+Type=forking
+# The shipped .desktop file wraps this in `sleep 3` so the icon finds a tray.
+# Ordering after quickshell, which owns the StatusNotifierWatcher, does that
+# properly. The icon only changes when arch-update.timer runs a check; this
+# just watches the state file the check writes.
+ExecStart=/usr/bin/arch-update --tray
+# on-failure, not always: quitting from the tray should stay quit until the
+# next login.
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target
