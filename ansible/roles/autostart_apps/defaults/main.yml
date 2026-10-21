@@ -9,3 +9,8 @@ autostart_apps_units_dir: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/us
 # and Signal come from roles/apps.
 autostart_apps_packages:
   - proton-vpn-gtk-app
+
+# Timers shipped by packages, enabled by name. arch-update comes from roles/aur,
+# which runs before this role, and its timer drives the arch-update-tray icon.
+autostart_apps_timers:
+  - arch-update.timer

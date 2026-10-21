@@ -92,6 +92,9 @@ PanelWindow {
           TrayIcon {
             modelData: Tray.getItem(Tray.ids.proton_vpn)
           }
+          TrayIcon {
+            modelData: Tray.getItem(Tray.ids.arch_update)
+          }
         }
       }
     }

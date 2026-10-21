@@ -51,3 +51,15 @@
   loop_control:
     label: "{{ item.path | basename }}"
   when: not ansible_check_mode
+
+# Packaged timers this role enables but does not install: their units live in
+# /usr/lib/systemd/user, so the find above never sees them. WantedBy=
+# timers.target rather than the graphical session, so they run in any login.
+# Skipped in check mode because on a fresh box the package is not there yet.
+- name: Enable the packaged timers
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    scope: user
+    enabled: true
+  loop: "{{ autostart_apps_timers }}"
+  when: not ansible_check_mode

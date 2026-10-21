@@ -36,7 +36,6 @@ apps_repo_packages:
 # roles/aur for the trust argument and the build account that makes it work.
 apps_aur_packages:
   - google-chrome
-  - visual-studio-code-bin
   - 1password
   - 1password-cli
   - slack-desktop          # 4.52.155 — the same version the old .deb pinned
@@ -44,9 +43,4 @@ apps_aur_packages:
   - onlyoffice-bin
   - unityhub               # the AUR flags this out-of-date as of 2026-09-10
   - dankcalendar-bin       # calendar app for the dank desktop; pulls in quickshell
-
-# JetBrains Toolbox is deliberately out of scope for this pass — it
-# self-manages its IDEs and its licences are manual either way, so nothing here
-# can make a fresh box usefully closer to done. Rider is likewise left as
-# whatever the machine already has. (AUR `jetbrains-toolbox` exists, 220 votes,
-# if that ever changes.) Both are a later decision, not a gap.
+  - arch-update

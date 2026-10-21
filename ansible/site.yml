@@ -64,8 +64,9 @@
           hyprland={{install_hyprland }}
       tags: always
 
-  # Ordered as they must run. Only one ordering is load-bearing: apps names
-  # the AUR list that the aur role immediately after it consumes. Every role is
+  # Ordered as they must run. Two orderings are load-bearing: apps names
+  # the AUR list that the aur role immediately after it consumes, and
+  # autostart_apps enables a timer shipped by an AUR package. Every role is
   # independently runnable with --tags.
   #
   # `aur` sits after `apps`, not before it: role defaults are resolved as the
@@ -85,7 +86,6 @@
     # install or link anything it removes.
     - {role: qtile_removal, tags: [qtile-removal]}
     - {role: hyprland, tags: [hyprland], when: install_hyprland | bool}
-    - {role: autostart_apps, tags: [autostart-apps], when: install_hyprland | bool}
     - {role: desktop_apps, tags: [desktop-apps]}
     - {role: dotfiles, tags: [dotfiles]}
     - {role: neovim, tags: [neovim]}
@@ -98,4 +98,7 @@
       tags: [aur]
       vars:
         aur_packages: "{{ apps_aur_packages }}"
+    # After aur, not beside hyprland: it enables arch-update.timer, a unit that
+    # only exists once the aur role has built arch-update.
+    - {role: autostart_apps, tags: [autostart-apps], when: install_hyprland | bool}
     - {role: identity, tags: [identity]}

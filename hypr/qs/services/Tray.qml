@@ -12,7 +12,8 @@ Singleton {
       one_password: "1password",
       mailspring: "mailspring",
       discord: "discord",
-      proton_vpn: "proton.vpn.app.gtk"
+      proton_vpn: "proton.vpn.app.gtk",
+      arch_update: "arch-update"
     })
 
   function getItem(prefix): SystemTrayItem {

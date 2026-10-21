@@ -7,6 +7,7 @@ neovim_packages:
   - python-pynvim
   - nodejs         # intelephense is an npm package
   - npm
+  - tree-sitter-cli  # nvim-treesitter's :TSInstall builds parsers with it
 
 # The servers after/plugin/lsp.lua registers. On Ubuntu these came four
 # different ways — apt for clangd, uv tools for ruff and pyright, a pinned
