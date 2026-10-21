@@ -69,6 +69,13 @@ vim.opt.isfname:append("@-@")
 
 vim.opt.colorcolumn = "80"
 
+-- fold by treesitter syntax nodes (za to toggle); foldlevel 99 opens files
+-- unfolded, empty foldtext keeps the folded line's highlighting
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.opt.foldlevel = 99
+vim.opt.foldtext = ""
+
 vim.g.mapleader = " "
 
 -- vim.diagnostic.config({virtual_text = true })
