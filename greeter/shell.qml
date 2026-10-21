@@ -76,16 +76,16 @@ ShellRoot {
           anchors.rightMargin: 16
           anchors.verticalCenter: parent.verticalCenter
           text: "\u{f0054}"
-          color: Theme.textDim
+          color: MyColors.oonSurfaceVariant
           font.family: "MesloLGS Nerd Font"
         }
 
         background: Rectangle {
           implicitHeight: 28
           radius: implicitHeight / 2
-          color: Theme.frame
+          color: MyColors.surfaceContainer
           border.width: 2
-          border.color: parent.activeFocus ? Theme.accent : "transparent"
+          border.color: parent.activeFocus ? MyColors.primary : "transparent"
         }
       }
     }
@@ -119,8 +119,8 @@ ShellRoot {
     property string icon
 
     Layout.fillWidth: true
-    color: Theme.text
-    placeholderTextColor: Theme.textDim
+    color: MyColors.oonSurface
+    placeholderTextColor: MyColors.oonSurfaceVariant
     leftPadding: 36
     topPadding: 6
     bottomPadding: 6
@@ -130,16 +130,16 @@ ShellRoot {
       anchors.leftMargin: 16
       anchors.verticalCenter: parent.verticalCenter
       text: parent.icon
-      color: Theme.textDim
+      color: MyColors.oonSurfaceVariant
       font.family: "MesloLGS Nerd Font"
     }
 
     background: Rectangle {
       implicitHeight: 34
       radius: implicitHeight / 2
-      color: Theme.frame
+      color: MyColors.surfaceContainer
       border.width: 2
-      border.color: parent.activeFocus ? Theme.accent : "transparent"
+      border.color: parent.activeFocus ? MyColors.primary : "transparent"
     }
   }
 

@@ -1,0 +1,1 @@
+../hypr/qs/MyColors.qml

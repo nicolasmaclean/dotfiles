@@ -16,7 +16,7 @@
     state: present
 
 # Copied from the real files rather than greeter/ itself: greeter/ symlinks
-# Theme.qml and theme/ from hypr/qs, and also holds a .qmlls.ini symlink into
+# Theme.qml and MyColors.qml from hypr/qs, and also holds a .qmlls.ini symlink into
 # /run/user that must not be copied.
 - name: Create the Quickshell greeter directory
   become: true
@@ -36,7 +36,7 @@
     - greeter/shell.qml
     - greeter/login.png
     - hypr/qs/Theme.qml
-    - hypr/qs/theme
+    - hypr/qs/MyColors.qml
   when: display_manager_greeter == 'quickshell'
 
 # Owned by the greeter user, since its home (/) is not writable. Created now

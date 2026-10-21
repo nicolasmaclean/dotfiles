@@ -88,6 +88,17 @@
         # runs before the file is put in place, which is the whole point of it.
         validate: "visudo -cf %s"
 
+    # arch-update's tray applet makedepends on cargo, which three packages
+    # provide, and paru's --noconfirm takes the first: cachyos's rustup. That
+    # installs with no toolchain, and the build account has no default to fall
+    # back on, so cargo refuses to run. The repo rust package is a working cargo
+    # with nothing to configure, and once it is present paru has nothing to pick.
+    - name: Install a cargo for AUR builds
+      become: true
+      community.general.pacman:
+        name: rust
+        state: present
+
     # become_user rather than become: false — either avoids building as root,
     # which makepkg refuses outright, but become_user is what routes the build
     # through the account the grant above is scoped to.
