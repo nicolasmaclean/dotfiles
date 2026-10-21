@@ -95,9 +95,11 @@ Scope {
   PanelWindow {
     id: notifications
 
-    WlrLayershell.namespace: "qs-notifications"
     screen: Theme.mainScreen
+    WlrLayershell.namespace: "qs-notifications"
     exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+
     mask: Region {
       Region {
         item: calendarCard.visible ? calendarCard : null
@@ -132,6 +134,7 @@ Scope {
       Loader {
         id: calendarCard
 
+        property real slideY: -(height + 10)
         active: Calendar.open || slideOut.running
         visible: active
 
@@ -139,7 +142,7 @@ Scope {
           name: "open"
           when: Calendar.open
           PropertyChanges {
-            slide.y: 0
+            calendarCard.slideY: 0
           }
         }
 
@@ -147,8 +150,7 @@ Scope {
           Transition {
             to: "open"
             NumberAnimation {
-              target: slide
-              property: "y"
+              property: "slideY"
               easing.type: Easing.OutElastic
               easing.amplitude: 1
               easing.period: 0.8
@@ -159,19 +161,16 @@ Scope {
             id: slideOut
             from: "open"
             NumberAnimation {
-              target: slide
-              property: "y"
+              property: "slideY"
               easing.type: Easing.OutCubic
             }
           }
         ]
 
-        transform: Translate {
-          id: slide
-          y: -(calendarCard.height + 10)
-        }
-
         sourceComponent: CalendarCard {
+          transform: Translate {
+            y: calendarCard.slideY
+          }
           HyprlandFocusGrab {
             active: true
             windows: [notifications]
