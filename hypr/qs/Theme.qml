@@ -23,7 +23,7 @@ Singleton {
   readonly property real hoverDarken: 1.5
 
   readonly property string mainScreenName: "HDMI-A-2"
-  readonly property ShellScreen mainScreen: Quickshell.screens.find(s => s.name === mainScreenName)
+  readonly property ShellScreen mainScreen: Quickshell.screens.find(s => s.name === mainScreenName) ?? Quickshell.screens[0]
 
   readonly property real pillLiftX: 2
   readonly property real pillLiftY: 2

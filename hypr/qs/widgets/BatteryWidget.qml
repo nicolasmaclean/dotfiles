@@ -5,9 +5,9 @@ import qs
 import qs.services
 
 Text {
-  text: `${Battery.glyph} ${(Battery.value * 100).toFixed(0)}%`
+  text: `${(Battery.value * 100).toFixed(0)}%`
   visible: Battery.available
   font.family: Theme.iconFont
-  font.pixelSize: Theme.widgetIconSize
+  font.pixelSize: 13
   color: MyColors.oonTertiaryContainer
 }
