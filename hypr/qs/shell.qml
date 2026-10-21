@@ -40,7 +40,7 @@ Scope {
       }
 
       implicitWidth: launcherWindow.implicitWidth
-      implicitHeight: launcherWindow.maxHeight
+      implicitHeight: launcherWindow.maxHeight + 5
 
       color: "transparent"
       LauncherWindow {
