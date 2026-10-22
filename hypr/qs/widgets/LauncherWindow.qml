@@ -49,6 +49,17 @@ Rectangle {
       visible: !root.actionsFor
       Keys.onUpPressed: scroll(false)
       Keys.onDownPressed: scroll(true)
+      Keys.onPressed: event => {
+        if (!root.actionsFor)
+          return
+        if (event.key === Qt.Key_J) {
+          scroll(true)
+          event.accepted = true
+        } else if (event.key === Qt.Key_K) {
+          scroll(false)
+          event.accepted = true
+        }
+      }
 
       // use tab or right to view current entry's actions (like firefox private browsing)
       Keys.onTabPressed: appEntries.toggleActions()
