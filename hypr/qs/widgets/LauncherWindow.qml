@@ -71,8 +71,16 @@ Rectangle {
         const e = appEntries.currentItem?.modelData
         if (e === null)
           return
-        Launcher.executeEntry(e)
-        Launcher.close()
+        if (!root.actionsFor) {
+          Launcher.executeEntry(e)
+          Launcher.close()
+        } else {
+          const a = actionEntries.currentItem?.modelData
+          if (a === null)
+            return
+          Launcher.executeAction(e, a)
+          Launcher.close()
+        }
       }
 
       function scroll(inc): void {
