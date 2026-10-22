@@ -10,6 +10,7 @@ Rectangle {
   id: root
 
   readonly property real maxHeight: search.height + Theme.launcherHeight + Theme.launcherPaddingY * 2
+  property var actionsFor: null
 
   implicitWidth: Theme.launcherWidth
   implicitHeight: layout.implicitHeight + 2 * Theme.launcherPaddingY
@@ -45,8 +46,14 @@ Rectangle {
       }
 
       // use arrows to select app entry
-      Keys.onUpPressed: appEntries.decrementCurrentIndex()
-      Keys.onDownPressed: appEntries.incrementCurrentIndex()
+      visible: !root.actionsFor
+      Keys.onUpPressed: scroll(false)
+      Keys.onDownPressed: scroll(true)
+
+      // use tab or right to view current entry's actions (like firefox private browsing)
+      Keys.onTabPressed: appEntries.toggleActions()
+      Keys.onRightPressed: appEntries.expandActions()
+      Keys.onLeftPressed: appEntries.closeActions()
 
       // enter to execute the current entry
       Keys.onReturnPressed: {
@@ -56,10 +63,60 @@ Rectangle {
         Launcher.executeEntry(e)
         Launcher.close()
       }
+
+      function scroll(inc): void {
+        let entries = !root.actionsFor ? appEntries : actionEntries
+        if (inc) {
+          entries.incrementCurrentIndex()
+        } else {
+          entries.decrementCurrentIndex()
+        }
+      }
+    }
+
+    // show root.actionsFor instead of TextInput when looking at actions
+    RowLayout {
+      visible: !!root.actionsFor
+
+      Layout.fillWidth: true
+      Layout.leftMargin: 15
+      Layout.rightMargin: 15
+
+      IconImage {
+        source: Quickshell.iconPath(root.actionsFor.icon, true)
+        implicitSize: 20
+      }
+
+      Text {
+        // id: label
+        text: root.actionsFor.name
+        Layout.fillWidth: true
+        elide: Text.ElideRight
+      }
     }
 
     ListView {
       id: appEntries
+
+      visible: !root.actionsFor
+
+      function toggleActions(): void {
+        if (!root.actionsFor) {
+          expandActions()
+        } else {
+          closeActions()
+        }
+      }
+      function expandActions(): void {
+        if (currentItem?.modelData.actions.length === 0) {
+          return
+        }
+        root.actionsFor = currentItem?.modelData
+        actionEntries.currentIndex = 0
+      }
+      function closeActions(): void {
+        root.actionsFor = null
+      }
 
       spacing: 2
       model: ScriptModel {
@@ -86,6 +143,8 @@ Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           anchors.left: parent.left
           anchors.leftMargin: 10
+          anchors.right: parent.right
+          anchors.rightMargin: 10
 
           IconImage {
             source: Quickshell.iconPath(appEntry.modelData.icon, true)
@@ -97,6 +156,13 @@ Rectangle {
             text: appEntry.modelData.name
             Layout.fillWidth: true
             elide: Text.ElideRight
+          }
+
+          Text {
+            visible: appEntry.modelData.actions.length !== 0
+            text: "\uF061"
+            color: MyColors.oonBackground
+            opacity: 0.6
           }
         }
 
@@ -125,9 +191,63 @@ Rectangle {
       Layout.preferredHeight: Math.min(contentHeight, Theme.launcherHeight)
       clip: true
     }
+
+    ListView {
+      id: actionEntries
+
+      visible: !!root.actionsFor
+
+      spacing: 2
+      model: ScriptModel {
+        values: root.actionsFor?.actions ?? []
+      }
+
+      delegate: Rectangle {
+        id: actionEntry
+        required property var modelData
+        radius: Theme.borderRadiusBig
+        color: {
+          let c = ListView.isCurrentItem ? MyColors.tertiaryContainer : MyColors.background
+          if (actionEntryHover.hovered) {
+            c = Qt.darker(c, Theme.hoverDarken)
+          }
+          return c
+        }
+
+        width: ListView.view.width
+        implicitHeight: actionLabel.implicitHeight + 12
+
+        Text {
+          id: actionLabel
+          text: actionEntry.modelData.name
+          elide: Text.ElideRight
+
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.leftMargin: 10
+          anchors.rightMargin: 10
+        }
+
+        HoverHandler {
+          id: actionEntryHover
+        }
+
+        TapHandler {
+          acceptedButtons: Qt.LeftButton
+          onTapped: {
+            Launcher.executeAction(root.actionsFor, actionEntry.modelData)
+            Launcher.close()
+          }
+        }
+      }
+
+      Layout.fillWidth: true
+      Layout.preferredHeight: Math.min(contentHeight, Theme.launcherHeight)
+      clip: true
+    }
   }
 
-  // TODO: all instances of this component are getting clipped by their parent...
   CardShadow {
     target: root
   }

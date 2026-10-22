@@ -26,6 +26,10 @@ Singleton {
     Quickshell.execDetached(["uwsm", "app", "--", e.id + ".desktop"])
   }
 
+  function executeAction(e, a): void {
+    Quickshell.execDetached(["uwsm", "app", "--", e.id + ".desktop:" + a.id])
+  }
+
   function getSearchResults(q) {
     const visible = apps.filter(a => !a.noDisplay)
     q = q.trim().toLowerCase()
