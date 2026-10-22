@@ -16,4 +16,9 @@ Text {
     acceptedButtons: Qt.LeftButton
     onTapped: Calendar.toggle()
   }
+
+  TapHandler {
+    acceptedButtons: Qt.RightButton
+    onTapped: Quickshell.execDetached(["uwsm", "app", "--", "dev.duxlabs.calendar.desktop"])
+  }
 }
