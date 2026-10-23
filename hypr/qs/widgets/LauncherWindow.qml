@@ -82,6 +82,18 @@ Rectangle {
           Launcher.close()
         }
       }
+      Keys.onSpacePressed: {
+        const e = appEntries.currentItem?.modelData
+        if (e === null)
+          return
+        if (!root.actionsFor)
+          return
+        const a = actionEntries.currentItem?.modelData
+        if (a === null)
+          return
+        Launcher.executeAction(e, a)
+        Launcher.close()
+      }
 
       function scroll(inc): void {
         let entries = !root.actionsFor ? appEntries : actionEntries
