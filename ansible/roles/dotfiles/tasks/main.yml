@@ -13,6 +13,29 @@
     - "{{ ansible_facts['env']['HOME'] }}/.config"
     - "{{ ansible_facts['env']['HOME'] }}/.config/alacritty"
 
+# The migration to zsh. ~/.zshrc is the one link target an installer is
+# expected to have written already: cachyos-zsh-config puts one in /etc/skel
+# that sources its oh-my-zsh + powerlevel10k bundle, and `p10k configure` then
+# edits it in place. Left there, the guard below would skip the link and zsh
+# would keep drawing p10k instead of starship. So a real file is renamed out
+# of the way, never deleted, and never onto an earlier backup — if
+# ~/.zshrc.pre-dotfiles already exists this does nothing and the guard below
+# reports the file instead.
+- name: Look for an installer-written zshrc
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['env']['HOME'] }}/.zshrc"
+    follow: false
+  register: dotfiles_zshrc
+
+- name: Move the installer's zshrc aside
+  ansible.builtin.command:
+    cmd: mv -n .zshrc .zshrc.pre-dotfiles
+    chdir: "{{ ansible_facts['env']['HOME'] }}"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.zshrc.pre-dotfiles"
+  when:
+    - dotfiles_zshrc.stat.exists
+    - dotfiles_zshrc.stat.isreg
+
 # The guard that makes adoption safe. A dest that is already a symlink, or
 # absent, is ours to write; a dest that is a real file or directory is somebody
 # else's config and gets left alone with a warning.
@@ -97,11 +120,10 @@
 # /etc/skel here rather than Ubuntu's — which sets up the prompt, history and
 # completion this repo's .bashrc assumes.
 #
-# This task assumes bash is the login shell, and on CachyOS that is not free:
-# the ISO ships fish and a prompt theme for it, so a minimal install may hand
-# the user fish, which never reads this file. roles/base sets the shell back to
-# bash for exactly that reason (base_login_shell); the task here is unchanged
-# either way.
+# zsh is the login shell now (roles/base, base_login_shell) and reads the
+# linked ~/.zshrc instead, so this only serves bash run by hand. It stays
+# because it is cheap and both rc files share .shellrc: an interactive bash
+# still gets the editor, aliases and gitll.
 #
 # The installer does not always leave one. A minimal CachyOS install that hands
 # the user fish may write no ~/.bashrc at all, and the append below then stops

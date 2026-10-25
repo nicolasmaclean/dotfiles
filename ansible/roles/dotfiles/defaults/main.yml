@@ -30,6 +30,10 @@ dotfiles_links:
     dest: "{{ ansible_facts['env']['HOME'] }}/.ideavimrc"
   - src: configs/starship.toml
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/starship.toml"
+  # A link, unlike ~/.bashrc: there is no stock zshrc worth keeping under it.
+  # The installer's one is moved aside first — see tasks/main.yml.
+  - src: .zshrc
+    dest: "{{ ansible_facts['env']['HOME'] }}/.zshrc"
 
 # Links whose config has left the repo. Removed only while they are still
 # symlinks — see tasks/main.yml.

@@ -8,11 +8,14 @@ $git_branch\
 $git_state\
 $git_status\
 $cmd_duration\
+$fill\
+$time\
 $line_break\
 $python\
 $character"""
 
-right_format = "$time"
+[fill]
+symbol = " "
 
 [time]
 disabled = false
