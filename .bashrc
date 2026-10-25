@@ -60,3 +60,5 @@ gitll() {
   ' |
   { if [ -t 1 ]; then LESS="${LESS:-FRX}" $(git var GIT_PAGER 2>/dev/null || echo less); else cat; fi; }
 }
+
+command -v starship >/dev/null && eval "$(starship init bash)"
