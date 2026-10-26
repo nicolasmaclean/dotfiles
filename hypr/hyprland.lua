@@ -54,6 +54,14 @@ hl.monitor({
     position = "auto",
     scale = 1.2,
 })
+-- XWayland apps (Steam) can't render at 1.2, so Hyprland upscales them and
+-- they blur. Render them unscaled instead; Steam then scales itself via
+-- Settings > Interface. A no-op on cnick, whose monitors are all scale 1.
+hl.config({
+  xwayland = {
+    force_zero_scaling = true,
+  }
+})
 
 -- Fallback for any other monitor
 hl.monitor({

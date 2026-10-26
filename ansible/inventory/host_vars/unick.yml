@@ -15,7 +15,7 @@ form_factor: laptop
 # whatever that is worth given it takes the intel branch.)
 gpu: intel
 
-install_steam: false
+install_steam: true
 install_battlenet: false
 
 install_hyprland: true
