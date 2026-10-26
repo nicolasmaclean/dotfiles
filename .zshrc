@@ -8,6 +8,7 @@ ZSH_THEME=""                    # starship, below
 DISABLE_MAGIC_FUNCTIONS=true    # keeps pasted URLs from getting mangled
 ENABLE_CORRECTION=true
 COMPLETION_WAITING_DOTS=true
+CASE_SENSITIVE=true             # path completion matches case exactly
 plugins=(git fzf extract)
 source $ZSH/oh-my-zsh.sh
 
