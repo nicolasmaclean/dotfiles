@@ -12,6 +12,9 @@ hyprland_packages:
   - hyprpolkitagent
   - hyprlock
   - hypridle
+  # Holds an idle inhibitor while PipeWire is playing audio, so hypridle won't
+  # suspend mid-song. Players like Spotify don't inhibit on their own.
+  - wayland-pipewire-idle-inhibit
   - quickshell
   # quickshell's battery widget reads UPower over D-Bus. Harmless on a desktop:
   # the widget hides itself when there's no laptop battery.
@@ -40,6 +43,7 @@ hyprland_daemons:
   - hyprpolkitagent.service
   - hyprpaper.service
   - hypridle.service
+  - wayland-pipewire-idle-inhibit.service
   - hyprsunset.service
 
 hyprland_theme_seed: "#47105E"

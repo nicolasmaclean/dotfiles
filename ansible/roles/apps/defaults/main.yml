@@ -29,6 +29,7 @@ apps_repo_packages:
   # is the official thin launcher that fetches and runs the real client.
   - spotify-launcher
   - obsidian
+  - mullvad-browser-bin
 
 # Consumed by the `aur` role, which site.yml runs immediately after this one —
 # the list lives here so the answer to "which apps does this box get" stays in
